@@ -154,7 +154,17 @@ namespace MATH {
         Vector3(float scalar) :x(scalar), y(scalar), z(scalar) {};
         Vector3(float _x, float _y, float _z) :x(_x), y(_y), z(_z) {};
         explicit Vector3(const float* coords) : x{ coords[0] }, y{ coords[1] }, z{ coords[2] } {}
+        float operator[](size_t i) const
+        {
+            assert(i < 3);
+            return *(&x + i);
+        }
 
+        float& operator[](size_t i)
+        {
+            assert(i < 3);
+            return *(&x + i);
+        }
         bool operator==(const Vector3& rhs) const { return (x == rhs.x && y == rhs.y && z == rhs.z); }
 
         bool operator!=(const Vector3& rhs) const { return x != rhs.x || y != rhs.y || z != rhs.z; }

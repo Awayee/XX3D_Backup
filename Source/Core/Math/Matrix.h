@@ -3,47 +3,9 @@
 #include "Quaternion.h"
 
 namespace MATH {
-    void MatrixToQuaternion(float rotation[3][3], Quaternion& q) {
-        // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
-        // article "Quaternion Calculus and Fast Animation".
-
-        float trace = rotation[0][0] + rotation[1][1] + rotation[2][2];
-        float root;
-
-        if (trace > 0.0)
-        {
-            // |w| > 1/2, may as well choose w > 1/2
-            root = std::sqrt(trace + 1.0f); // 2w
-            w = 0.5f * root;
-            root = 0.5f / root; // 1/(4w)
-            x = (rotation[2][1] - rotation[1][2]) * root;
-            y = (rotation[0][2] - rotation[2][0]) * root;
-            z = (rotation[1][0] - rotation[0][1]) * root;
-        }
-        else
-        {
-            // |w| <= 1/2
-            size_t s_iNext[3] = { 1, 2, 0 };
-            size_t i = 0;
-            if (rotation[1][1] > rotation[0][0])
-                i = 1;
-            if (rotation[2][2] > rotation[i][i])
-                i = 2;
-            size_t j = s_iNext[i];
-            size_t k = s_iNext[j];
-
-            root = std::sqrt(rotation[i][i] - rotation[j][j] - rotation[k][k] + 1.0f);
-            float* apkQuat[3] = { &x, &y, &z };
-            *apkQuat[i] = 0.5f * root;
-            root = 0.5f / root;
-            w = (rotation[k][j] - rotation[j][k]) * root;
-            *apkQuat[j] = (rotation[j][i] + rotation[i][j]) * root;
-            *apkQuat[k] = (rotation[k][i] + rotation[i][k]) * root;
-        }
-    }
 	class Matrix3x3 {
 	public:
-        static const Matrix3x3 IDENTITY(1, 0, 0, 0, 1, 0, 0, 0, 1);
+        static const Matrix3x3 IDENTITY;
 		float m_mat[3][3];
 		Matrix3x3() = default;
         explicit Matrix3x3(float arr[3][3])
@@ -98,7 +60,21 @@ namespace MATH {
             m_mat[2][1] = row2.y;
             m_mat[2][2] = row2.z;
         }
+        // assignment and comparison
+        float* operator[](size_t row_index) const { return (float*)m_mat[row_index]; }
+        bool operator==(const Matrix3x3& rhs) const
+        {
+            for (size_t row_index = 0; row_index < 3; row_index++)
+            {
+                for (size_t col_index = 0; col_index < 3; col_index++)
+                {
+                    if (m_mat[row_index][col_index] != rhs.m_mat[row_index][col_index])
+                        return false;
+                }
+            }
 
+            return true;
+        }
         bool operator!=(const Matrix3x3& rhs) const { return !operator==(rhs); }
 
         // arithmetic operations
@@ -230,11 +206,76 @@ namespace MATH {
 
         Matrix3x3 Inverse(float tolerance = 1e-06) const
         {
-            Matrix3x3 inv = ZERO;
+            Matrix3x3 inv;
             Inverse(inv, tolerance);
             return inv;
         }
 	};
+
+    inline void MatrixToQuaternion(const Matrix3x3& m, Quaternion& q) {
+        // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
+        // article "Quaternion Calculus and Fast Animation".
+
+        float trace = m[0][0] + m[1][1] + m[2][2];
+        float root;
+
+        if (trace > 0.0)
+        {
+            // |w| > 1/2, may as well choose w > 1/2
+            root = std::sqrt(trace + 1.0f); // 2w
+            q.w = 0.5f * root;
+            root = 0.5f / root; // 1/(4w)
+            q.x = (m[2][1] - m[1][2]) * root;
+            q.y = (m[0][2] - m[2][0]) * root;
+            q.z = (m[1][0] - m[0][1]) * root;
+        }
+        else
+        {
+            // |w| <= 1/2
+            size_t s_iNext[3] = { 1, 2, 0 };
+            size_t i = 0;
+            if (m[1][1] > m[0][0])
+                i = 1;
+            if (m[2][2] > m[i][i])
+                i = 2;
+            size_t j = s_iNext[i];
+            size_t k = s_iNext[j];
+
+            root = std::sqrt(m[i][i] - m[j][j] - m[k][k] + 1.0f);
+            float* apkQuat[3] = { &q.x, &q.y, &q.z };
+            *apkQuat[i] = 0.5f * root;
+            root = 0.5f / root;
+            q.w = (m[k][j] - m[j][k]) * root;
+            *apkQuat[j] = (m[j][i] + m[i][j]) * root;
+            *apkQuat[k] = (m[k][i] + m[i][k]) * root;
+        }
+    }
+
+    inline void QuaternionToMatrix(const Quaternion& q, Matrix3x3& m) {
+        float fTx = q.x + q.x;   // 2x
+        float fTy = q.y + q.y;   // 2y
+        float fTz = q.z + q.z;   // 2z
+        float fTwx = fTx * q.w; // 2xw
+        float fTwy = fTy * q.w; // 2yw
+        float fTwz = fTz * q.w; // 2z2
+        float fTxx = fTx * q.x; // 2x^2
+        float fTxy = fTy * q.x; // 2xy
+        float fTxz = fTz * q.x; // 2xz
+        float fTyy = fTy * q.y; // 2y^2
+        float fTyz = fTz * q.y; // 2yz
+        float fTzz = fTz * q.z; // 2z^2
+
+       m[0][0] = 1.0f - (fTyy + fTzz); // 1 - 2y^2 - 2z^2
+       m[0][1] = fTxy - fTwz;          // 2xy - 2wz
+       m[0][2] = fTxz + fTwy;          // 2xz + 2wy
+       m[1][0] = fTxy + fTwz;          // 2xy + 2wz
+       m[1][1] = 1.0f - (fTxx + fTzz); // 1 - 2x^2 - 2z^2
+       m[1][2] = fTyz - fTwx;          // 2yz - 2wx
+       m[2][0] = fTxz - fTwy;          // 2xz - 2wy
+       m[2][1] = fTyz + fTwx;          // 2yz + 2wx
+       m[2][2] = 1.0f - (fTxx + fTyy); // 1 - 2x^2 - 2y^2
+    }
+
 
     class Matrix4x4
     {
@@ -247,27 +288,26 @@ namespace MATH {
         @note
         It does <b>NOT</b> initialize the matrix for efficiency.
         */
-        static const Matrix4x4 IDENTITY(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         Matrix4x4() = default;
 
-        Matrix4x4(const Matrix4x4_& mat)
+        Matrix4x4(const Matrix4x4& mat)
         {
-            m_mat[0][0] = mat.v0;
-            m_mat[0][1] = mat.v1;
-            m_mat[0][2] = mat.v2;
-            m_mat[0][3] = mat.v3;
-            m_mat[1][0] = mat.v4;
-            m_mat[1][1] = mat.v5;
-            m_mat[1][2] = mat.v6;
-            m_mat[1][3] = mat.v7;
-            m_mat[2][0] = mat.v8;
-            m_mat[2][1] = mat.v9;
-            m_mat[2][2] = mat.v10;
-            m_mat[2][3] = mat.v11;
-            m_mat[3][0] = mat.v12;
-            m_mat[3][1] = mat.v13;
-            m_mat[3][2] = mat.v14;
-            m_mat[3][3] = mat.v15;
+            m_mat[0][0] = mat[0][0];
+            m_mat[0][1] = mat[0][1];
+            m_mat[0][2] = mat[0][2];
+            m_mat[0][3] = mat[0][3];
+            m_mat[1][0] = mat[1][0];
+            m_mat[1][1] = mat[1][1];
+            m_mat[1][2] = mat[1][2];
+            m_mat[1][3] = mat[1][3];
+            m_mat[2][0] = mat[2][0];
+            m_mat[2][1] = mat[2][1];
+            m_mat[2][2] = mat[2][2];
+            m_mat[2][3] = mat[2][3];
+            m_mat[3][0] = mat[3][0];
+            m_mat[3][1] = mat[3][1];
+            m_mat[3][2] = mat[3][2];
+            m_mat[3][3] = mat[3][3];
         }
 
         Matrix4x4(const float (&float_array)[16])
@@ -345,16 +385,7 @@ namespace MATH {
             m_mat[3][3] = row3.w;
         }
 
-        /** Creates a standard 4x4 transformation matrix with a zero translation part from a rotation/scaling
-         * Quaternion.
-         */
-        Matrix4x4(const Quaternion& rot)
-        {
-            Matrix3x3 m3x3;
-            rot.toRotationMatrix(m3x3);
-            operator=(IDENTITY);
-            setMatrix3x3(m3x3);
-        }
+        static const Matrix4x4 IDENTITY;
 
         float* operator[](size_t row_index)
         {
@@ -529,7 +560,28 @@ namespace MATH {
                 m_mat[3][0] != m2.m_mat[3][0] || m_mat[3][1] != m2.m_mat[3][1] || m_mat[3][2] != m2.m_mat[3][2] ||
                 m_mat[3][3] != m2.m_mat[3][3];
         }
-
+        /** Creates a standard 4x4 transformation matrix with a zero translation part from a rotation/scaling 3x3
+ * matrix.
+ */
+        void SetMatrix3x3(const Matrix3x3& mat3)
+        {
+            m_mat[0][0] = mat3.m_mat[0][0];
+            m_mat[0][1] = mat3.m_mat[0][1];
+            m_mat[0][2] = mat3.m_mat[0][2];
+            m_mat[0][3] = 0;
+            m_mat[1][0] = mat3.m_mat[1][0];
+            m_mat[1][1] = mat3.m_mat[1][1];
+            m_mat[1][2] = mat3.m_mat[1][2];
+            m_mat[1][3] = 0;
+            m_mat[2][0] = mat3.m_mat[2][0];
+            m_mat[2][1] = mat3.m_mat[2][1];
+            m_mat[2][2] = mat3.m_mat[2][2];
+            m_mat[2][3] = 0;
+            m_mat[3][0] = 0;
+            m_mat[3][1] = 0;
+            m_mat[3][2] = 0;
+            m_mat[3][3] = 1;
+        }
         Matrix4x4 Transpose() const
         {
             return Matrix4x4(m_mat[0][0],
@@ -624,16 +676,16 @@ namespace MATH {
                 up = Vector3(0, 1, 0);
             }
 
-            Vector3 left = up.crossProduct(normal);
-            up           = normal.crossProduct(left);
+            Vector3 left = up.Cross(normal);
+            up = normal.Cross(left);
 
-            left.normalise();
-            up.normalise();
+            left.Normalize();
+            up.Normalize();
 
             Matrix4x4 result = Matrix4x4::IDENTITY;
-            result.setMatrix3x3(Matrix3x3(left, up, normal));
+            result.SetMatrix3x3(Matrix3x3(left, up, normal));
 
-            return result.transpose();
+            return result.Transpose();
         }
 
         /** Builds a translation matrix
@@ -743,34 +795,26 @@ namespace MATH {
             out_z.Normalize();
         }
 
-        Matrix4x4 adjoint() const;
-
-        float determinant() const
-        {
-            return m_mat[0][0] * getMinor(1, 2, 3, 1, 2, 3) - m_mat[0][1] * getMinor(1, 2, 3, 0, 2, 3) +
-                   m_mat[0][2] * getMinor(1, 2, 3, 0, 1, 3) - m_mat[0][3] * getMinor(1, 2, 3, 0, 1, 2);
-        }
-
         /** Building a Matrix4 from orientation / scale / position.
         @remarks
         Transform is performed in the order scale, rotate, translation, i.e. translation is independent
         of orientation axes, scale does not affect size of translation, rotation and scaling are always
         centered on the origin.
         */
-        void MakeTransform(const Vector3& position, const Vector3& scale, const Quaternion& orientation) {
+        void MakeTransform(const Vector3& position, const Vector3& scale, const Quaternion& rotation) {
             // quaternion to rotate matrix
-            float fTx = x + x;   // 2x
-            float fTy = y + y;   // 2y
-            float fTz = z + z;   // 2z
-            float fTwx = fTx * w; // 2xw
-            float fTwy = fTy * w; // 2yw
-            float fTwz = fTz * w; // 2z2
-            float fTxx = fTx * x; // 2x^2
-            float fTxy = fTy * x; // 2xy
-            float fTxz = fTz * x; // 2xz
-            float fTyy = fTy * y; // 2y^2
-            float fTyz = fTz * y; // 2yz
-            float fTzz = fTz * z; // 2z^2
+            float fTx = rotation.x + rotation.x;   // 2x
+            float fTy = rotation.y + rotation.y;   // 2y
+            float fTz = rotation.z + rotation.z;   // 2z
+            float fTwx = fTx * rotation.w; // 2xw
+            float fTwy = fTy * rotation.w; // 2yw
+            float fTwz = fTz * rotation.w; // 2z2
+            float fTxx = fTx * rotation.x; // 2x^2
+            float fTxy = fTy * rotation.x; // 2xy
+            float fTxz = fTz * rotation.x; // 2xz
+            float fTyy = fTy * rotation.y; // 2y^2
+            float fTyz = fTz * rotation.y; // 2yz
+            float fTzz = fTz * rotation.z; // 2z^2
 
             m_mat[0][0] = 1.0f - (fTyy + fTzz); // 1 - 2y^2 - 2z^2
             m_mat[0][1] = fTxy - fTwz;          // 2xy - 2wz
@@ -809,11 +853,11 @@ namespace MATH {
         As MakeTransform except it build the inverse given the same data as MakeTransform, so
         performing -translation, -rotate, 1/scale in that order.
         */
-        void MakeInverseTransform(const Vector3& position, const Vector3& scale, const Quaternion& orientation) {
+        void MakeInverseTransform(const Vector3& position, const Vector3& scale, const Quaternion& rotation) {
             // Invert the parameters
             Vector3    inv_translate = -position;
             Vector3    inv_scale(1 / scale.x, 1 / scale.y, 1 / scale.z);
-            Quaternion inv_rot = orientation.Inverse();
+            Quaternion inv_rot = rotation.Inverse();
 
             // Because we're inverting, order is translation, rotation, scale
             // So make translation relative to scale & rotation
@@ -822,7 +866,7 @@ namespace MATH {
 
             // Next, make a 3x3 rotation matrix
             Matrix3x3 rot3x3;
-            inv_rot.toRotationMatrix(rot3x3);
+            QuaternionToMatrix(rotation, rot3x3);
 
             // Set up final matrix with scale, rotation and translation
             m_mat[0][0] = inv_scale.x * rot3x3[0][0];
@@ -876,11 +920,11 @@ namespace MATH {
             // U stores the entries U[0] = u01, U[1] = u02, U[2] = u12
 
             // build orthogonal matrix Q
-            float out_Q[3][3];
+            Matrix3x3 out_Q;
 
             float inv_length = m_mat[0][0] * m_mat[0][0] + m_mat[1][0] * m_mat[1][0] + m_mat[2][0] * m_mat[2][0];
             if (inv_length != 0)
-                inv_length = 1 / std::sqrt(in_length);
+                inv_length = 1 / std::sqrt(inv_length);
 
             out_Q[0][0] = m_mat[0][0] * inv_length;
             out_Q[1][0] = m_mat[1][0] * inv_length;
@@ -892,7 +936,7 @@ namespace MATH {
             out_Q[2][1] = m_mat[2][1] - dot * out_Q[2][0];
             inv_length = out_Q[0][1] * out_Q[0][1] + out_Q[1][1] * out_Q[1][1] + out_Q[2][1] * out_Q[2][1];
             if (inv_length != 0)
-                inv_length = 1 / std::sqrt(in_length);
+                inv_length = 1 / std::sqrt(inv_length);
 
             out_Q[0][1] *= inv_length;
             out_Q[1][1] *= inv_length;
@@ -908,7 +952,7 @@ namespace MATH {
             out_Q[2][2] -= dot * out_Q[2][1];
             inv_length = out_Q[0][2] * out_Q[0][2] + out_Q[1][2] * out_Q[1][2] + out_Q[2][2] * out_Q[2][2];
             if (inv_length != 0)
-                inv_length = 1 / std::sqrt(in_length);
+                inv_length = 1 / std::sqrt(inv_length);
 
             out_Q[0][2] *= inv_length;
             out_Q[1][2] *= inv_length;

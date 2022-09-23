@@ -1,10 +1,13 @@
 #pragma once
-#include <vulkan\vulkan.h>
-namespace RI {
-	typedef VkBuffer RIBuffer;
-	typedef VkDeviceMemory RIMemory;
+#include <memory>
+#include <GLFW\glfw3.h>
+#include "RenderCore.h"
 
-	class RenderCore {
-	};
-	void Render();
+namespace RI {
+
+	extern std::unique_ptr<RenderCore> s_RenderCore;
+
+	void Initialize(GLFWwindow* w);
+
+	void Release();
 }

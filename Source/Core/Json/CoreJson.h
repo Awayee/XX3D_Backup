@@ -2,7 +2,7 @@
 #include <document.h>
 #include <fstream>
 #include <string>
-#include "../logger.h"
+#include "../macro.h"
 namespace Json {
 	bool ParseFile(const char* file, rapidjson::Document& doc) {
 		std::ifstream in(file);

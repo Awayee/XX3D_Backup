@@ -1,7 +1,7 @@
 #pragma once
 #include <fstream>
 #include <vector>
-#include "../logger.h"
+#include "../macro.h"
 namespace File {
 	void LoadFile(const char* fileName, std::vector<char>& code) {
 		std::ifstream file(fileName, std::ios::ate | std::ios::binary);

@@ -19,6 +19,4 @@ add_dependencies(${TARGET_NAME} ${DEPENDENCY_NAME})
 target_link_libraries(${TARGET_NAME} PUBLIC ${DEPENDENCY_NAME})
 endmacro(DEPENDENCY)
 
-add_subdirectory(Source/Core)
-add_subdirectory(Source/Render)
-add_subdirectory(Source/Engine)
+add_subdirectory("Source")

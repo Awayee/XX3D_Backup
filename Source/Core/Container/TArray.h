@@ -4,8 +4,8 @@ class TArray {
 private:
 	unsigned int size;
 	T* data;
-#define _Free if(data) delete[] data;
-#define _Allocate data = new T[size];
+#define _TArrayFree if(data) delete[] data;
+#define _TArrayAllocate data = new T[size];
 public:
 	TArray() {
 		data = nullptr;
@@ -13,10 +13,10 @@ public:
 	}
 	TArray(const TArray<T>& other) {
 		if (this != &other) {
-			_Free();
+			_TArrayFree();
 			size = other.size;
 			if (size > 0) {
-				_Allocate();
+				_TArrayAllocate();
 				memcpy(data, other.data, sizeof(T) * size);
 			}
 			else {
@@ -33,12 +33,12 @@ public:
 
 	TArray(unsigned int l) {
 		size = l;
-		_Allocate();
+		_TArrayAllocate();
 	}
 
 	TArray(std::initializer_list<T> p) {
 		size = p.size();
-		_Allocate();
+		_TArrayAllocate();
 		auto begin = p.begin();
 		for (uint32_t i = 0; i < size; i++) {
 			data[i] = *(begin + i);
@@ -47,7 +47,7 @@ public:
 	TArray(T* other, unsigned int l) {
 		size = l;
 		if (size > 0) {
-			_Allocate();
+			_TArrayAllocate();
 			memcpy(data, other, sizeof(T) * size);
 		}
 		else {
@@ -68,7 +68,7 @@ public:
 
 	void Clear() {
 		if (data != nullptr) {
-			_Free();
+			_TArrayFree();
 		}
 		size = 0;
 	}
@@ -96,14 +96,14 @@ public:
 
 	void Resize(unsigned int l) {
 		if (size != l) {
-			_Free();
+			_TArrayFree();
 
 			size = l;
 			if (l == 0) {
 				data = nullptr;
 			}
 			else {
-				_Allocate();
+				_TArrayAllocate();
 
 			}
 		}
@@ -111,10 +111,10 @@ public:
 
 	TArray<T>& operator=(const TArray<T>& other) {
 		if (this != &other) {
-			_Free();
+			_TArrayFree();
 			size = other.size;
 			if (size > 0) {
-				_Allocate();
+				_TArrayAllocate();
 				memcpy(data, other.data, sizeof(T) * size);
 			}
 			else {

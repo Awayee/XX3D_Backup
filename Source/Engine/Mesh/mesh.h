@@ -1,6 +1,7 @@
 #pragma once
-#include "Core/Math/CoreMath.h"
 #include <Render/RenderInterface.h>
+
+#include "Core/Math/CoreMath.h"
 #include "Core/Container/TArray.h"
 
 struct Vertex {
@@ -14,6 +15,4 @@ struct Mesh {
 	MATH::Matrix4x4 transformMatrix;
 	uint32_t vertexCount;
 	uint32_t indexCount;
-	RI::RIBuffer buffer;
-	RI::RIMemory memory;
 };
