@@ -1,12 +1,12 @@
 #include <iostream>
 #include "RenderInterface.h"
 #include "Vulkan\VulkanCore.h"
-namespace RI {
+namespace RHI {
 	std::unique_ptr<RenderCore> s_RenderCore;
 
-	void Initialize(GLFWwindow* w)
+	void Initialize()
 	{
-		s_RenderCore = std::make_unique<VulkanCore>(w);
+		s_RenderCore = std::make_unique<RenderCoreVulkan>();
 	}
 	void Release()
 	{

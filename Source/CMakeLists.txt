@@ -1,0 +1,24 @@
+﻿# CMakeList.txt : CMake project for xxEngine, include source and define
+# project specific logic here.
+#
+cmake_minimum_required (VERSION 3.8)
+
+set(TARGET_NAME "Source")
+file(GLOB_RECURSE SRC_DIR_LIST "*.cpp" "*.h" "*.hpp")
+
+add_executable(${TARGET_NAME} ${SRC_DIR_LIST})
+target_include_directories(${TARGET_NAME} PRIVATE ${SOURCE_DIR})
+
+#glfw
+target_link_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/glfwWin64/lib-vc2019)
+target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/glfwWin64/include)
+#glm
+target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/glm)
+
+#vulkan
+target_link_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/VulkanSDK/lib/Win64)
+target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/VulkanSDK/include)
+
+#rapidjson
+target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/rapidjson/include)
+

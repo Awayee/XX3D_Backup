@@ -1,13 +1,16 @@
 #pragma once
 #include <memory>
 #include <GLFW\glfw3.h>
-#include "RenderCore.h"
 
-namespace RI {
+namespace RHI {
 
-	extern std::unique_ptr<RenderCore> s_RenderCore;
 
-	void Initialize(GLFWwindow* w);
+	void Initialize();
 
 	void Release();
+
+	class RenderCore {
+
+	};
+	extern std::unique_ptr<RenderCore> s_RenderCore;
 }
