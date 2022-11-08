@@ -13,6 +13,9 @@ set(BUILD_SHARED_LIBS OFF)
 
 set(THIRD_PARTY ${xxEngine_SOURCE_DIR}/ThirdParty)
 set(SOURCE_DIR ${xxEngine_SOURCE_DIR}/Source)
+set(ASSETS_DIR ${xxEngine_SOURCE_DIR}/Assets)
+
+add_definitions(-DASSETS_PATH="${ASSETS_DIR}/")
 
 macro (DEPENDENCY TARGET_NAME DEPENDENCY_NAME)
 add_dependencies(${TARGET_NAME} ${DEPENDENCY_NAME})
