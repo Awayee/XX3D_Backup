@@ -23,19 +23,19 @@ namespace Engine {
 		RHI::RHIVulkan* vkRHI = reinterpret_cast<RHI::RHIVulkan*>(rhi);
 		RHI::RSVkImGuiInitInfo initInfo = vkRHI->GetImGuiInitInfo();
 		ImGui_ImplGlfw_InitForVulkan(reinterpret_cast<GLFWwindow*>(initInfo.windowHandle), true);
-		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = initInfo.instance;
-		init_info.PhysicalDevice = initInfo.physicalDevice;
-		init_info.Device = initInfo.device;
-		init_info.QueueFamily = initInfo.queueIndex;
-		init_info.Queue = initInfo.queue;
-		init_info.DescriptorPool = initInfo.descriptorPool;
-		init_info.Subpass = subpass;
+		ImGui_ImplVulkan_InitInfo imGuiInit = {};
+		imGuiInit.Instance = initInfo.instance;
+		imGuiInit.PhysicalDevice = initInfo.physicalDevice;
+		imGuiInit.Device = initInfo.device;
+		imGuiInit.QueueFamily = initInfo.queueIndex;
+		imGuiInit.Queue = initInfo.queue;
+		imGuiInit.DescriptorPool = initInfo.descriptorPool;
+		imGuiInit.Subpass = subpass;
 		// may be different from the real swapchain image count
 		// see ImGui_ImplVulkanH_GetMinImageCountFromPresentMode
-		init_info.MinImageCount = 3;
-		init_info.ImageCount = 3;
-		ASSERT(ImGui_ImplVulkan_Init(&init_info, reinterpret_cast<RHI::RVkRenderPass*>(pass)->m_VkRenderPass), "Failed to init imgui!");
+		imGuiInit.MinImageCount = 3;
+		imGuiInit.ImageCount = 3;
+		ASSERT(ImGui_ImplVulkan_Init(&imGuiInit, reinterpret_cast<RHI::RVkRenderPass*>(pass)->m_VkRenderPass), "Failed to init imgui!");
 		BRANCH_END
 	}
 	void ImGuiRelease()
