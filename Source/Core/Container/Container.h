@@ -3,6 +3,10 @@
 #include <unordered_map>
 #include <map>
 #include "TArray.h"
+#include <algorithm>
+#include <string>
+#include <unordered_set>
+#include <set>
 
 
 struct cmp {
@@ -21,4 +25,31 @@ struct hs {
 	}
 };
 template<class T>
-using StrDict = std::unordered_map<const char*, T, hs, cmp>;
+using TStrMap = std::unordered_map<const char*, T, hs, cmp>;
+
+template<class T>
+using TVector =  std::vector<T>;
+
+template<typename T1, typename T2>
+using TPair = std::pair<T1, T2>;
+
+template<typename T>
+using TUnorderedSet = std::unordered_set<T>;
+
+template<typename T>
+using TSet = std::set<T>;
+
+template<typename TKey, typename TValue>
+using TUnorderedMap = std::unordered_map<TKey, TValue>;
+
+template <class _RanIt, class _Pr>
+inline void TSort(_RanIt _first, _RanIt _last, _Pr _pred) {
+	std::sort(_first, _last, _pred);
+}
+
+template <class _RanIt>
+inline void TSort(const _RanIt _First, const _RanIt _Last) { // order [_First, _Last)
+	std::sort(_First, _Last, less<>{});
+}
+
+using FString = std::string;

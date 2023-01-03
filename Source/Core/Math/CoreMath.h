@@ -1,6 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include <cmath>
+#include <cstdint>
 #include "Vector.h"
 #include "Quaternion.h"
 #include "Matrix.h"
@@ -14,14 +15,16 @@ namespace MATH {
 
 	inline int Min(int a, int b) { return a < b ? a : b; };
 	inline bool IsNaN(float f) { return std::isnan(f); };
-	inline bool FloatEqual(float a, float b, float precision = 0.0001f) { return std::fabs(b - a) <= precision; }
+	inline bool FloatEqual(float a, float b, float precision = 1e-6f) { return std::fabs(b - a) <= precision; }
 
 	// rad is default
 	inline float ToRad(const float& f) { return f * Deg2Rad; }
 	inline float ToDeg(const float& f) { return f * Rad2Deg; }
+
+	// triangle func
 #ifdef MATH_DEG
 #define TRI_FUNC(func, f){ return func(f * Deg2Rad); }
-#define ATRI_FUNC(func, f) { return func(f) * Deg2Rad); }
+#define ATRI_FUNC(func, f) { return func(f * Deg2Rad); }
 #else
 #define TRI_FUNC(func, f){ return func(f);}
 #define ATRI_FUNC(func, ...) { return func( ##__VA_ARGS__); }

@@ -6,30 +6,13 @@ namespace MATH {
 		float x{ 0.0f }, y{ 0.0f }, z{ 0.0f }, w{ 1.0f };
 		Quaternion() = default;
 		Quaternion(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {};
+        void FromAngleAxis(float a, const Vector3& axis);
         static Quaternion AngleAxis(float a, const Vector3& axis) {
             Quaternion q;
             q.FromAngleAxis(a, axis);
             return q;
         }
-		void FromAngleAxis(float a, const Vector3& axis) {
-            float half_a(0.5 * a);
-            float sin_v = std::sin(half_a);
-            w = std::cos(half_a);
-            x = axis.x * sin_v;
-            y = axis.y * sin_v;
-            z = axis.z * sin_v;
-        }
-        Vector3 RotateVector3(const Vector3& v) const {
-            // nVidia SDK implementation
-            Vector3 uv, uuv;
-            Vector3 qvec(x, y, z);
-            uv = qvec.Cross(v);
-            uuv = qvec.Cross(uv);
-            uv *= (2.0f * w);
-            uuv *= 2.0f;
-
-            return v + uv + uuv;
-        }
+        Vector3 RotateVector3(const Vector3& v) const;
         Quaternion Inverse() const // apply to non-zero quaternion
         {
             float norm = w * w + x * x + y * y + z * z;

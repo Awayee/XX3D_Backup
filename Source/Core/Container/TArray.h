@@ -1,4 +1,7 @@
 #pragma once
+
+#include <initializer_list>
+
 template<typename T>
 class TArray {
 private:

@@ -22,4 +22,9 @@ add_dependencies(${TARGET_NAME} ${DEPENDENCY_NAME})
 target_link_libraries(${TARGET_NAME} PUBLIC ${DEPENDENCY_NAME})
 endmacro(DEPENDENCY)
 
+SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
+
+add_subdirectory("ThirdParty")
 add_subdirectory("Source")
+add_subdirectory("Editor")
+add_subdirectory("Runtime")
