@@ -10,8 +10,10 @@ namespace Engine {
 	class RenderSystem {
 	private:
 		//RenderPasses
-		RHI::RRenderPass m_MainPass;
+		RHI::RRenderPass* m_MainPass{nullptr};
 		UIRenderer m_UIRenderer;
+		TVector<RHI::RFramebuffer*> m_SwapchianFramebuffers;
+		uint8_t m_CurrentFrameIndex{0};
 	public:
 		RenderSystem() = default;
 		RenderSystem(WindowSystemBase* window);

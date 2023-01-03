@@ -334,12 +334,13 @@ namespace RHI{
        COMMAND_BUFFER_LEVEL_MAX_ENUM = 0x7FFFFFFF
     };
 
-    enum RCommandBufferUsageFlags {
+    enum RCommandBufferUsageFlagsBit {
         COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT = 0x00000001,
         COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT = 0x00000002,
         COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT = 0x00000004,
         COMMAND_BUFFER_USAGE_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
     };
+    typedef unsigned int RCommandBufferUsageFlags;
 
     enum RPipelineStageFlagBits {
         PIPELINE_STAGE_TOP_OF_PIPE_BIT = 0x00000001,

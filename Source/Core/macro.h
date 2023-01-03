@@ -3,7 +3,7 @@
 
 
 #define ASSERT(x, s)\
-	if(!x)throw s
+	if(!(x))throw s
 
 #define LOG(...)\
 	printf(__VA_ARGS__); std::cout << std::endl

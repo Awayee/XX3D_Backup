@@ -2,25 +2,54 @@
 #include "../RHIResources.h"
 #include <vulkan/vulkan.h>
 namespace RHI {
-	class RVkWindowHandle: public RWindowHandle {
+
+	class RWindowHandleVk: public RWindowHandle {
 	public:
 		uint64_t m_WindowHandle;
 	};
 
-	class RVkCommandBuffer: public RCommandBuffer {
+	class RCommandBufferVk: public RCommandBuffer {
 	public:
-		RVkCommandBuffer() = default;
+		RCommandBufferVk() = default;
 		VkCommandBuffer m_VkCmd{VK_NULL_HANDLE};
+		VkCommandPool m_Pool{ VK_NULL_HANDLE };
 	};
 
-	class RVkRenderPass: public RRenderPass {
+	class RRenderPassVk: public RRenderPass {
 	public:
 		VkRenderPass m_VkRenderPass;
 	};
 
-	class RVkQueue:public RQueue {
+	class RImageViewVk: public RImageView {
+	public:
+		VkImageView m_VkImageView;
+	};
+
+	class RFramebufferVk: public RFramebuffer {
+	public:
+		VkFramebuffer m_VkFramebuffer;
+	};
+
+	class RQueueVk:public RQueue {
 	public:
 		VkQueue m_VkQueue;
+	};
+
+	class RSemaphoreVk: public RSemaphore {
+	public:
+		VkSemaphore m_VkSemaphore;
+	};
+
+	class RFenceVk: public RFence {
+	public:
+		VkFence m_VkFence;
+	};
+
+	class RBufferVk: public RBuffer {
+	private:
+		VkDevice m_Device;
+		VkBuffer m_Buffer;
+		VkDeviceMemory m_BufferMemory;
 	};
 
 	struct RSVkImGuiInitInfo {
@@ -31,22 +60,5 @@ namespace RHI {
 		uint32_t queueIndex;
 		VkQueue queue;
 		VkDescriptorPool descriptorPool;
-	};
-
-	class RVkSemaphore: public RSemaphore {
-	public:
-		VkSemaphore m_VkSemaphore;
-	};
-
-	class RVkFence: public RFence {
-	public:
-		VkFence m_VkFence;
-	};
-
-	class RVkBuffer: public RBuffer {
-	private:
-		VkDevice m_Device;
-		VkBuffer m_Buffer;
-		VkDeviceMemory m_BufferMemory;
 	};
 }

@@ -15,6 +15,7 @@ namespace RHI{
 		int windowHeight;
 		void* windowHandle;
 		const char* applicationName;
+		uint8_t maxFramesInFlight;
 	};
 
 	struct RSAttachment {
@@ -24,15 +25,54 @@ namespace RHI{
 		RAttachmentType type;
 	};
 
+	struct RSOffset2D {
+		int32_t x;
+		int32_t y;
+	};
+
+	struct RSExtent2D {
+		uint32_t width;
+		uint32_t height;
+	};
+
+	struct RSRect2D {
+		RSOffset2D offset;
+		RSExtent2D extent;
+	};
+
+	struct RSClearDepthStencilValue {
+		float depth;
+		uint32_t stencil;
+	};
+
+	union RSClearColorValue {
+		float float32[4];
+		int32_t int32[4];
+		uint32_t uint32[4];
+	};
+
+	union RSClearValue {
+		RSClearColorValue color;
+		RSClearDepthStencilValue depthStencil;
+	};
+
 	class RWindowHandle {
 	};
 
 	class RRenderPass {
 	};
 
+	class RImageView {
+	public:
+		virtual ~RImageView() {};
+	};
+
+	class RFramebuffer {
+		
+	};
+
 	class RBuffer {};
 	class RTexture {};
-	class RFrameBuffer {};
 	class RSampler{};
 	class RShader {};
 

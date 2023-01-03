@@ -5,18 +5,11 @@
 #include "Core/Container/Container.h"
 
 namespace RHI{
-
-	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT,
-		VkDebugUtilsMessageTypeFlagsEXT,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void*);
-
 	class RHIVulkan: public RHIInstance {
 #pragma region private members
 	private:
-		static uint8_t const s_MaxFramesInFlight{ 3 };
+		uint8_t m_MaxFramesInFlight{ 3 };
 		uint8_t m_CurrentFrame {0};
-		bool m_IsNormal{ true };
 		bool m_EnableValidationLayers{ false };
 		bool m_EnableDebugUtils{ false };
 		bool m_EnableGeometryShader{ false };
@@ -44,29 +37,30 @@ namespace RHI{
 			VkExtent2D swapchainExtent{ 0, 0 };
 		} m_PhysicalDeviceInfo;
 
-		RVkQueue m_GraphicsQueue;
-		RVkQueue m_ComputeQueue;
-		RVkQueue m_PresentQueue;
+		RQueueVk m_GraphicsQueue;
+		RQueueVk m_ComputeQueue;
+		RQueueVk m_PresentQueue;
 
 		VkDevice m_Device{ nullptr };
 		VkFormat m_DepthFormat;
 
 		VkCommandPool m_RHICommandPool;
-		VkCommandPool m_CommandPools[s_MaxFramesInFlight];
-		RVkCommandBuffer m_CommandBuffers[s_MaxFramesInFlight];
+		TVector<VkCommandPool> m_CommandPools;
+		TVector<RCommandBufferVk> m_CommandBuffers;
 		VkDescriptorPool m_DescriptorPool;
 		// sync
-		VkSemaphore m_ImageAvaliableSemaphores[s_MaxFramesInFlight];
-		VkSemaphore m_PresentationFinishSemaphores[s_MaxFramesInFlight];
-		VkSemaphore m_ImageAvaliableForTextureCopySemaphores[s_MaxFramesInFlight];
-		VkFence m_IsFrameInFlightFences[s_MaxFramesInFlight];
+		TVector<VkSemaphore> m_ImageAvaliableSemaphores;
+		TVector<VkSemaphore> m_PresentationFinishSemaphores;
+		TVector<VkSemaphore> m_ImageAvaliableForTextureCopySemaphores;
+		TVector<VkFence> m_IsFrameInFlightFences;
 		VmaAllocator m_VMA{ nullptr };
 
 
 		VkSwapchainKHR m_Swapchain{ nullptr };
+		RSExtent2D m_SwapchainExtent;
+		uint32_t m_CurrentSwapchainImageIndex;
 		TVector<VkImage> m_SwapchainImages;
-		TVector<VkImageView> m_SwapchainImageViews;
-		TVector<VkFramebuffer> m_SwapchainFramebuffers;
+		TVector<RImageViewVk> m_SwapchainImageViews;
 		VkRect2D m_Scissor;
 
 		// function pointers
@@ -90,11 +84,6 @@ namespace RHI{
 		PFN_vkCmdClearAttachments   _vkCmdClearAttachments;
 
 	private:
-		friend VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT,
-			VkDebugUtilsMessageTypeFlagsEXT,
-			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-			void*);
-
 		bool CheckValidationLayerSupport();
 		TVector<const char*> GetRequiredExtensions();
 		void CreateInstance();
@@ -118,15 +107,29 @@ namespace RHI{
 		void Release() override;
 		RSVkImGuiInitInfo GetImGuiInitInfo();
 		RCommandBuffer* GetCurrentCommandBuffer() override;
-
-		void CreateRenderPass(RRenderPass* pass, uint32_t attachmentCount, RSAttachment* attachments) override;
+		uint8_t GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
+		RFormat GetSwapchainImageFormat() override { return (RFormat)m_PhysicalDeviceInfo.swapchainFormat.format; }
+		const RSExtent2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
+		RRenderPass* CreateRenderPass(uint32_t attachmentCount, RSAttachment* attachments) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
+		RQueue* GetGraphicsQueue() override;
+		void QueueSubmit(RQueue* queue,
+			uint32_t cmdCount, RCommandBuffer* cmds,
+			uint32_t waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
+			uint32_t signalSemaphoreCount, RSemaphore* signalSemaphores,
+			RFence* fence) override;
+		void QueueWaitIdle(RQueue* queue)override;
+		RImageView* GetSwapchainImageViews(uint8_t i) override;
+		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, const TVector<RImageView*>& imageViews, uint32_t width, uint32_t height, uint32_t layers) override;
+		void DestoryFramebuffer(RFramebuffer* framebuffer) override;
 		RCommandBuffer* CreateCommandBuffer(RCommandBufferLevel level)override;
 		void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) override;
 		void EndCommandBuffer(RCommandBuffer* cmd) override;
-		void FreeCommandBuffer(RCommandBuffer*& cmd) override;
-		RQueue* GetGraphicsQueue() override;
-		void QueueSubmit(RQueue* queue, TVector<RCommandBuffer*> cmds, TVector<TPair<RSemaphore*, RPipelineStageFlags>> waitSemaphores, TVector<RSemaphore*> signalSemaphores, RFence* fence) override;
-		void QueueWaitIdle(RQueue* queue)override;
+		void FreeCommandBuffer(RCommandBuffer* cmd) override;
+		void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClearValue* clearValues)override;
+		void CmdEndRenderPass(RCommandBuffer* cmd) override;
+		void ImmediateSubmit(CmdFunc func) override;
+		void PrepareRendering() override;
+		void QueueSubmitRendering(RCommandBuffer* cmd) override;
 	};
 }

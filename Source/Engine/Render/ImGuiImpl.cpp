@@ -10,17 +10,15 @@
 
 namespace Engine {
 
-#define RHI_VULKAN_BEGIN \
+#define BRANCH_VULKAN \
 	if(Resource::RHI_Vulkan == Resource::GetConfigManager()->GetRHIType()) {
 
 #define BRANCH_END return ;}
 
 	void ImGuiInitialize(RHI::RRenderPass* pass, uint32_t subpass)
 	{
-		RHI_VULKAN_BEGIN
-		GET_RHI(rhi);
-		RHI::RVkRenderPass* vkPass = reinterpret_cast<RHI::RVkRenderPass*>(pass);
-		RHI::RHIVulkan* vkRHI = reinterpret_cast<RHI::RHIVulkan*>(rhi);
+		BRANCH_VULKAN
+		RHI::RHIVulkan* vkRHI = reinterpret_cast<RHI::RHIVulkan*>(RHI::GetInstance());
 		RHI::RSVkImGuiInitInfo initInfo = vkRHI->GetImGuiInitInfo();
 		ImGui_ImplGlfw_InitForVulkan(reinterpret_cast<GLFWwindow*>(initInfo.windowHandle), true);
 		ImGui_ImplVulkan_InitInfo imGuiInit = {};
@@ -35,22 +33,25 @@ namespace Engine {
 		// see ImGui_ImplVulkanH_GetMinImageCountFromPresentMode
 		imGuiInit.MinImageCount = 3;
 		imGuiInit.ImageCount = 3;
-		ASSERT(ImGui_ImplVulkan_Init(&imGuiInit, reinterpret_cast<RHI::RVkRenderPass*>(pass)->m_VkRenderPass), "Failed to init imgui!");
+		ASSERT(ImGui_ImplVulkan_Init(&imGuiInit, reinterpret_cast<RHI::RRenderPassVk*>(pass)->m_VkRenderPass), "Failed to init imgui!");
 		BRANCH_END
 	}
 	void ImGuiRelease()
 	{
-		RHI_VULKAN_BEGIN ImGui_ImplVulkan_Shutdown(); BRANCH_END
+		BRANCH_VULKAN
+		ImGui_ImplVulkan_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		BRANCH_END
 	}
 	void ImGuiRenderDrawData(ImDrawData* data, RHI::RCommandBuffer* cmd) {
-		RHI_VULKAN_BEGIN ImGui_ImplVulkan_RenderDrawData(data, reinterpret_cast<RHI::RVkCommandBuffer*>(cmd)->m_VkCmd); BRANCH_END
+		BRANCH_VULKAN ImGui_ImplVulkan_RenderDrawData(data, reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->m_VkCmd); BRANCH_END
 	}
 	void ImGuiCreateFontsTexture(RHI::RCommandBuffer* cmd)
 	{
-		RHI_VULKAN_BEGIN ImGui_ImplVulkan_CreateFontsTexture(reinterpret_cast<RHI::RVkCommandBuffer*>(cmd)->m_VkCmd); BRANCH_END
+		BRANCH_VULKAN ASSERT(ImGui_ImplVulkan_CreateFontsTexture(reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->m_VkCmd), "Failed to upload imgui fonts!"); BRANCH_END
 	}
 	void ImGuiNewFrame() {
-		RHI_VULKAN_BEGIN
+		BRANCH_VULKAN
 		ImGui_ImplGlfw_NewFrame();
 		ImGui_ImplVulkan_NewFrame();
 		ImGui::NewFrame();
@@ -58,6 +59,6 @@ namespace Engine {
 	}
 	void ImGuiDestroyFontUploadObjects()
 	{
-		RHI_VULKAN_BEGIN ImGui_ImplVulkan_DestroyFontUploadObjects(); BRANCH_END
+		BRANCH_VULKAN ImGui_ImplVulkan_DestroyFontUploadObjects(); BRANCH_END
 	}
 }
