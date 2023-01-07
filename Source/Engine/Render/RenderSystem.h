@@ -3,7 +3,6 @@
 #include "RHI/RHIInstance.h"
 #include "UIRenderer.h"
 
-
 namespace Engine {
 	class WindowSystemBase;
 

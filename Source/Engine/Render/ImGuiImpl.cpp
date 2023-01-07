@@ -33,7 +33,7 @@ namespace Engine {
 		// see ImGui_ImplVulkanH_GetMinImageCountFromPresentMode
 		imGuiInit.MinImageCount = 3;
 		imGuiInit.ImageCount = 3;
-		ASSERT(ImGui_ImplVulkan_Init(&imGuiInit, reinterpret_cast<RHI::RRenderPassVk*>(pass)->m_VkRenderPass), "Failed to init imgui!");
+		ASSERT(ImGui_ImplVulkan_Init(&imGuiInit, reinterpret_cast<RHI::RRenderPassVk*>(pass)->handle), "Failed to init imgui!");
 		BRANCH_END
 	}
 	void ImGuiRelease()
@@ -44,11 +44,11 @@ namespace Engine {
 		BRANCH_END
 	}
 	void ImGuiRenderDrawData(ImDrawData* data, RHI::RCommandBuffer* cmd) {
-		BRANCH_VULKAN ImGui_ImplVulkan_RenderDrawData(data, reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->m_VkCmd); BRANCH_END
+		BRANCH_VULKAN ImGui_ImplVulkan_RenderDrawData(data, reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->handle); BRANCH_END
 	}
 	void ImGuiCreateFontsTexture(RHI::RCommandBuffer* cmd)
 	{
-		BRANCH_VULKAN ASSERT(ImGui_ImplVulkan_CreateFontsTexture(reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->m_VkCmd), "Failed to upload imgui fonts!"); BRANCH_END
+		BRANCH_VULKAN ASSERT(ImGui_ImplVulkan_CreateFontsTexture(reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->handle), "Failed to upload imgui fonts!"); BRANCH_END
 	}
 	void ImGuiNewFrame() {
 		BRANCH_VULKAN

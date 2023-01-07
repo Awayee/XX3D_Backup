@@ -3,11 +3,6 @@
 #include <cstdint>
 
 namespace RHI{
-	class RCommandBuffer {
-	public:
-		virtual ~RCommandBuffer() {}
-	};
-
 	struct RSInitInfo {
 		bool enableDebug;
 		bool enableGeometryShader;
@@ -35,6 +30,16 @@ namespace RHI{
 		uint32_t height;
 	};
 
+	struct RSExtent3D {
+		uint32_t width;
+		uint32_t height;
+		uint32_t depth;
+	};
+
+	struct RSOffset3D {
+		int32_t x, y, z;
+	};
+
 	struct RSRect2D {
 		RSOffset2D offset;
 		RSExtent2D extent;
@@ -43,6 +48,37 @@ namespace RHI{
 	struct RSClearDepthStencilValue {
 		float depth;
 		uint32_t stencil;
+	};
+
+	struct RSImageBlit {
+		RImageAspectFlags srcAspect;
+		uint32_t		  srcMipLevel;
+		uint32_t		  srcBaseLayer;
+		uint32_t		  srcLayerCount;
+		RSOffset3D		  srcOffsets[2];
+		RImageAspectFlags dstAspect;
+		uint32_t		  dstMipLevel;
+		uint32_t		  dstBaseLayer;
+		uint32_t		  dstLayerCount;
+		RSOffset3D		  dstOffsets[2];
+	};
+
+	struct RSSamplerInfo {
+		RFilter magFilter;
+		RFilter minFilter;
+		RSamplerMipmapMode mipmapMode;
+		RSamplerAddressMode addressModeU;
+		RSamplerAddressMode addressModeV;
+		RSamplerAddressMode addressModeW;
+		float minLodBias{ 0.0f };
+		bool anisotropyEnable{ false };
+		float maxAnisotropy;
+		bool compareEnable{ false };
+		RCompareOp compreOp;
+		float minLod{ 0.0f };
+		float maxLod{ 1000.0f }; // none
+		RBorderColor borderColor{BORDER_COLOR_FLOAT_OPAQUE_BLACK};
+		bool unnormalizedCoordinates{ false };
 	};
 
 	union RSClearColorValue {
@@ -62,18 +98,42 @@ namespace RHI{
 	class RRenderPass {
 	};
 
+	class RImage {
+	protected:
+		RImageType m_Type;
+		RFormat m_Format;
+		RSExtent3D m_Extent;
+	public:
+		virtual ~RImage() {}
+		RImageType GetType() { return m_Type; }
+		RFormat GetFormat() { return m_Format; }
+		const RSExtent3D GetExtent() { return m_Extent; }
+	};
+
 	class RImageView {
 	public:
 		virtual ~RImageView() {};
 	};
 
+	class RCommandBuffer {
+	public:
+		virtual ~RCommandBuffer() {}
+	};
+
+	class RMemory {
+	public:
+		virtual ~RMemory() {};
+	};
+
 	class RFramebuffer {
+		
+	};
+	class RSampler {
 		
 	};
 
 	class RBuffer {};
 	class RTexture {};
-	class RSampler{};
 	class RShader {};
 
 	class RDescriptorSet {};
@@ -83,4 +143,5 @@ namespace RHI{
 	class RSemaphore {};
 	class RQueue {};
 	class RPipeline {};
-}
+
+} // namespace RHI

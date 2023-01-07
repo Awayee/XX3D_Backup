@@ -7,7 +7,12 @@ namespace Engine {
 	XXEngine::XXEngine()
 	{
 		m_Window = new WindowSystemGLFW();
-		m_Window->Initialize(1024, 768, "xxEngine");
+		WindowInitInfo initInfo;
+		initInfo.width = 1024;
+		initInfo.height = 768;
+		initInfo.title = "xxEngine";
+		initInfo.resizeable = false;
+		m_Window->Initialize(initInfo);
 
 
 		m_Renderer = new RenderSystem(m_Window);

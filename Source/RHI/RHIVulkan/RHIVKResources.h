@@ -1,56 +1,17 @@
 #pragma once
 #include "../RHIResources.h"
+
+#ifdef USE_VMA
+#include <vk_mem_alloc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif
 namespace RHI {
-
-	class RWindowHandleVk: public RWindowHandle {
-	public:
-		uint64_t m_WindowHandle;
-	};
-
-	class RCommandBufferVk: public RCommandBuffer {
-	public:
-		RCommandBufferVk() = default;
-		VkCommandBuffer m_VkCmd{VK_NULL_HANDLE};
-		VkCommandPool m_Pool{ VK_NULL_HANDLE };
-	};
-
-	class RRenderPassVk: public RRenderPass {
-	public:
-		VkRenderPass m_VkRenderPass;
-	};
-
-	class RImageViewVk: public RImageView {
-	public:
-		VkImageView m_VkImageView;
-	};
-
-	class RFramebufferVk: public RFramebuffer {
-	public:
-		VkFramebuffer m_VkFramebuffer;
-	};
-
-	class RQueueVk:public RQueue {
-	public:
-		VkQueue m_VkQueue;
-	};
-
-	class RSemaphoreVk: public RSemaphore {
-	public:
-		VkSemaphore m_VkSemaphore;
-	};
-
-	class RFenceVk: public RFence {
-	public:
-		VkFence m_VkFence;
-	};
-
-	class RBufferVk: public RBuffer {
-	private:
-		VkDevice m_Device;
-		VkBuffer m_Buffer;
-		VkDeviceMemory m_BufferMemory;
-	};
+#define RESOURCE_VK_HANDLE(cls, vkHandle)\
+	class cls##Vk{\
+	public:\
+		vkHandle handle;\
+	}
 
 	struct RSVkImGuiInitInfo {
 		void* windowHandle;
@@ -60,5 +21,76 @@ namespace RHI {
 		uint32_t queueIndex;
 		VkQueue queue;
 		VkDescriptorPool descriptorPool;
+	};
+
+	class RWindowHandleVk: public RWindowHandle {
+	public:
+		uint64_t handle;
+	};
+
+	class RCommandBufferVk: public RCommandBuffer {
+	public:
+		RCommandBufferVk() = default;
+		VkCommandBuffer handle{VK_NULL_HANDLE};
+		VkCommandPool m_Pool{ VK_NULL_HANDLE };
+	};
+
+
+	class RRenderPassVk: public RRenderPass {
+	public:
+		VkRenderPass handle;
+	};
+
+	class RMemoryVk: public RMemory {
+	public:
+		VkDeviceMemory handle;
+		VkDeviceSize offset;
+		VkDeviceSize size;
+	};
+
+	class RMemoryVma: public RMemory {
+	public:
+		VmaAllocation handle;
+	};
+
+	class RImageVk: public RImage {
+	public:
+		friend class RHIVulkan;
+		VkImage handle;
+	};
+
+	class RImageViewVk: public RImageView {
+	public:
+		VkImageView handle;
+	};
+
+	class RFramebufferVk: public RFramebuffer {
+	public:
+		VkFramebuffer handle;
+	};
+
+	class RQueueVk: public RQueue {
+	public:
+		VkQueue handle;
+	};
+
+	class RSemaphoreVk: public RSemaphore {
+	public:
+		VkSemaphore handle;
+	};
+
+	class RFenceVk: public RFence {
+	public:
+		VkFence handle;
+	};
+
+	class RBufferVk: public RBuffer {
+	public:
+		VkBuffer handle;
+	};
+
+	class RSamplerVk: public RSampler {
+	public:
+		VkSampler handle;
 	};
 }

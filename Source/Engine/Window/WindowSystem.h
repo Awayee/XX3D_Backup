@@ -4,6 +4,14 @@
 
 namespace Engine {
 
+    struct WindowInitInfo {
+        int width;
+        int height;
+        const char* title;
+        bool resizeable;
+
+    };
+
     struct WindowIcon {
         int width;
         int height;
@@ -13,7 +21,7 @@ namespace Engine {
 	class WindowSystemBase {
 	public:
 		virtual ~WindowSystemBase() {};
-        virtual void Initialize(int w, int h, const char* title) = 0;
+        virtual void Initialize(const WindowInitInfo& initInfo) = 0;
 		virtual void PollEvents() = 0;
 		virtual bool ShouldClose() = 0;
 		virtual void SetTitle(const char* title) = 0;

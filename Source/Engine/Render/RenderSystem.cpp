@@ -28,11 +28,11 @@ namespace Engine {
 		m_MainPass = rhi->CreateRenderPass(1, &attachment);
 
 		// create swapchain framebuffers
-		auto maxFrame = rhi->GetMaxFramesInFlight();
+		auto imageCount = rhi->GetSwapchainMaxImageCount();
 		auto swapchainExtent = rhi->GetSwapchainExtent();
-		m_SwapchianFramebuffers.resize(maxFrame);
-		for(uint8_t i=0; i< maxFrame; ++i) {
-			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, { rhi->GetSwapchainImageViews(i) }, swapchainExtent.width, swapchainExtent.height, 1);
+		m_SwapchianFramebuffers.resize(imageCount);
+		for(uint8_t i=0; i< imageCount; ++i) {
+			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, { rhi->GetSwapchainImageView(i) }, swapchainExtent.width, swapchainExtent.height, 1);
 		}
 
 	}
@@ -42,8 +42,8 @@ namespace Engine {
 		// wait cmds submit
 		rhi->QueueWaitIdle(rhi->GetGraphicsQueue());
 		m_UIRenderer.Release();
-		for(uint8_t i=0; i<rhi->GetMaxFramesInFlight(); ++i) {
-			rhi->DestoryFramebuffer(m_SwapchianFramebuffers[i]);
+		for(auto& framebuffer: m_SwapchianFramebuffers) {
+			rhi->DestoryFramebuffer(framebuffer);
 		}
 		m_SwapchianFramebuffers.clear();
 
@@ -55,17 +55,17 @@ namespace Engine {
 	void RenderSystem::Tick(){
 		// begin render pass;
 		GET_RHI(rhi);
-		rhi->PrepareRendering();
+		uint32_t swapchainImageIndex = rhi->PrepareRendering();
 		RHI::RCommandBuffer* cmd = rhi->GetCurrentCommandBuffer();
 		rhi->BeginCommandBuffer(cmd, 0);
-		TVector<RHI::RSClearValue> clearValues(1);
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		RHI::RSClearValue clearValue;
+		clearValue.color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		// todo depth
-		//TVector<RHI::RSClearValue> clearValues(2);
+		//RHI::RSClearValue clearValues[2];
 		//clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		//clearValues[1].depthStencil = { 1.0f, 0 };
-		rhi->CmdBeginRenderPass(cmd, m_MainPass, m_SwapchianFramebuffers[m_CurrentFrameIndex], 
-			{ {0, 0}, rhi->GetSwapchainExtent() }, clearValues.size(), clearValues.data());
+		rhi->CmdBeginRenderPass(cmd, m_MainPass, m_SwapchianFramebuffers[swapchainImageIndex],
+			{ {0, 0}, rhi->GetSwapchainExtent() }, 1, &clearValue);
 
 		m_UIRenderer.Tick();
 

@@ -11,7 +11,7 @@ namespace Engine {
 		Engine::ImGuiInitialize(m_RenderPass, 0);
 		GET_RHI(rhi);
 		// upload font
-		rhi->ImmediateSubmit([](RHI::RCommandBuffer* cmd) {
+		rhi->ImmediateCommit([](RHI::RCommandBuffer* cmd) {
 			ImGuiCreateFontsTexture(cmd);
 		});
 		ImGuiDestroyFontUploadObjects();

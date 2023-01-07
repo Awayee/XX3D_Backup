@@ -25,7 +25,7 @@ namespace Engine {
 	public:
 		WindowSystemGLFW() = default;
 		~WindowSystemGLFW();
-		void Initialize(int w, int h, const char* title) override;
+		void Initialize(const WindowInitInfo& initInfo) override;
 		void PollEvents() override;
 		bool ShouldClose() override;
 		void SetTitle(const char* title) override;

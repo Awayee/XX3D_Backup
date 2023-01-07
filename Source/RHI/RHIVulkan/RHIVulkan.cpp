@@ -1,11 +1,13 @@
 #include "RHIVulkan.h"
-
+#include "VulkanUtil.hpp"
 #include <GLFW/glfw3.h>
-
 #include "Core/macro.h"
-
+#ifdef USE_VMA
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
+#else
+#include <vulkan/vulkan.h>
+#endif
 
 namespace RHI {
 
@@ -13,6 +15,8 @@ namespace RHI {
 	if(VK_SUCCESS != x) throw s
 
 	const uint32_t VK_API_VER = VK_API_VERSION_1_2;
+
+#define VK_FREE(ptr) delete ptr; ptr = nullptr
 
 #pragma region private members
 	// debug callback
@@ -293,7 +297,8 @@ namespace RHI {
 
 		m_PhysicalDevice = devicesInfo[0].first;
 		m_PhysicalDeviceInfo = devicesInfo[0].second;
-		LOG("Picked GPU: %u", (uint64_t)(m_PhysicalDevice));
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_PhysicalDeviceProperties);
+		LOG("Picked GPU: %s %u", m_PhysicalDeviceProperties.deviceName, m_PhysicalDeviceProperties.deviceID);
 	}
 
 	VkFormat RHIVulkan::FindDepthFormat()
@@ -318,7 +323,7 @@ namespace RHI {
 			}
 		}
 
-		LOG_ERROR("findSupportedFormat failed");
+		ERROR("findSupportedFormat failed");
 		return VK_FORMAT_UNDEFINED;
 	}
 
@@ -355,9 +360,9 @@ namespace RHI {
 		VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCreateInfo, nullptr, &m_Device), "vkCreateDevice");
 
 		// initialize queues of this device
-		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex), 0, &m_GraphicsQueue.m_VkQueue);
-		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.computeIndex), 0, &m_ComputeQueue.m_VkQueue);
-		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.presentIndex), 0, &m_PresentQueue.m_VkQueue);
+		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex), 0, &m_GraphicsQueue.handle);
+		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.computeIndex), 0, &m_ComputeQueue.handle);
+		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.presentIndex), 0, &m_PresentQueue.handle);
 
 		// more efficient pointer
 		_vkResetCommandPool = (PFN_vkResetCommandPool)vkGetDeviceProcAddr(m_Device, "vkResetCommandPool");
@@ -416,7 +421,7 @@ namespace RHI {
 		for (uint32_t i = 0; i < m_MaxFramesInFlight; ++i)
 		{
 			commandBufferAllocateInfo.commandPool = m_CommandPools[i];
-			VK_CHECK(vkAllocateCommandBuffers(m_Device, &commandBufferAllocateInfo, &m_CommandBuffers[i].m_VkCmd), "vkAllocateCommandBuffers");
+			VK_CHECK(vkAllocateCommandBuffers(m_Device, &commandBufferAllocateInfo, &m_CommandBuffers[i].handle), "vkAllocateCommandBuffers");
 			m_CommandBuffers[i].m_Pool = commandBufferAllocateInfo.commandPool;
 		}
 	}
@@ -486,7 +491,7 @@ namespace RHI {
 		allocatorCreateInfo.device = m_Device;
 		allocatorCreateInfo.instance = m_Instance;
 		allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
-		vmaCreateAllocator(&allocatorCreateInfo, &m_VMA);
+		vmaCreateAllocator(&allocatorCreateInfo, &m_Vma);
 	}
 	void RHIVulkan::CreateSwapchain()
 	{
@@ -539,13 +544,13 @@ namespace RHI {
 			imageViewCreateInfo.subresourceRange.levelCount = 1;
 			imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 			imageViewCreateInfo.subresourceRange.layerCount = 1;
-			VK_CHECK(vkCreateImageView(m_Device, &imageViewCreateInfo, nullptr, &m_SwapchainImageViews[i].m_VkImageView), "CreateImageView");
+			VK_CHECK(vkCreateImageView(m_Device, &imageViewCreateInfo, nullptr, &m_SwapchainImageViews[i].handle), "CreateImageView");
 		}
 	}
 	void RHIVulkan::ClearSwapchain()
 	{
 		for(auto imageView: m_SwapchainImageViews) {
-			vkDestroyImageView(m_Device, imageView.m_VkImageView, nullptr);
+			vkDestroyImageView(m_Device, imageView.handle, nullptr);
 		}
 		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
 		m_Swapchain = nullptr;
@@ -578,13 +583,15 @@ namespace RHI {
 		CreateMemoryAllocator();
 
 		m_Initialized = true;
+
+		LOG("RHI: Vulkan is initialized.");
 	}
 
 	void RHIVulkan::Release()
 	{
 		//vma
-		vmaDestroyAllocator(m_VMA);
-		m_VMA = nullptr;
+		vmaDestroyAllocator(m_Vma);
+		m_Vma = nullptr;
 		//sync
 		for (auto smp : m_ImageAvaliableSemaphores) {
 			vkDestroySemaphore(m_Device, smp, nullptr);
@@ -609,7 +616,7 @@ namespace RHI {
 		vkDestroyCommandPool(m_Device, m_RHICommandPool, nullptr);
 		vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 		for (auto imageView : m_SwapchainImageViews) {
-			vkDestroyImageView(m_Device, imageView.m_VkImageView, nullptr);
+			vkDestroyImageView(m_Device, imageView.handle, nullptr);
 		}
 		m_SwapchainImageViews.clear();
 		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
@@ -627,7 +634,7 @@ namespace RHI {
 		info.device = m_Device;
 		info.physicalDevice = m_PhysicalDevice;
 		info.queueIndex = static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex);
-		info.queue = m_GraphicsQueue.m_VkQueue;
+		info.queue = m_GraphicsQueue.handle;
 		info.descriptorPool = m_DescriptorPool;
 		return info;
 	}
@@ -636,7 +643,7 @@ namespace RHI {
 	{
 		return static_cast<RCommandBuffer*>(&m_CommandBuffers[m_CurrentFrame]);
 	}
-	RRenderPass* RHIVulkan::CreateRenderPass(uint32_t attachmentCount, RSAttachment* attachments)
+	RRenderPass* RHIVulkan::CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments)
 	{
 		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 		info.flags = 0;
@@ -684,17 +691,18 @@ namespace RHI {
 		info.dependencyCount = 1;
 		info.pDependencies = &dependency;
 
-		RRenderPassVk* vkPass = new RRenderPassVk();
-		vkCreateRenderPass(m_Device, &info, nullptr, &vkPass->m_VkRenderPass);
-		return reinterpret_cast<RRenderPass*>(vkPass);
+		VkRenderPass handle;
+		if(VK_SUCCESS != vkCreateRenderPass(m_Device, &info, nullptr, &handle)) {
+			return nullptr;
+		}
+		RRenderPassVk* pass = new RRenderPassVk;
+		pass->handle = handle;
+		return reinterpret_cast<RRenderPass*>(pass);
 	}
 	void RHIVulkan::DestroyRenderPass(RRenderPass* pass)
 	{
 		RRenderPassVk* vkPass = static_cast<RRenderPassVk*>(pass);
-		if(nullptr != vkPass->m_VkRenderPass) {
-			vkDestroyRenderPass(m_Device, vkPass->m_VkRenderPass, nullptr);
-			vkPass->m_VkRenderPass = nullptr;
-		}
+		vkDestroyRenderPass(m_Device, vkPass->handle, nullptr);
 		delete vkPass;
 	}
 	RQueue* RHIVulkan::GetGraphicsQueue()
@@ -710,72 +718,93 @@ namespace RHI {
 		submitInfo.pNext = nullptr;
 		uint32_t i;
 
+		// wait semaphores
 		TVector<VkSemaphore> vkWaitSmps(waitSemaphoreCount);
 		for (i = 0; i < waitSemaphoreCount; ++i) {
-			vkWaitSmps[i] = reinterpret_cast<RSemaphoreVk*>(waitSemaphores + i)->m_VkSemaphore;
+			vkWaitSmps[i] = reinterpret_cast<RSemaphoreVk*>(waitSemaphores + i)->handle;
 		}
 		submitInfo.waitSemaphoreCount = static_cast<uint32_t>(vkWaitSmps.size());
 		submitInfo.pWaitSemaphores = vkWaitSmps.data();
 		submitInfo.pWaitDstStageMask = (VkPipelineStageFlags*)waitStageFlags;
+
+		// commands
 		TVector<VkCommandBuffer> vkCmds(cmdCount);
 		for (i = 0; i < cmdCount; ++i) {
-			vkCmds[i] = reinterpret_cast<RCommandBufferVk*>(cmds + i)->m_VkCmd;
+			vkCmds[i] = reinterpret_cast<RCommandBufferVk*>(cmds + i)->handle;
 		}
 		submitInfo.commandBufferCount = cmdCount;
 		submitInfo.pCommandBuffers = vkCmds.data();
 
+		// signal semaphores
 		TVector<VkSemaphore> vkSignalSmps(signalSemaphoreCount);
 		for(i=0; i< signalSemaphoreCount; ++i) {
-			vkSignalSmps[i] = reinterpret_cast<RSemaphoreVk*>(signalSemaphores + i)->m_VkSemaphore;
+			vkSignalSmps[i] = reinterpret_cast<RSemaphoreVk*>(signalSemaphores + i)->handle;
 		}
 		submitInfo.signalSemaphoreCount = static_cast<uint32_t>(vkSignalSmps.size());
 		submitInfo.pSignalSemaphores = vkSignalSmps.data();
 
-		VkFence vkFence = (nullptr == fence) ? VK_NULL_HANDLE : reinterpret_cast<RFenceVk*>(fence)->m_VkFence;
+		// fence
+		VkFence vkFence = (nullptr == fence) ? VK_NULL_HANDLE : reinterpret_cast<RFenceVk*>(fence)->handle;
 
-		VK_CHECK(vkQueueSubmit(reinterpret_cast<RQueueVk*>(queue)->m_VkQueue, 1, &submitInfo, vkFence), "vkQueueSubmit");
+		VK_CHECK(vkQueueSubmit(reinterpret_cast<RQueueVk*>(queue)->handle, 1, &submitInfo, vkFence), "vkQueueSubmit");
 	}
 	void RHIVulkan::QueueWaitIdle(RQueue* queue)
 	{
-		VK_CHECK(vkQueueWaitIdle(reinterpret_cast<RQueueVk*>(queue)->m_VkQueue), "vkQueueWaitIdle");
+		VK_CHECK(vkQueueWaitIdle(reinterpret_cast<RQueueVk*>(queue)->handle), "vkQueueWaitIdle");
 	}
 
-	RImageView* RHIVulkan::GetSwapchainImageViews(uint8_t i)
+	RImageView* RHIVulkan::GetSwapchainImageView(uint8_t i)
 	{
 		ASSERT(i < m_MaxFramesInFlight, "i < m_MaxFramesInFlight");
 		return reinterpret_cast<RImageView*>(&m_SwapchainImageViews[i]);
 	}
+	uint32_t RHIVulkan::GetSwapchainMaxImageCount()
+	{
+		return (uint32_t)m_SwapchainImages.size();
+	}
 	RFramebuffer* RHIVulkan::CreateFrameBuffer(RRenderPass* pass, const TVector<RImageView*>& imageViews, uint32_t width, uint32_t height, uint32_t layers)
 	{
 		VkFramebufferCreateInfo framebufferInfo{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-		framebufferInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->m_VkRenderPass;
+		framebufferInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->handle;
 		TVector<VkImageView> vkImageViews(imageViews.size());
 		for(uint32_t i=0; i< vkImageViews.size(); ++i) {
-			vkImageViews[i] = reinterpret_cast<RImageViewVk*>(imageViews[i])->m_VkImageView;
+			vkImageViews[i] = reinterpret_cast<RImageViewVk*>(imageViews[i])->handle;
 		}
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
 		framebufferInfo.pAttachments = vkImageViews.data();
 		framebufferInfo.width = width;
 		framebufferInfo.height = height;
 		framebufferInfo.layers = layers;
-		RFramebufferVk* framebuffer = new RFramebufferVk();
-		VK_CHECK(vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &framebuffer->m_VkFramebuffer), "Failed to create framebuffer!");
-		return reinterpret_cast<RFramebuffer*>(framebuffer);
+
+		VkFramebuffer handle;
+		if(VK_SUCCESS != vkCreateFramebuffer(m_Device, &framebufferInfo, nullptr, &handle)) {
+			return nullptr;
+		}
+
+		RFramebufferVk* framebuffer = new RFramebufferVk;
+		framebuffer->handle = handle;
+		return framebuffer;
 	}
+
 	void RHIVulkan::DestoryFramebuffer(RFramebuffer* framebuffer)
 	{
-		vkDestroyFramebuffer(m_Device, reinterpret_cast<RFramebufferVk*>(framebuffer)->m_VkFramebuffer, nullptr);
-		delete reinterpret_cast<RFramebufferVk*>(framebuffer);
+		RFramebufferVk* framebufferVk = (RFramebufferVk*)framebuffer;
+		vkDestroyFramebuffer(m_Device, framebufferVk->handle, nullptr);
+		delete framebufferVk;
 	}
 	RCommandBuffer* RHIVulkan::CreateCommandBuffer(RCommandBufferLevel level)
 	{
-		RCommandBufferVk* cmd = new RCommandBufferVk();
 		VkCommandBufferAllocateInfo allocateInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		allocateInfo.pNext = nullptr;
 		allocateInfo.commandPool = m_RHICommandPool;
 		allocateInfo.level = (VkCommandBufferLevel)level;
 		allocateInfo.commandBufferCount = 1;
-		VK_CHECK(vkAllocateCommandBuffers(m_Device, &allocateInfo, &cmd->m_VkCmd), "Failed to allocate command buffers!");
+		VkCommandBuffer handle;
+		if(VK_SUCCESS != vkAllocateCommandBuffers(m_Device, &allocateInfo, &handle)){
+			return nullptr;
+		}
+		RCommandBufferVk* cmd = new RCommandBufferVk;
+		cmd->handle = handle;
 		cmd->m_Pool = allocateInfo.commandPool;
 		return cmd;
 	}
@@ -786,16 +815,16 @@ namespace RHI {
 		beginInfo.pNext = nullptr;
 		beginInfo.flags = flags;
 		beginInfo.pInheritanceInfo = nullptr;
-		VK_CHECK(_vkBeginCommandBuffer(vkCmd->m_VkCmd, &beginInfo), "Failed to begin command buffer!");
+		VK_CHECK(_vkBeginCommandBuffer(vkCmd->handle, &beginInfo), "Failed to begin command buffer!");
 	}
 	void RHIVulkan::EndCommandBuffer(RCommandBuffer* cmd)
 	{
-		VK_CHECK(_vkEndCommandBuffer(static_cast<RCommandBufferVk*>(cmd)->m_VkCmd), "Failed to end command buffer!");
+		VK_CHECK(_vkEndCommandBuffer(static_cast<RCommandBufferVk*>(cmd)->handle), "Failed to end command buffer!");
 	}
 	void RHIVulkan::FreeCommandBuffer(RCommandBuffer* cmd)
 	{
 		RCommandBufferVk* vkCmd = reinterpret_cast<RCommandBufferVk*>(cmd);
-		vkFreeCommandBuffers(m_Device, vkCmd->m_Pool, 1, &vkCmd->m_VkCmd);
+		vkFreeCommandBuffers(m_Device, vkCmd->m_Pool, 1, &vkCmd->handle);
 		delete vkCmd;
 	}
 	void RHIVulkan::CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClearValue* clearValues)
@@ -804,18 +833,71 @@ namespace RHI {
 		memcpy(&vkRenderArea, &renderArea, sizeof(VkRect2D));
 		VkRenderPassBeginInfo passInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		passInfo.pNext = nullptr;
-		passInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->m_VkRenderPass;
-		passInfo.framebuffer = reinterpret_cast<RFramebufferVk*>(framebuffer)->m_VkFramebuffer;
+		passInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->handle;
+		passInfo.framebuffer = reinterpret_cast<RFramebufferVk*>(framebuffer)->handle;
 		passInfo.renderArea = vkRenderArea;
 		passInfo.clearValueCount = clearValueCount;
 		passInfo.pClearValues = reinterpret_cast<const VkClearValue*>(clearValues);
-		_vkCmdBeginRenderPass(((RCommandBufferVk*)cmd)->m_VkCmd, &passInfo, VK_SUBPASS_CONTENTS_INLINE);
+		_vkCmdBeginRenderPass(((RCommandBufferVk*)cmd)->handle, &passInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 	void RHIVulkan::CmdEndRenderPass(RCommandBuffer* cmd)
 	{
-		_vkCmdEndRenderPass(((RCommandBufferVk*)cmd)->m_VkCmd);
+		_vkCmdEndRenderPass(((RCommandBufferVk*)cmd)->handle);
 	}
-	void RHIVulkan::ImmediateSubmit(CmdFunc func)
+	void RHIVulkan::CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32_t baseLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount, RImageAspectFlags aspect)
+	{
+		VkImageMemoryBarrier barrier{};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = (VkImageLayout)oldLayout;
+		barrier.newLayout = (VkImageLayout)oldLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = ((RImageVk*)image)->handle;
+		barrier.subresourceRange.aspectMask = aspect;
+		barrier.subresourceRange.baseMipLevel = baseLevel;
+		barrier.subresourceRange.levelCount = levelCount;
+		barrier.subresourceRange.baseArrayLayer = baseLayer;
+		barrier.subresourceRange.layerCount = layerCount;
+		VkPipelineStageFlags srcStage;
+		VkPipelineStageFlags dstStage;
+		GetPipelineBarrierStage(barrier.oldLayout, barrier.newLayout, barrier.srcAccessMask, barrier.dstAccessMask, srcStage, dstStage);
+		vkCmdPipelineBarrier(((RCommandBufferVk*)cmd)->handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+	}
+	void RHIVulkan::CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32_t mipLevel, uint32_t baseLayout, uint32_t layerCount)
+	{
+		RImageVk* imageVk = (RImageVk*)image;
+		VkBufferImageCopy region{};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = mipLevel;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = layerCount;
+		region.imageOffset = { 0, 0, 0 };
+		region.imageExtent = { imageVk->m_Extent.width, imageVk->m_Extent.height, imageVk->m_Extent.depth};
+		vkCmdCopyBufferToImage(((RCommandBufferVk*)cmd)->handle, ((RBufferVk*)buffer)->handle, imageVk->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	}
+	void RHIVulkan::CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion)
+	{
+		VkImageBlit blit{};
+		blit.srcSubresource.aspectMask = pRegion->srcAspect;
+		blit.srcSubresource.baseArrayLayer = pRegion->srcBaseLayer;
+		blit.srcSubresource.layerCount = pRegion->srcLayerCount;
+		memcpy(blit.srcOffsets, pRegion->srcOffsets, sizeof(VkOffset3D) * 2);
+		blit.dstSubresource.aspectMask = pRegion->dstAspect;
+		blit.dstSubresource.baseArrayLayer = pRegion->dstBaseLayer;
+		blit.dstSubresource.layerCount = pRegion->dstLayerCount;
+		memcpy(blit.dstOffsets, pRegion->dstOffsets, sizeof(VkOffset3D) * 2);
+		vkCmdBlitImage(((RCommandBufferVk*)cmd)->handle, ((RImageVk*)srcImage)->handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			((RImageVk*)dstImage)->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+	}
+	void RHIVulkan::CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount)
+	{
+		RImageVk* imageVk = (RImageVk*)image;
+		GenerateMipMap(((RCommandBufferVk*)cmd)->handle, imageVk->handle, levelCount, imageVk->m_Extent.width, imageVk->m_Extent.height, aspect, baseLayer, layerCount);
+	}
+	void RHIVulkan::ImmediateCommit(CommandBufferFunc func)
 	{
 		RCommandBufferVk cmd;
 
@@ -825,7 +907,7 @@ namespace RHI {
 		allocateInfo.commandPool = m_RHICommandPool;
 		allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocateInfo.commandBufferCount = 1;
-		VK_CHECK(vkAllocateCommandBuffers(m_Device, &allocateInfo, &cmd.m_VkCmd), "Failed to allocate command buffers!");
+		VK_CHECK(vkAllocateCommandBuffers(m_Device, &allocateInfo, &cmd.handle), "Failed to allocate command buffers!");
 		cmd.m_Pool = m_RHICommandPool;
 
 		// begin
@@ -833,34 +915,34 @@ namespace RHI {
 		beginInfo.pNext = nullptr;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		beginInfo.pInheritanceInfo = nullptr;
-		VK_CHECK(_vkBeginCommandBuffer(cmd.m_VkCmd, &beginInfo), "Failed to begin command buffer!");
+		VK_CHECK(_vkBeginCommandBuffer(cmd.handle, &beginInfo), "Failed to begin command buffer!");
 
 		// run
 		func(&cmd);
 
 		// end
-		_vkEndCommandBuffer(cmd.m_VkCmd);
+		_vkEndCommandBuffer(cmd.handle);
 
 		// submit
 		VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &cmd.m_VkCmd;
-		vkQueueSubmit(m_GraphicsQueue.m_VkQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(m_GraphicsQueue.m_VkQueue);
+		submitInfo.pCommandBuffers = &cmd.handle;
+		vkQueueSubmit(m_GraphicsQueue.handle, 1, &submitInfo, VK_NULL_HANDLE);
+		vkQueueWaitIdle(m_GraphicsQueue.handle);
 
 		// free
-		vkFreeCommandBuffers(m_Device, cmd.m_Pool, 1, &cmd.m_VkCmd);
+		vkFreeCommandBuffers(m_Device, cmd.m_Pool, 1, &cmd.handle);
 	}
 
-	void RHIVulkan::PrepareRendering()
+	uint32_t RHIVulkan::PrepareRendering()
 	{
 		vkWaitForFences(m_Device, 1, &m_IsFrameInFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
-
 		VkResult res = 
 			vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, m_ImageAvaliableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
 		// todo acquire next image khr result
 
 		VK_CHECK(_vkResetCommandPool(m_Device, m_CommandPools[m_CurrentFrame], 0), "Failed to reset command pool!");
+		return m_CurrentSwapchainImageIndex;
 	}
 	void RHIVulkan::QueueSubmitRendering(RCommandBuffer* cmd)
 	{
@@ -870,8 +952,8 @@ namespace RHI {
 		//VkSemaphore semaphores[2] = { m_ImageAvaliableForTextureCopySemaphores[m_CurrentFrame], m_PresentationFinishSemaphores[m_CurrentFrame] };
 		VkSemaphore semaphores[1] = { m_PresentationFinishSemaphores[m_CurrentFrame] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSubmitInfo         submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-		VkCommandBuffer vkCmd = reinterpret_cast<RCommandBufferVk*>(cmd)->m_VkCmd;
+		VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+		VkCommandBuffer vkCmd = reinterpret_cast<RCommandBufferVk*>(cmd)->handle;
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = &m_ImageAvaliableSemaphores[m_CurrentFrame];
 		submitInfo.pWaitDstStageMask = waitStages;
@@ -879,7 +961,7 @@ namespace RHI {
 		submitInfo.pCommandBuffers = &vkCmd;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = semaphores;
-		VK_CHECK(vkQueueSubmit(m_GraphicsQueue.m_VkQueue, 1, &submitInfo, m_IsFrameInFlightFences[m_CurrentFrame]), "Failed to submit graphics queue!");
+		VK_CHECK(vkQueueSubmit(m_GraphicsQueue.handle, 1, &submitInfo, m_IsFrameInFlightFences[m_CurrentFrame]), "Failed to submit graphics queue!");
 
 		// present
 		VkPresentInfoKHR presentQueue = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
@@ -889,10 +971,189 @@ namespace RHI {
 		presentQueue.pSwapchains = &m_Swapchain;
 		presentQueue.pImageIndices = &m_CurrentSwapchainImageIndex;
 
-		VkResult presentResult = vkQueuePresentKHR(m_PresentQueue.m_VkQueue, &presentQueue);
+		VkResult presentResult = vkQueuePresentKHR(m_PresentQueue.handle, &presentQueue);
 		// todo present result
 
 		m_CurrentFrame = (m_CurrentFrame + 1) % m_MaxFramesInFlight;
 
 	}
+	void RHIVulkan::DestroyMemory(RMemory* memory)
+	{
+		vmaFreeMemory(m_Vma, reinterpret_cast<RMemoryVma*>(memory)->handle);
+		delete memory;
+	}
+
+	RBuffer* RHIVulkan::CreatBuffer(size_t size, RBufferUsage usage)
+	{
+		VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		bufferCreateInfo.size = size;
+		bufferCreateInfo.usage = usage;
+		bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // not sharing among queue families
+
+		VkBuffer handle;
+		if (VK_SUCCESS != vkCreateBuffer(m_Device, &bufferCreateInfo, nullptr, &handle)) {
+			return nullptr;
+		}
+		RBufferVk* buffer = new RBufferVk;
+		buffer->handle = handle;
+		return buffer;
+	}
+
+	void RHIVulkan::CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags, RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)
+	{
+		VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		bufferCreateInfo.size = size;
+		bufferCreateInfo.usage = usage;
+		bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // not sharing among queue families
+
+		VmaAllocationCreateInfo allocInfo;
+		allocInfo.flags = 0;
+		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		allocInfo.requiredFlags = (VkMemoryPropertyFlags)memoryFlags;
+		allocInfo.preferredFlags = (VkMemoryPropertyFlags)memoryFlags;
+		allocInfo.memoryTypeBits = 0;
+		allocInfo.pool = nullptr;
+		allocInfo.pUserData = pData;
+		allocInfo.priority = 1.0f;
+
+		VkBuffer bufferHandle;
+		VmaAllocation allocHandle;
+		if(VK_SUCCESS != vmaCreateBuffer(m_Vma, &bufferCreateInfo, &allocInfo, &bufferHandle, &allocHandle, nullptr)) {
+			return;
+		}
+
+		RBufferVk* bufferVk = new RBufferVk;
+		bufferVk->handle = bufferHandle;
+		RMemoryVma* memoryVk = new RMemoryVma;
+		memoryVk->handle = allocHandle;
+
+		pBuffer = bufferVk;
+		pMemory = memoryVk;
+	}
+
+	void RHIVulkan::DestroyBuffer(RBuffer* buffer)
+	{
+		RBufferVk* bufferVk = (RBufferVk*)buffer;
+		vkDestroyBuffer(m_Device, bufferVk->handle, nullptr);
+		delete bufferVk;
+	}
+
+	RImageVk* RHIVulkan::CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32_t mipLevels, uint32_t arrayLayers, RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage)
+	{
+		VkImageCreateInfo imageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+		imageInfo.pNext = nullptr;
+		imageInfo.flags = 0;
+		imageInfo.imageType = (VkImageType)type;
+		imageInfo.format = (VkFormat)format;
+		imageInfo.extent.width = extent.width; imageInfo.extent.height = extent.height; imageInfo.extent.depth = extent.depth;
+		imageInfo.mipLevels = mipLevels;
+		imageInfo.arrayLayers = arrayLayers;
+		imageInfo.samples = (VkSampleCountFlagBits)samples;
+		imageInfo.tiling = (VkImageTiling)tiling;
+		imageInfo.usage = (VkImageUsageFlags)usage;
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		VkImage handle;
+		if(VK_SUCCESS != vkCreateImage(m_Device, &imageInfo, nullptr, &handle)) {
+			return nullptr;
+		}
+		RImageVk* image = new RImageVk();
+		image->handle = handle;
+		image->m_Type = type;
+		image->m_Extent = extent;
+		image->m_Format = format;
+		return image;
+	}
+
+	RImage* RHIVulkan::CreateImage2D(RFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, RSampleCountFlagBits samples, RImageTiling tiling, RImageUsageFlags usage)
+	{
+		return CreateImage(IMAGE_TYPE_2D, format, {width, height, 0}, mipLevels, 1, samples, tiling, usage);
+	}
+
+	RMemory* RHIVulkan::CreateImageMemory(RImage* image, RMemoryPropertyFlags memoryProperty, void* pData)
+	{
+		VkImage imageVk = reinterpret_cast<RImageVk*>(image)->handle;
+		VkMemoryRequirements memRequirements;
+		vkGetImageMemoryRequirements(m_Device, imageVk, &memRequirements);
+		RMemoryVma* memory = new RMemoryVma;
+
+		VmaAllocationCreateInfo info;
+		info.flags = 0;
+		info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		info.requiredFlags = (VkMemoryPropertyFlags)memoryProperty;
+		info.preferredFlags = (VkMemoryPropertyFlags)memoryProperty;
+		info.memoryTypeBits = 0;
+		info.pool = nullptr;
+		info.pUserData = pData;
+		info.priority = 1.0f;
+		vmaAllocateMemoryForImage(m_Vma, imageVk, &info, &memory->handle, nullptr);
+		vmaBindImageMemory(m_Vma, memory->handle, imageVk);
+		return reinterpret_cast<RMemory*>(memory);
+	}
+
+	void RHIVulkan::DestroyImage(RImage* image)
+	{
+		RImageVk* imageVk = (RImageVk*)image;
+		vkDestroyImage(m_Device, imageVk->handle, nullptr);
+		delete imageVk;
+	}
+
+	RImageView* RHIVulkan::CreateImageView(RImage* image, RImageViewType viewType, RImageAspectFlags aspectMask,
+		uint32_t baseMipLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount)
+	{
+		RImageVk* imageVk = (RImageVk*)image;
+		VkImageViewCreateInfo imageViewCreateInfo{};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.image = imageVk->handle;
+		imageViewCreateInfo.viewType = (VkImageViewType)viewType;
+		imageViewCreateInfo.format = (VkFormat)imageVk->m_Format;
+		imageViewCreateInfo.subresourceRange.aspectMask = aspectMask;
+		imageViewCreateInfo.subresourceRange.baseMipLevel = baseMipLevel;
+		imageViewCreateInfo.subresourceRange.levelCount = levelCount;
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = baseLayer;
+		imageViewCreateInfo.subresourceRange.layerCount = layerCount;
+		VkImageView handle;
+		if (VK_SUCCESS != vkCreateImageView(m_Device, &imageViewCreateInfo, nullptr, &handle)) {
+			return nullptr;
+		}
+		RImageViewVk* imageView = new RImageViewVk;
+		imageView->handle = handle;
+		return imageView;
+	}
+
+	void RHIVulkan::DestroyImageView(RImageView* imageView)
+	{
+		RImageViewVk* imageViewVk = (RImageViewVk*)imageView;
+		vkDestroyImageView(m_Device, imageViewVk->handle, nullptr);
+		delete imageViewVk;
+	}
+
+	RSampler* RHIVulkan::CreateSampler(const RSSamplerInfo* samplerInfo)
+	{
+		VkSamplerCreateInfo info{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		info.pNext = nullptr;
+		info.flags = 0;
+		info.magFilter = (VkFilter)samplerInfo->magFilter;
+		info.minFilter = (VkFilter)samplerInfo->minFilter;
+		info.addressModeU = (VkSamplerAddressMode)samplerInfo->addressModeU;
+		info.addressModeV = (VkSamplerAddressMode)samplerInfo->addressModeV;
+		info.addressModeW = (VkSamplerAddressMode)samplerInfo->addressModeW;
+		info.mipLodBias = samplerInfo->minLodBias;
+		info.anisotropyEnable = samplerInfo->anisotropyEnable;
+		info.maxAnisotropy = samplerInfo->maxAnisotropy;
+		info.compareEnable = samplerInfo->compareEnable;
+		info.compareOp = (VkCompareOp)samplerInfo->compreOp;
+		info.minLod = samplerInfo->minLod;
+		info.maxLod = samplerInfo->maxLod;
+		info.borderColor = (VkBorderColor)samplerInfo->borderColor;
+		info.unnormalizedCoordinates = samplerInfo->unnormalizedCoordinates;
+
+		VkSampler handle;
+		if(VK_SUCCESS != vkCreateSampler(m_Device, &info, nullptr, &handle)) {
+			return nullptr;
+		}
+		RSamplerVk* sampler = new RSamplerVk;
+		sampler->handle = handle;
+		return sampler;
+	}
+
 } // namespace RHI

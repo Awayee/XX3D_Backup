@@ -8,6 +8,6 @@
 #define LOG(...)\
 	printf(__VA_ARGS__); std::cout << std::endl
 
-#define LOG_ERROR(...)\
+#define ERROR(...)\
 	printf(__VA_ARGS__); std::cout << std::endl; ASSERT(0, "")
 	

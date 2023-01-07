@@ -12,11 +12,12 @@ namespace Engine {
 		glfwDestroyWindow(m_Window);
 		glfwTerminate();
 	}
-	void WindowSystemGLFW::Initialize(int w, int h, const char* title)
+	void WindowSystemGLFW::Initialize(const WindowInitInfo& initInfo)
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		m_Window = glfwCreateWindow(w, h, title, nullptr, nullptr);
+		glfwWindowHint(GLFW_RESIZABLE, initInfo.resizeable);
+		m_Window = glfwCreateWindow(initInfo.width, initInfo.height, initInfo.title, nullptr, nullptr);
 		glfwSetWindowUserPointer(m_Window, (void*)this);
 		if(s_GLFWButtonCodeMap.empty()) {
 			InitKeyButtonCodeMap();

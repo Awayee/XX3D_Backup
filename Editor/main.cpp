@@ -9,7 +9,7 @@
 int main() {
 	// Run Editor
 	{
-		LOG("Editor");
+		LOG("Editor Mode");
 		Engine::XXEngine engine{};
 		Editor::XXEditor editor(&engine);
 		editor.EditorRun();

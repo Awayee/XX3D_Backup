@@ -19,7 +19,7 @@ namespace RHI{
 					s_Instance.reset(new RHIVulkan());
 				}
 				else {
-					LOG_ERROR("Failed to initialize RHI!");
+					ERROR("Failed to initialize RHI!");
 				}
 			}
 		}

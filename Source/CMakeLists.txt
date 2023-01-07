@@ -7,10 +7,11 @@ set(TARGET_NAME "Source")
 
 file(GLOB_RECURSE H_FILES "*.h")
 file(GLOB_RECURSE CPP_FILES "*.cpp")
+file(GLOB_RECURSE HPP_FILES "*.hpp")
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${H_FILES} ${CPP_FILES})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${H_FILES} ${CPP_FILES} ${HPP_FILES})
 
-add_library(${TARGET_NAME} ${H_FILES} ${CPP_FILES})
+add_library(${TARGET_NAME} ${H_FILES} ${CPP_FILES} ${HPP_FILES})
 target_include_directories(${TARGET_NAME} PRIVATE ${SOURCE_DIR})
 
 #glfw

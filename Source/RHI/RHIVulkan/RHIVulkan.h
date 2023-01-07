@@ -1,12 +1,17 @@
 #pragma once
+
+#ifdef USE_VMA
 #include <vk_mem_alloc.h>
+#else
+#include <vulkan/vulkan.h>
+#endif;
 #include "../RHI.h"
 #include "RHIVKResources.h"
 #include "Core/Container/Container.h"
 
 namespace RHI{
 	class RHIVulkan: public RHIInstance {
-#pragma region private members
+#pragma region rhi initialize
 	private:
 		uint8_t m_MaxFramesInFlight{ 3 };
 		uint8_t m_CurrentFrame {0};
@@ -36,6 +41,7 @@ namespace RHI{
 			VkSurfaceTransformFlagBitsKHR swapchainTransform{ VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR };
 			VkExtent2D swapchainExtent{ 0, 0 };
 		} m_PhysicalDeviceInfo;
+		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
 
 		RQueueVk m_GraphicsQueue;
 		RQueueVk m_ComputeQueue;
@@ -53,7 +59,7 @@ namespace RHI{
 		TVector<VkSemaphore> m_PresentationFinishSemaphores;
 		TVector<VkSemaphore> m_ImageAvaliableForTextureCopySemaphores;
 		TVector<VkFence> m_IsFrameInFlightFences;
-		VmaAllocator m_VMA{ nullptr };
+		VmaAllocator m_Vma{ nullptr };
 
 
 		VkSwapchainKHR m_Swapchain{ nullptr };
@@ -101,6 +107,8 @@ namespace RHI{
 		void CreateSwapchain();
 		void ClearSwapchain();
 #pragma endregion
+		RImageVk* CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32_t mipLevels, uint32_t arrayLayers, 
+			RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage);
 	public:
 		RHIVulkan() = default;
 		void Initialize(const RSInitInfo* initInfo) override;
@@ -110,7 +118,10 @@ namespace RHI{
 		uint8_t GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
 		RFormat GetSwapchainImageFormat() override { return (RFormat)m_PhysicalDeviceInfo.swapchainFormat.format; }
 		const RSExtent2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
-		RRenderPass* CreateRenderPass(uint32_t attachmentCount, RSAttachment* attachments) override;
+		RImageView* GetSwapchainImageView(uint8_t i) override;
+		uint32_t GetSwapchainMaxImageCount() override;
+
+		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 		RQueue* GetGraphicsQueue() override;
 		void QueueSubmit(RQueue* queue,
@@ -119,7 +130,6 @@ namespace RHI{
 			uint32_t signalSemaphoreCount, RSemaphore* signalSemaphores,
 			RFence* fence) override;
 		void QueueWaitIdle(RQueue* queue)override;
-		RImageView* GetSwapchainImageViews(uint8_t i) override;
 		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, const TVector<RImageView*>& imageViews, uint32_t width, uint32_t height, uint32_t layers) override;
 		void DestoryFramebuffer(RFramebuffer* framebuffer) override;
 		RCommandBuffer* CreateCommandBuffer(RCommandBufferLevel level)override;
@@ -128,8 +138,31 @@ namespace RHI{
 		void FreeCommandBuffer(RCommandBuffer* cmd) override;
 		void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClearValue* clearValues)override;
 		void CmdEndRenderPass(RCommandBuffer* cmd) override;
-		void ImmediateSubmit(CmdFunc func) override;
-		void PrepareRendering() override;
+		void CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout,
+			uint32_t baseLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount, RImageAspectFlags aspect) override;
+		void CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32_t mipLevel, uint32_t baseLayout, uint32_t layerCount) override;
+		void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion) override;
+		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) override;
+		void ImmediateCommit(CommandBufferFunc func) override;
+		uint32_t PrepareRendering() override;
 		void QueueSubmitRendering(RCommandBuffer* cmd) override;
+
+		void DestroyMemory(RMemory* memory)override;
+
+		// buffer
+		RBuffer* CreatBuffer(size_t size, RBufferUsage usage) override;
+		void CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags,
+			RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)override;
+		void DestroyBuffer(RBuffer* buffer) override;
+
+		// image
+		RImage* CreateImage2D(RFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
+		                      RSampleCountFlagBits samples, RImageTiling tiling, RImageUsageFlags usage) override;
+		RMemory* CreateImageMemory(RImage* image, RMemoryPropertyFlags memoryProperty, void* pData) override;
+		void DestroyImage(RImage* image) override;
+		RImageView* CreateImageView(RImage* image, RImageViewType viewType, RImageAspectFlags aspectMask,
+			uint32_t baseMipLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount) override;
+		void DestroyImageView(RImageView* imageView) override;
+		RSampler* CreateSampler(const RSSamplerInfo* samplerInfo) override;
 	};
 }
