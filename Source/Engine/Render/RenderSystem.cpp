@@ -32,7 +32,8 @@ namespace Engine {
 		auto swapchainExtent = rhi->GetSwapchainExtent();
 		m_SwapchianFramebuffers.resize(imageCount);
 		for(uint8_t i=0; i< imageCount; ++i) {
-			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, { rhi->GetSwapchainImageView(i) }, swapchainExtent.width, swapchainExtent.height, 1);
+			RHI::RImageView* imageView = rhi->GetSwapchainImageView(i);
+			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, 1, &imageView, swapchainExtent.width, swapchainExtent.height, 1);
 		}
 
 	}

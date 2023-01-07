@@ -118,8 +118,11 @@ namespace RHI{
 		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
-		void AllocateDescriptorSets(uint32_t count, RDescriptorSet* descriptorSets)override;
-		void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)override;
+		RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) override;
+		void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
+		void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) override;
+
+		void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)override;
 
 		void QueueSubmit(RQueue* queue,
 			uint32_t cmdCount, RCommandBuffer* cmds,
@@ -127,9 +130,9 @@ namespace RHI{
 			uint32_t signalSemaphoreCount, RSemaphore* signalSemaphores,
 			RFence* fence) override;
 		void QueueWaitIdle(RQueue* queue)override;
-		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, const TVector<RImageView*>& imageViews, uint32_t width, uint32_t height, uint32_t layers) override;
+		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers) override;
 		void DestoryFramebuffer(RFramebuffer* framebuffer) override;
-		RCommandBuffer* CreateCommandBuffer(RCommandBufferLevel level)override;
+		RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level)override;
 		void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) override;
 		void EndCommandBuffer(RCommandBuffer* cmd) override;
 		void FreeCommandBuffer(RCommandBuffer* cmd) override;

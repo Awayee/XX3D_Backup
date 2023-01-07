@@ -104,4 +104,9 @@ namespace RHI {
 		VkDescriptorSetLayout handle;
 	};
 
+	class RDescriptorSetVk: public RDescriptorSet {
+	public:
+		VkDescriptorSet handle;
+	};
+
 }

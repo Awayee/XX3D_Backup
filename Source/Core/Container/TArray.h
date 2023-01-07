@@ -2,19 +2,51 @@
 
 #include <initializer_list>
 
+// a simple array just contains data
 template<typename T>
 class TArray {
 private:
+	T* data;
+public:
+	TArray(unsigned int size) {
+		data = new T[size];
+	}
+	~TArray() {
+		delete[] data;
+	}
+	T& operator[](unsigned int i) {
+		return data[i];
+	}
+	const T& operator[](unsigned int i)const {
+		return data[i];
+	}
+
+	T* Data() {
+		return data;
+	}
+	const T* Data() const {
+		return data;
+	}
+};
+
+
+
+#define _TArrayFree if(data) delete[] data
+#define _TArrayAllocate data = new T[size]
+
+// an array with more info
+// can be replaced by TVector
+template<typename T>
+class TArray2 {
+private:
 	unsigned int size;
 	T* data;
-#define _TArrayFree if(data) delete[] data;
-#define _TArrayAllocate data = new T[size];
 public:
-	TArray() {
+	TArray2() {
 		data = nullptr;
 		size = 0;
 	}
-	TArray(const TArray<T>& other) {
+	TArray2(const TArray2<T>& other) {
 		if (this != &other) {
 			_TArrayFree();
 			size = other.size;
@@ -27,19 +59,19 @@ public:
 			}
 		}
 	}
-	TArray(TArray<T>&& other) {
+	TArray2(TArray2<T>&& other) {
 		data = other.data;
 		size = other.size;
 		other.data = nullptr;
 		other.size = 0u;
 	}
 
-	TArray(unsigned int l) {
+	TArray2(unsigned int l) {
 		size = l;
 		_TArrayAllocate();
 	}
 
-	TArray(std::initializer_list<T> p) {
+	TArray2(std::initializer_list<T> p) {
 		size = p.size();
 		_TArrayAllocate();
 		auto begin = p.begin();
@@ -47,7 +79,7 @@ public:
 			data[i] = *(begin + i);
 		}
 	}
-	TArray(T* other, unsigned int l) {
+	TArray2(T* other, unsigned int l) {
 		size = l;
 		if (size > 0) {
 			_TArrayAllocate();
@@ -57,7 +89,7 @@ public:
 			data = nullptr;
 		}
 	}
-	~TArray() {
+	~TArray2() {
 		Clear();
 	}
 
@@ -76,7 +108,7 @@ public:
 		size = 0;
 	}
 
-	void Swap(TArray<T>& other) {
+	void Swap(TArray2<T>& other) {
 		T* tempData = data;
 		unsigned int tempSize = size;
 		data = other.data;
@@ -93,7 +125,11 @@ public:
 		return data + size;
 	}
 
-	T& operator[](int i)const {
+	T& operator[](int i) {
+		return data[i];
+	}
+
+	const T& operator[](int i)const {
 		return data[i];
 	}
 
@@ -112,7 +148,7 @@ public:
 		}
 	}
 
-	TArray<T>& operator=(const TArray<T>& other) {
+	TArray2<T>& operator=(const TArray2<T>& other) {
 		if (this != &other) {
 			_TArrayFree();
 			size = other.size;

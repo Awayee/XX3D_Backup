@@ -121,9 +121,9 @@ namespace RHI {
 
 	void RHIVulkan::CreateLogicalDevice()
 	{
-		TVector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		TUnorderedSet<uint32_t> queueFamilies{m_GraphicsIndex, m_PresentIndex, m_ComputeIndex};
-
+		TVector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		queueCreateInfos.reserve(queueFamilies.size());
 		float queuePriority = 1.0f;
 		for(uint32_t queueFamily: queueFamilies) {
 			VkDeviceQueueCreateInfo queueCreateInfo{};
@@ -227,7 +227,8 @@ namespace RHI {
 		uint32_t maxVertexBlendingMeshCount{ 256 };
 		uint32_t maxMaterialCount{ 256 };
 
-		TVector<VkDescriptorPoolSize> poolSizes(7);
+		uint32_t poolCount = 7;
+		TArray<VkDescriptorPoolSize> poolSizes(poolCount);
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 		poolSizes[0].descriptorCount = 3 + 2 + 2 + 2 + 1 + 1 + 3 + 3;
 		poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -245,8 +246,8 @@ namespace RHI {
 
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-		poolInfo.pPoolSizes = poolSizes.data();
+		poolInfo.poolSizeCount = poolCount;
+		poolInfo.pPoolSizes = poolSizes.Data();
 		poolInfo.maxSets = 1 + 1 + 1 + maxMaterialCount + maxVertexBlendingMeshCount + 1 + 1; // +skybox + axis descriptor set
 		poolInfo.flags = 0U;
 		VK_CHECK(vkCreateDescriptorPool(m_Device, &poolInfo, nullptr, &m_DescriptorPool), "VkCreateDescriptorPool");
@@ -439,7 +440,7 @@ namespace RHI {
 		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 		info.flags = 0;
 		info.attachmentCount = attachmentCount;
-		TVector<VkAttachmentDescription> descs(attachmentCount);
+		TArray<VkAttachmentDescription> descs(attachmentCount);
 		TVector<VkAttachmentReference> colorRefs;
 		std::unique_ptr<VkAttachmentReference> depthRefPtr;
 
@@ -461,7 +462,7 @@ namespace RHI {
 				depthRefPtr.reset(new VkAttachmentReference{i, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL });
 			}
 		}
-		info.pAttachments = descs.data();
+		info.pAttachments = descs.Data();
 
 		// just 1 subpass
 		VkSubpassDescription subpass{};
@@ -498,12 +499,74 @@ namespace RHI {
 	}
 	RDescriptorSetLayout* RHIVulkan::CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)
 	{
-		return nullptr;
+		VkDescriptorSetLayoutCreateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+		info.pNext = nullptr;
+		info.flags = 0;
+		info.bindingCount = bindingCount;
+		TArray<VkDescriptorSetLayoutBinding> bindingsVk(bindingCount);
+		for(uint32_t i=0; i< bindingCount; ++i) {
+			bindingsVk[i].binding = bindings[i].binding;
+			bindingsVk[i].descriptorType = (VkDescriptorType)bindings[i].descriptorType;
+			bindingsVk[i].descriptorCount = bindings[i].descriptorCount;
+			bindingsVk[i].stageFlags = (VkShaderStageFlags)bindings[i].stageFlags;
+			bindingsVk[i].pImmutableSamplers = nullptr;
+		}
+		info.pBindings = bindingsVk.Data();
+		VkDescriptorSetLayout handle;
+		if(VK_SUCCESS != vkCreateDescriptorSetLayout(m_Device, &info, nullptr, &handle)) {
+			return nullptr;
+		}
+		RDescriptorSetLayoutVk* descriptorSetLayout = new RDescriptorSetLayoutVk;
+		descriptorSetLayout->handle = handle;
+		return descriptorSetLayout;
+
 	}
-	void RHIVulkan::AllocateDescriptorSets(uint32_t count, RDescriptorSet* descriptorSets)
+	RDescriptorSet* RHIVulkan::AllocateDescriptorSet(const RDescriptorSetLayout* layout)
 	{
+		VkDescriptorSetAllocateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
+		info.pNext = nullptr;
+		info.descriptorPool = m_DescriptorPool;
+		info.descriptorSetCount = 1;
+		info.pSetLayouts = &((RDescriptorSetLayoutVk*)layout)->handle;
+		VkDescriptorSet handle;
+		if (VK_SUCCESS != vkAllocateDescriptorSets(m_Device, &info, &handle)) {
+			return nullptr;
+		}
+		RDescriptorSetVk* descriptorSet = new RDescriptorSetVk;
+		descriptorSet->handle = handle;
+		return descriptorSet;
 	}
-	void RHIVulkan::CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)
+
+	void RHIVulkan::AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)
+	{
+		TArray<VkDescriptorSetLayout> layoutsVk(count);
+		for(uint32_t i=0; i< count; ++i) {
+			layoutsVk[i] = ((RDescriptorSetLayoutVk*)layouts[i])->handle;
+		}
+		VkDescriptorSetAllocateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+		info.pNext = nullptr;
+		info.descriptorPool = m_DescriptorPool;
+		info.descriptorSetCount = count;
+		info.pSetLayouts = layoutsVk.Data();
+		TArray<VkDescriptorSet> descriptorSetsVk(count);
+		if(VK_SUCCESS != vkAllocateDescriptorSets(m_Device, &info, descriptorSetsVk.Data())) {
+			return;
+		}
+		for(uint32_t i=0; i< count; ++i) {
+			RDescriptorSetVk* descriptorSetVk = (RDescriptorSetVk*)descriptorSets[i];
+			descriptorSetVk->handle = descriptorSetsVk[i];
+		}
+	}
+	void RHIVulkan::FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets)
+	{
+		TArray<VkDescriptorSet> descriptorSetsVk(count);
+		for(uint32_t i=0; i<count; ++i) {
+			descriptorSetsVk[i] = ((RDescriptorSetVk*)descriptorSets[i])->handle;
+			delete (descriptorSets + i);
+		}
+		vkFreeDescriptorSets(m_Device, m_DescriptorPool, count, descriptorSetsVk.Data());
+	}
+	void RHIVulkan::CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)
 	{
 	}
 	RQueue* RHIVulkan::GetGraphicsQueue()
@@ -520,29 +583,29 @@ namespace RHI {
 		uint32_t i;
 
 		// wait semaphores
-		TVector<VkSemaphore> vkWaitSmps(waitSemaphoreCount);
+		TArray<VkSemaphore> vkWaitSmps(waitSemaphoreCount);
 		for (i = 0; i < waitSemaphoreCount; ++i) {
 			vkWaitSmps[i] = reinterpret_cast<RSemaphoreVk*>(waitSemaphores + i)->handle;
 		}
-		submitInfo.waitSemaphoreCount = static_cast<uint32_t>(vkWaitSmps.size());
-		submitInfo.pWaitSemaphores = vkWaitSmps.data();
+		submitInfo.waitSemaphoreCount = waitSemaphoreCount;
+		submitInfo.pWaitSemaphores = vkWaitSmps.Data();
 		submitInfo.pWaitDstStageMask = (VkPipelineStageFlags*)waitStageFlags;
 
 		// commands
-		TVector<VkCommandBuffer> vkCmds(cmdCount);
+		TArray<VkCommandBuffer> vkCmds(cmdCount);
 		for (i = 0; i < cmdCount; ++i) {
 			vkCmds[i] = reinterpret_cast<RCommandBufferVk*>(cmds + i)->handle;
 		}
 		submitInfo.commandBufferCount = cmdCount;
-		submitInfo.pCommandBuffers = vkCmds.data();
+		submitInfo.pCommandBuffers = vkCmds.Data();
 
 		// signal semaphores
-		TVector<VkSemaphore> vkSignalSmps(signalSemaphoreCount);
+		TArray<VkSemaphore> vkSignalSmps(signalSemaphoreCount);
 		for(i=0; i< signalSemaphoreCount; ++i) {
 			vkSignalSmps[i] = reinterpret_cast<RSemaphoreVk*>(signalSemaphores + i)->handle;
 		}
-		submitInfo.signalSemaphoreCount = static_cast<uint32_t>(vkSignalSmps.size());
-		submitInfo.pSignalSemaphores = vkSignalSmps.data();
+		submitInfo.signalSemaphoreCount = signalSemaphoreCount;
+		submitInfo.pSignalSemaphores = vkSignalSmps.Data();
 
 		// fence
 		VkFence vkFence = (nullptr == fence) ? VK_NULL_HANDLE : reinterpret_cast<RFenceVk*>(fence)->handle;
@@ -563,16 +626,17 @@ namespace RHI {
 	{
 		return (uint32_t)m_SwapchainImages.size();
 	}
-	RFramebuffer* RHIVulkan::CreateFrameBuffer(RRenderPass* pass, const TVector<RImageView*>& imageViews, uint32_t width, uint32_t height, uint32_t layers)
+	RFramebuffer* RHIVulkan::CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers)
 	{
 		VkFramebufferCreateInfo framebufferInfo{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 		framebufferInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->handle;
-		TVector<VkImageView> vkImageViews(imageViews.size());
-		for(uint32_t i=0; i< vkImageViews.size(); ++i) {
-			vkImageViews[i] = reinterpret_cast<RImageViewVk*>(imageViews[i])->handle;
+		TArray<VkImageView> vkImageViews(imageViewCount);
+		for(uint32_t i=0; i< imageViewCount; ++i) {
+			const RImageViewVk* imageViewVk = (const RImageViewVk*)(pImageViews[i]);
+			vkImageViews[i] = imageViewVk->handle;
 		}
-		framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
-		framebufferInfo.pAttachments = vkImageViews.data();
+		framebufferInfo.attachmentCount = imageViewCount;
+		framebufferInfo.pAttachments = vkImageViews.Data();
 		framebufferInfo.width = width;
 		framebufferInfo.height = height;
 		framebufferInfo.layers = layers;
@@ -593,7 +657,7 @@ namespace RHI {
 		vkDestroyFramebuffer(m_Device, framebufferVk->handle, nullptr);
 		delete framebufferVk;
 	}
-	RCommandBuffer* RHIVulkan::CreateCommandBuffer(RCommandBufferLevel level)
+	RCommandBuffer* RHIVulkan::AllocateCommandBuffer(RCommandBufferLevel level)
 	{
 		VkCommandBufferAllocateInfo allocateInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		allocateInfo.pNext = nullptr;

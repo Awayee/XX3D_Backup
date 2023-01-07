@@ -20,8 +20,10 @@ namespace RHI{
 		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
 		virtual RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings) = 0;
-		virtual void AllocateDescriptorSets(uint32_t count, RDescriptorSet* descriptorSets) = 0;
-		virtual void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
+		virtual RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) = 0;
+		virtual void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) = 0;
+		virtual void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet*const* descriptorSets) = 0;
+		virtual void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout*const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
 		//virtual RPipeline* CreateGraphicsPipeline() = 0;
 
 		virtual RQueue* GetGraphicsQueue() = 0;
@@ -31,10 +33,10 @@ namespace RHI{
 			uint32_t signalSemaphoreCount, RSemaphore* signalSemaphores, 
 			RFence* fence) = 0;
 		virtual void QueueWaitIdle(RQueue* queue) = 0;
-		virtual RFramebuffer* CreateFrameBuffer(RRenderPass* pass, const TVector<RImageView*>& imageViews, uint32_t width, uint32_t height, uint32_t layers) = 0;
+		virtual RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers) = 0;
 		virtual void DestoryFramebuffer(RFramebuffer* framebuffer) = 0;
 		// cmd
-		virtual RCommandBuffer* CreateCommandBuffer(RCommandBufferLevel level) = 0;
+		virtual RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level) = 0;
 		virtual void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) = 0;
 		virtual void EndCommandBuffer(RCommandBuffer* cmd) = 0;
 		virtual void FreeCommandBuffer(RCommandBuffer* cmd) = 0;
