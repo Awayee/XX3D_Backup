@@ -443,18 +443,16 @@ namespace RHI {
 		TArray<VkAttachmentDescription> descs(attachmentCount);
 		TVector<VkAttachmentReference> colorRefs;
 		std::unique_ptr<VkAttachmentReference> depthRefPtr;
-
 		for(uint32_t i=0; i<attachmentCount; ++i) {
 			descs[i].flags = 0;
 			descs[i].format = (VkFormat)attachments[i].format;
-			descs[i].samples = VK_SAMPLE_COUNT_1_BIT;
-			descs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			descs[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			descs[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			descs[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			descs[i].samples = (VkSampleCountFlagBits)attachments[i].sampleCount;
+			descs[i].loadOp = (VkAttachmentLoadOp)attachments[i].loadOp;
+			descs[i].storeOp = (VkAttachmentStoreOp)attachments[i].storeOp;
+			descs[i].stencilLoadOp = (VkAttachmentLoadOp)attachments[i].stencilLoadOp;
+			descs[i].stencilStoreOp = (VkAttachmentStoreOp)attachments[i].stencilStoreOp;
 			descs[i].initialLayout = (VkImageLayout)attachments[i].initialLayout;
 			descs[i].finalLayout = (VkImageLayout)attachments[i].finalLayout;
-
 			if(attachments[i].type == ATTACHMENT_COLOR) {
 				colorRefs.push_back({i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
 			}
@@ -692,7 +690,7 @@ namespace RHI {
 		vkFreeCommandBuffers(m_Device, vkCmd->m_Pool, 1, &vkCmd->handle);
 		delete vkCmd;
 	}
-	void RHIVulkan::CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClearValue* clearValues)
+	void RHIVulkan::CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClear* clearValues)
 	{
 		VkRect2D vkRenderArea{ {renderArea.offset.x, renderArea.offset.y}, {renderArea.extent.width, renderArea.extent.height} };
 		VkRenderPassBeginInfo passInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
@@ -701,7 +699,20 @@ namespace RHI {
 		passInfo.framebuffer = reinterpret_cast<RFramebufferVk*>(framebuffer)->handle;
 		passInfo.renderArea = vkRenderArea;
 		passInfo.clearValueCount = clearValueCount;
-		passInfo.pClearValues = reinterpret_cast<const VkClearValue*>(clearValues);
+		TArray<VkClearValue> clearValuesVk(clearValueCount);
+		for(uint32_t i=0; i<clearValueCount; ++i) {
+			if(clearValues[i].clearType == CLEAR_VALUE_COLOR) {
+				clearValuesVk[i].color.float32[0] = clearValues[i].clearValue.color[0];
+				clearValuesVk[i].color.float32[1] = clearValues[i].clearValue.color[1];
+				clearValuesVk[i].color.float32[2] = clearValues[i].clearValue.color[2];
+				clearValuesVk[i].color.float32[3] = clearValues[i].clearValue.color[3];
+			}
+			else {
+				clearValuesVk[i].depthStencil.depth = clearValues[i].clearValue.depthStencil.depth;
+				clearValuesVk[i].depthStencil.stencil = clearValues[i].clearValue.depthStencil.stencil;
+			}
+		}
+		passInfo.pClearValues = clearValuesVk.Data();
 		_vkCmdBeginRenderPass(((RCommandBufferVk*)cmd)->handle, &passInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 	void RHIVulkan::CmdEndRenderPass(RCommandBuffer* cmd)

@@ -41,7 +41,7 @@ namespace RHI{
 		virtual void EndCommandBuffer(RCommandBuffer* cmd) = 0;
 		virtual void FreeCommandBuffer(RCommandBuffer* cmd) = 0;
 		virtual void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer,
-			RSRect2D renderArea, uint32_t clearValueCount, const RSClearValue* clearValues) = 0;
+			RSRect2D renderArea, uint32_t clearValueCount, const RSClear* clearValues) = 0;
 
 		virtual void CmdEndRenderPass(RCommandBuffer* cmd) = 0;
 

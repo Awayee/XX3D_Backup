@@ -18,6 +18,11 @@ namespace RHI{
 		RImageLayout initialLayout;
 		RImageLayout finalLayout;
 		RAttachmentType type;
+		RSampleCountFlagBits sampleCount	{SAMPLE_COUNT_1_BIT};
+		RAttachmentLoadOp loadOp			{ATTACHMENT_LOAD_OP_CLEAR};
+		RAttachmentStoreOp storeOp			{ATTACHMENT_STORE_OP_STORE};
+		RAttachmentLoadOp stencilLoadOp		{ATTACHMENT_LOAD_OP_DONT_CARE};
+		RAttachmentStoreOp stencilStoreOp	{ATTACHMENT_STORE_OP_DONT_CARE};
 	};
 
 	struct RSOffset2D {
@@ -45,9 +50,15 @@ namespace RHI{
 		RSExtent2D extent;
 	};
 
-	struct RSClearDepthStencilValue {
-		float depth;
-		uint32_t stencil;
+	struct RSClear {
+		RClearValueType clearType;
+		union {
+			float color[4];
+			struct {
+				float depth;
+				uint32_t stencil;
+			}depthStencil;
+		}clearValue;
 	};
 
 	struct RSImageBlit {
@@ -96,17 +107,6 @@ namespace RHI{
 
 	struct RSGraphicsPipelineCreateInfo {
 		uint32_t x;
-	};
-
-	union RSClearColorValue {
-		float float32[4];
-		int32_t int32[4];
-		uint32_t uint32[4];
-	};
-
-	union RSClearValue {
-		RSClearColorValue color;
-		RSClearDepthStencilValue depthStencil;
 	};
 
 	class RWindowHandle {

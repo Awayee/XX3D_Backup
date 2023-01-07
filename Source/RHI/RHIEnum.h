@@ -328,6 +328,20 @@ namespace RHI{
         ATTACHMENT_DEPTH
     };
 
+    enum RAttachmentLoadOp {
+        ATTACHMENT_LOAD_OP_LOAD = 0,
+        ATTACHMENT_LOAD_OP_CLEAR = 1,
+        ATTACHMENT_LOAD_OP_DONT_CARE = 2,
+        ATTACHMENT_LOAD_OP_MAX_ENUM = 0x7FFFFFFF
+    };
+
+    enum RAttachmentStoreOp {
+        ATTACHMENT_STORE_OP_STORE = 0,
+        ATTACHMENT_STORE_OP_DONT_CARE = 1,
+        ATTACHMENT_STORE_OP_NONE_QCOM = 1000301000,
+        ATTACHMENT_STORE_OP_MAX_ENUM = 0x7FFFFFFF
+    };
+
     enum RCommandBufferLevel {
        COMMAND_BUFFER_LEVEL_PRIMARY = 0,
        COMMAND_BUFFER_LEVEL_SECONDARY = 1,
@@ -408,7 +422,7 @@ namespace RHI{
     };
 
     enum RSampleCountFlagBits {
-       SAMPLE_COUNT_1_BIT = 0x00000001,
+        SAMPLE_COUNT_1_BIT = 0x00000001,
         SAMPLE_COUNT_2_BIT = 0x00000002,
         SAMPLE_COUNT_4_BIT = 0x00000004,
         SAMPLE_COUNT_8_BIT = 0x00000008,
@@ -586,5 +600,9 @@ namespace RHI{
     };
     typedef unsigned int RShaderStageFlags;
 
+    enum RClearValueType {
+        CLEAR_VALUE_COLOR,
+        CLEAR_VALUE_DEPTH_STENCIL
+    };
 
 }

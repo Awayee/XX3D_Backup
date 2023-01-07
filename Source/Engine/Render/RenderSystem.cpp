@@ -59,10 +59,11 @@ namespace Engine {
 		uint32_t swapchainImageIndex = rhi->PrepareRendering(m_CurrentFrameIndex);
 		RHI::RCommandBuffer* cmd = rhi->GetCurrentCommandBuffer(m_CurrentFrameIndex);
 		rhi->BeginCommandBuffer(cmd, 0);
-		RHI::RSClearValue clearValue;
-		clearValue.color = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 		// todo depth
-		//RHI::RSClearValue clearValues[2];
+		RHI::RSClear clearValue;
+		clearValue.clearValue = { 0.0f, 0.0f, 0.0f, 0.0f };
+		//RHI::RSClear clearValues[2];
 		//clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		//clearValues[1].depthStencil = { 1.0f, 0 };
 		rhi->CmdBeginRenderPass(cmd, m_MainPass, m_SwapchianFramebuffers[swapchainImageIndex],
