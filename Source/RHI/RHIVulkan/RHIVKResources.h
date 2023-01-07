@@ -93,4 +93,15 @@ namespace RHI {
 	public:
 		VkSampler handle;
 	};
+
+	class RPipelineVk: public RPipeline {
+	public:
+		VkPipeline handle;
+	};
+
+	class RDescriptorSetLayoutVk: public RDescriptorSetLayout {
+	public:
+		VkDescriptorSetLayout handle;
+	};
+
 }

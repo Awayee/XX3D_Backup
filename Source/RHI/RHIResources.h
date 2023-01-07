@@ -81,6 +81,23 @@ namespace RHI{
 		bool unnormalizedCoordinates{ false };
 	};
 
+	struct RSDescriptorSetLayoutBinding {
+		uint32_t              binding;
+		RDescriptorType      descriptorType;
+		uint32_t              descriptorCount;
+		RShaderStageFlags    stageFlags;
+	};
+
+	struct RSPushConstantRange {
+		RShaderStageFlags stageFlags;
+		uint32_t offset;
+		uint32_t size;
+	};
+
+	struct RSGraphicsPipelineCreateInfo {
+		uint32_t x;
+	};
+
 	union RSClearColorValue {
 		float float32[4];
 		int32_t int32[4];
@@ -96,6 +113,9 @@ namespace RHI{
 	};
 
 	class RRenderPass {
+	};
+
+	class RPipeline {
 	};
 
 	class RImage {
@@ -132,6 +152,10 @@ namespace RHI{
 		
 	};
 
+	class RDescriptorSetLayout {
+		
+	};
+
 	class RBuffer {};
 	class RTexture {};
 	class RShader {};
@@ -142,6 +166,5 @@ namespace RHI{
 	class RFence {};
 	class RSemaphore {};
 	class RQueue {};
-	class RPipeline {};
 
 } // namespace RHI

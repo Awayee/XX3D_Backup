@@ -11,130 +11,8 @@
 
 namespace RHI {
 
-#define VK_CHECK(x, s)\
-	if(VK_SUCCESS != x) throw s
-
-	const uint32_t VK_API_VER = VK_API_VERSION_1_2;
-
-#define VK_FREE(ptr) delete ptr; ptr = nullptr
-
 #pragma region private members
-	// debug callback
-	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT,
-		VkDebugUtilsMessageTypeFlagsEXT,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* data)
-	{
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-		return VK_FALSE;
-	}
 
-	void SetDebugInfo(VkDebugUtilsMessengerCreateInfoEXT& debugInfo) {
-		debugInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		debugInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		debugInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		debugInfo.pfnUserCallback = DebugCallback;
-	}
-
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-		const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-		const VkAllocationCallbacks* pAllocator,
-		VkDebugUtilsMessengerEXT* pDebugMessenger)
-	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-		if (func != nullptr)
-		{
-			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-		}
-		else
-		{
-			return VK_ERROR_EXTENSION_NOT_PRESENT;
-		}
-	}
-
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-		VkDebugUtilsMessengerEXT     debugMessenger,
-		const VkAllocationCallbacks* pAllocator)
-	{
-		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-		if (func != nullptr)
-		{
-			func(instance, debugMessenger, pAllocator);
-		}
-	}
-
-	void FindQueueFamilyIndex(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, int* pGraphicsIndex, int* pPresentIndex, int* pComputeIndex)
-	{
-		*pGraphicsIndex = -1;
-		*pPresentIndex = -1;
-		*pComputeIndex = -1;
-		uint32_t queueFamilyCount = 0;
-		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-		TVector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-		for (uint32_t i = 0; i < queueFamilyCount; i++) {
-			if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-				*pGraphicsIndex = i;
-			}
-			if (queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
-				*pComputeIndex = i;
-			}
-			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-			if (presentSupport) {
-				*pPresentIndex = i;
-			}
-
-			if (*pGraphicsIndex != -1 && *pPresentIndex != -1 && *pComputeIndex != -1) break;
-		}
-	}
-
-	bool CheckExtensionSupported(VkPhysicalDevice device, const TVector<const char*>& extensions) {
-		uint32_t extensionCount;
-		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-		TVector<VkExtensionProperties> availableExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-		bool isSupport = false;
-		for (const char* extensionName : extensions) {
-			bool flag = false;
-			for (auto& extension : availableExtensions) {
-				if (strcmp(extensionName, extension.extensionName) == 0) {
-					flag = true;
-					isSupport = true;
-					break;
-				}
-			}
-			if (flag) break;
-		}
-		return isSupport;
-	}
-
-	bool RHIVulkan::CheckValidationLayerSupport()
-	{
-		uint32_t layerCount;
-		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-		TVector<VkLayerProperties> availableLayers(layerCount);
-		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-		for (const char* layerName : m_ValidationLayers)
-		{
-			bool layerFound = false;
-
-			for (const auto& layerProperties : availableLayers)
-			{
-				if (strcmp(layerName, layerProperties.layerName) == 0)
-				{
-					layerFound = true;
-					break;
-				}
-			}
-
-			if (!layerFound)
-			{
-				return false;
-			}
-		}
-	}
 	TVector<const char*> RHIVulkan::GetRequiredExtensions()
 	{
 		uint32_t     glfwExtensionCount = 0;
@@ -150,7 +28,8 @@ namespace RHI {
 	}
 	void RHIVulkan::CreateInstance()
 	{
-		ASSERT(!m_EnableValidationLayers || CheckValidationLayerSupport(), "validation layers requested, but not available!");
+		ASSERT(!m_EnableValidationLayers || CheckValidationLayerSupport(m_ValidationLayers), 
+			"validation layers requested, but not available!");
 		// app info
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -204,87 +83,15 @@ namespace RHI {
 		VK_CHECK(glfwCreateWindowSurface(m_Instance, reinterpret_cast<GLFWwindow*>(m_WindowHandle), nullptr, &m_Surface), "vk create window surface");
 	}
 
-	RHIVulkan::SPhyicalDeviceInfo RHIVulkan::GetPhysicalDeviceInfo(VkPhysicalDevice physicalDevice)
-	{
-		RHIVulkan::SPhyicalDeviceInfo info;
-		if (!CheckExtensionSupported(physicalDevice, m_DeviceExtensions)) {
-			return info;
-		}
-		// query family index
-		FindQueueFamilyIndex(physicalDevice, m_Surface, &info.graphicsIndex, &info.presentIndex, &info.computeIndex);
-		if(-1 == info.graphicsIndex || -1 == info.presentIndex || -1 == info.computeIndex) {
-			return info;
-		}
-
-		// query swapchain info
-		// format
-		uint32_t formatCount;
-		VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, nullptr), "vkGetPhysicalDeviceSurfaceFormatsKHR");
-		TVector<VkSurfaceFormatKHR> formats(formatCount);
-		VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, formats.data()), "vkGetPhysicalDeviceSurfaceFormatsKHR");
-		for (const auto& format : formats) {
-			if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-				info.swapchainFormat = format;
-				break;
-			}
-		}
-		//present mode
-		uint32_t presentModeCount;
-		VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, nullptr), "vkGetPhysicalDeviceSurfacePresentModesKHR");
-		TVector<VkPresentModeKHR> presentModes(presentModeCount);
-		VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, presentModes.data()), "vkGetPhysicalDeviceSurfacePresentModesKHR");
-		for (const auto& mode : presentModes) {
-			if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-				info.swapchainPresentMode = mode;
-				break;
-			}
-		}
-
-		//extent
-		VkSurfaceCapabilitiesKHR capabilities;
-		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &capabilities), "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
-		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-			info.swapchainExtent = capabilities.currentExtent;	
-		}
-		info.imageCount = capabilities.minImageCount + 1;
-		if (capabilities.maxImageCount > 0 && info.imageCount > capabilities.maxImageCount) {
-			info.imageCount = capabilities.maxImageCount;
-		}
-		info.swapchainTransform = capabilities.currentTransform;
-
-		if(info.swapchainFormat.format == VK_FORMAT_UNDEFINED || info.swapchainPresentMode == VK_PRESENT_MODE_MAX_ENUM_KHR || info.swapchainExtent.width == 0) {
-			return info;
-		}
-
-		info.score = 1;
-
-		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-
-		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-			info.score += 100;
-		}
-		else if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-			info.score += 10;
-		}
-		VkPhysicalDeviceFeatures features;
-		vkGetPhysicalDeviceFeatures(physicalDevice, &features);
-		if (features.geometryShader) {
-			info.score += 10;
-		}
-
-		return info;
-	}
-
 	void RHIVulkan::InitializePhysicalDevice()
 	{
 		uint32_t deviceCount = 0;
 		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr), "no avaliable physical device");
 		TVector<VkPhysicalDevice> devices(deviceCount);
 		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data()), "no avaliable physical device");
-		TVector<TPair<VkPhysicalDevice, RHIVulkan::SPhyicalDeviceInfo>> devicesInfo;
+		TVector<TPair<VkPhysicalDevice, SPhyicalDeviceInfo>> devicesInfo;
 		for (auto& device : devices) {
-			auto deviceInfo = GetPhysicalDeviceInfo(device);
+			auto deviceInfo = GetPhysicalDeviceInfo(device, m_Surface, m_DeviceExtensions);
 			if(deviceInfo.score > 0) {
 				devicesInfo.push_back({device, std::move(deviceInfo)});
 			}
@@ -293,50 +100,35 @@ namespace RHI {
 		ASSERT(!devicesInfo.empty(), "no avaliable GPU!");
 
 		TSort(devicesInfo.begin(), devicesInfo.end(),
-			[](const TPair<VkPhysicalDevice, RHIVulkan::SPhyicalDeviceInfo> p1, const TPair<VkPhysicalDevice, RHIVulkan::SPhyicalDeviceInfo> p2) {return p1.second.score > p2.second.score; });
+			[](const TPair<VkPhysicalDevice, SPhyicalDeviceInfo> p1, const TPair<VkPhysicalDevice, SPhyicalDeviceInfo> p2) {return p1.second.score > p2.second.score; });
 
 		m_PhysicalDevice = devicesInfo[0].first;
-		m_PhysicalDeviceInfo = devicesInfo[0].second;
+		auto& deviceInfo = devicesInfo[0].second;
 		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_PhysicalDeviceProperties);
 		LOG("Picked GPU: %s %u", m_PhysicalDeviceProperties.deviceName, m_PhysicalDeviceProperties.deviceID);
-	}
 
-	VkFormat RHIVulkan::FindDepthFormat()
-	{
-
-		// find depth format
-		const TVector<VkFormat> candidates{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
-		VkImageTiling tiling{ VK_IMAGE_TILING_OPTIMAL };
-		VkFormatFeatureFlags features{ VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT };
-		for (VkFormat format : candidates)
-		{
-			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, format, &props);
-
-			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-			{
-				return format;
-			}
-			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-			{
-				return format;
-			}
-		}
-
-		ERROR("findSupportedFormat failed");
-		return VK_FORMAT_UNDEFINED;
+		// record device info
+		m_GraphicsIndex = static_cast<uint32_t>(deviceInfo.graphicsIndex);
+		m_PresentIndex = static_cast<uint32_t>(deviceInfo.presentIndex);
+		m_ComputeIndex = static_cast<uint32_t>(deviceInfo.computeIndex);
+		m_ImageCount = deviceInfo.imageCount;
+		m_SwapchainFormat = deviceInfo.swapchainFormat;
+		m_SwapchainPresentMode = deviceInfo.swapchainPresentMode;
+		m_SwapchainTransform = deviceInfo.swapchainTransform;
+		m_SwapchainExtent.width = deviceInfo.swapchainExtent.width;
+		m_SwapchainExtent.height = deviceInfo.swapchainExtent.height;
 	}
 
 	void RHIVulkan::CreateLogicalDevice()
 	{
 		TVector<VkDeviceQueueCreateInfo> queueCreateInfos;
-		TUnorderedSet<int> queueFamilies{ m_PhysicalDeviceInfo.graphicsIndex, m_PhysicalDeviceInfo.computeIndex, m_PhysicalDeviceInfo.presentIndex };
+		TUnorderedSet<uint32_t> queueFamilies{m_GraphicsIndex, m_PresentIndex, m_ComputeIndex};
 
 		float queuePriority = 1.0f;
-		for(int queueFamily: queueFamilies) {
+		for(uint32_t queueFamily: queueFamilies) {
 			VkDeviceQueueCreateInfo queueCreateInfo{};
 			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueCreateInfo.queueFamilyIndex = static_cast<uint32_t>(queueFamily);
+			queueCreateInfo.queueFamilyIndex = queueFamily;
 			queueCreateInfo.queueCount = 1;
 			queueCreateInfo.pQueuePriorities = &queuePriority;
 			queueCreateInfos.push_back(std::move(queueCreateInfo));
@@ -360,9 +152,9 @@ namespace RHI {
 		VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCreateInfo, nullptr, &m_Device), "vkCreateDevice");
 
 		// initialize queues of this device
-		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex), 0, &m_GraphicsQueue.handle);
-		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.computeIndex), 0, &m_ComputeQueue.handle);
-		vkGetDeviceQueue(m_Device, static_cast<uint32_t>(m_PhysicalDeviceInfo.presentIndex), 0, &m_PresentQueue.handle);
+		vkGetDeviceQueue(m_Device, m_GraphicsIndex, 0, &m_GraphicsQueue.handle);
+		vkGetDeviceQueue(m_Device, m_ComputeIndex, 0, &m_ComputeQueue.handle);
+		vkGetDeviceQueue(m_Device, m_PresentIndex, 0, &m_PresentQueue.handle);
 
 		// more efficient pointer
 		_vkResetCommandPool = (PFN_vkResetCommandPool)vkGetDeviceProcAddr(m_Device, "vkResetCommandPool");
@@ -382,7 +174,7 @@ namespace RHI {
 		_vkCmdBindDescriptorSets = (PFN_vkCmdBindDescriptorSets)vkGetDeviceProcAddr(m_Device, "vkCmdBindDescriptorSets");
 		_vkCmdClearAttachments = (PFN_vkCmdClearAttachments)vkGetDeviceProcAddr(m_Device, "vkCmdClearAttachments");
 
-		m_DepthFormat = FindDepthFormat();
+		m_DepthFormat = FindDepthFormat(m_PhysicalDevice);
 	}
 
 	void RHIVulkan::CreateCommandPools()
@@ -393,7 +185,7 @@ namespace RHI {
 			commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			commandPoolCreateInfo.pNext = NULL;
 			commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			commandPoolCreateInfo.queueFamilyIndex = static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex);
+			commandPoolCreateInfo.queueFamilyIndex = m_GraphicsIndex;
 			VK_CHECK(vkCreateCommandPool(m_Device, &commandPoolCreateInfo, nullptr, &m_RHICommandPool), "VkCreateCommandPool");
 		}
 
@@ -403,7 +195,7 @@ namespace RHI {
 			commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			commandPoolCreateInfo.pNext = NULL;
 			commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			commandPoolCreateInfo.queueFamilyIndex = static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex);
+			commandPoolCreateInfo.queueFamilyIndex = m_GraphicsIndex;
 			m_CommandPools.resize(m_MaxFramesInFlight);
 			for (uint32_t i = 0; i < m_MaxFramesInFlight; ++i) {
 				VK_CHECK(vkCreateCommandPool(m_Device, &commandPoolCreateInfo, nullptr, &m_CommandPools[i]), "VkCreateCommandPool");
@@ -497,13 +289,14 @@ namespace RHI {
 	{
 		VkSwapchainCreateInfoKHR createInfo{ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
 		createInfo.surface = m_Surface;
-		createInfo.minImageCount = m_PhysicalDeviceInfo.imageCount;
-		createInfo.imageFormat = m_PhysicalDeviceInfo.swapchainFormat.format;
-		createInfo.imageColorSpace = m_PhysicalDeviceInfo.swapchainFormat.colorSpace;
-		createInfo.imageExtent = m_PhysicalDeviceInfo.swapchainExtent;
+		createInfo.minImageCount = m_ImageCount;
+		createInfo.imageFormat = m_SwapchainFormat.format;
+		createInfo.imageColorSpace = m_SwapchainFormat.colorSpace;
+		createInfo.imageExtent.width = m_SwapchainExtent.width;
+		createInfo.imageExtent.height = m_SwapchainExtent.height;
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex), static_cast<uint32_t>(m_PhysicalDeviceInfo.presentIndex)};
+		uint32_t queueFamilyIndices[] = { m_GraphicsIndex, m_PresentIndex};
 
 		if (queueFamilyIndices[0] != queueFamilyIndices[1])
 		{
@@ -515,9 +308,9 @@ namespace RHI {
 		{
 			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		}
-		createInfo.preTransform = m_PhysicalDeviceInfo.swapchainTransform;
+		createInfo.preTransform = m_SwapchainTransform;
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		createInfo.presentMode = m_PhysicalDeviceInfo.swapchainPresentMode;
+		createInfo.presentMode = m_SwapchainPresentMode;
 		createInfo.clipped = VK_TRUE;
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 		VK_CHECK(vkCreateSwapchainKHR(m_Device, &createInfo, nullptr, &m_Swapchain), "CreateSwapchain");
@@ -526,8 +319,6 @@ namespace RHI {
 		vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &image_count, nullptr);
 		m_SwapchainImages.resize(image_count);
 		vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &image_count, m_SwapchainImages.data());
-		m_SwapchainExtent.width = m_PhysicalDeviceInfo.swapchainExtent.width;
-		m_SwapchainExtent.height = m_PhysicalDeviceInfo.swapchainExtent.height;
 		m_Scissor = { {0, 0,}, {m_SwapchainExtent.width, m_SwapchainExtent.height} };
 		// Create image views
 		m_SwapchainImageViews.resize(m_SwapchainImages.size());
@@ -538,7 +329,7 @@ namespace RHI {
 			VkImageViewCreateInfo imageViewCreateInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 			imageViewCreateInfo.image = m_SwapchainImages[i];
 			imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			imageViewCreateInfo.format = m_PhysicalDeviceInfo.swapchainFormat.format;
+			imageViewCreateInfo.format = m_SwapchainFormat.format;
 			imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 			imageViewCreateInfo.subresourceRange.levelCount = 1;
@@ -584,7 +375,7 @@ namespace RHI {
 
 		m_Initialized = true;
 
-		LOG("RHI: Vulkan is initialized.");
+		LOG("RHI: Vulkan initialized successfully!");
 	}
 
 	void RHIVulkan::Release()
@@ -633,15 +424,15 @@ namespace RHI {
 		info.instance = m_Instance;
 		info.device = m_Device;
 		info.physicalDevice = m_PhysicalDevice;
-		info.queueIndex = static_cast<uint32_t>(m_PhysicalDeviceInfo.graphicsIndex);
+		info.queueIndex = m_GraphicsIndex;
 		info.queue = m_GraphicsQueue.handle;
 		info.descriptorPool = m_DescriptorPool;
 		return info;
 	}
 
-	RCommandBuffer* RHIVulkan::GetCurrentCommandBuffer()
+	RCommandBuffer* RHIVulkan::GetCurrentCommandBuffer(uint8_t idx)
 	{
-		return static_cast<RCommandBuffer*>(&m_CommandBuffers[m_CurrentFrame]);
+		return static_cast<RCommandBuffer*>(&m_CommandBuffers[idx]);
 	}
 	RRenderPass* RHIVulkan::CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments)
 	{
@@ -705,6 +496,16 @@ namespace RHI {
 		vkDestroyRenderPass(m_Device, vkPass->handle, nullptr);
 		delete vkPass;
 	}
+	RDescriptorSetLayout* RHIVulkan::CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)
+	{
+		return nullptr;
+	}
+	void RHIVulkan::AllocateDescriptorSets(uint32_t count, RDescriptorSet* descriptorSets)
+	{
+	}
+	void RHIVulkan::CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)
+	{
+	}
 	RQueue* RHIVulkan::GetGraphicsQueue()
 	{
 		return reinterpret_cast<RQueue*>(&m_GraphicsQueue);
@@ -755,7 +556,7 @@ namespace RHI {
 
 	RImageView* RHIVulkan::GetSwapchainImageView(uint8_t i)
 	{
-		ASSERT(i < m_MaxFramesInFlight, "i < m_MaxFramesInFlight");
+		ASSERT(i < m_SwapchainImageViews.size(), "i < m_MaxFramesInFlight");
 		return reinterpret_cast<RImageView*>(&m_SwapchainImageViews[i]);
 	}
 	uint32_t RHIVulkan::GetSwapchainMaxImageCount()
@@ -829,8 +630,7 @@ namespace RHI {
 	}
 	void RHIVulkan::CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClearValue* clearValues)
 	{
-		VkRect2D vkRenderArea;
-		memcpy(&vkRenderArea, &renderArea, sizeof(VkRect2D));
+		VkRect2D vkRenderArea{ {renderArea.offset.x, renderArea.offset.y}, {renderArea.extent.width, renderArea.extent.height} };
 		VkRenderPassBeginInfo passInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		passInfo.pNext = nullptr;
 		passInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->handle;
@@ -934,39 +734,39 @@ namespace RHI {
 		vkFreeCommandBuffers(m_Device, cmd.m_Pool, 1, &cmd.handle);
 	}
 
-	uint32_t RHIVulkan::PrepareRendering()
+	uint32_t RHIVulkan::PrepareRendering(uint8_t frameIndex)
 	{
-		vkWaitForFences(m_Device, 1, &m_IsFrameInFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+		vkWaitForFences(m_Device, 1, &m_IsFrameInFlightFences[frameIndex], VK_TRUE, UINT64_MAX);
 		VkResult res = 
-			vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, m_ImageAvaliableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
+			vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, m_ImageAvaliableSemaphores[frameIndex], VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
 		// todo acquire next image khr result
 
-		VK_CHECK(_vkResetCommandPool(m_Device, m_CommandPools[m_CurrentFrame], 0), "Failed to reset command pool!");
+		VK_CHECK(_vkResetCommandPool(m_Device, m_CommandPools[frameIndex], 0), "Failed to reset command pool!");
 		return m_CurrentSwapchainImageIndex;
 	}
-	void RHIVulkan::QueueSubmitRendering(RCommandBuffer* cmd)
+	void RHIVulkan::QueueSubmitRendering(RCommandBuffer* cmd, uint8_t frameIndex)
 	{
-		VK_CHECK(_vkResetFences(m_Device, 1, &m_IsFrameInFlightFences[m_CurrentFrame]));
+		VK_CHECK(_vkResetFences(m_Device, 1, &m_IsFrameInFlightFences[frameIndex]));
 
 		// submit command buffer
 		//VkSemaphore semaphores[2] = { m_ImageAvaliableForTextureCopySemaphores[m_CurrentFrame], m_PresentationFinishSemaphores[m_CurrentFrame] };
-		VkSemaphore semaphores[1] = { m_PresentationFinishSemaphores[m_CurrentFrame] };
+		VkSemaphore semaphores[1] = { m_PresentationFinishSemaphores[frameIndex] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		VkCommandBuffer vkCmd = reinterpret_cast<RCommandBufferVk*>(cmd)->handle;
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &m_ImageAvaliableSemaphores[m_CurrentFrame];
+		submitInfo.pWaitSemaphores = &m_ImageAvaliableSemaphores[frameIndex];
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &vkCmd;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = semaphores;
-		VK_CHECK(vkQueueSubmit(m_GraphicsQueue.handle, 1, &submitInfo, m_IsFrameInFlightFences[m_CurrentFrame]), "Failed to submit graphics queue!");
+		VK_CHECK(vkQueueSubmit(m_GraphicsQueue.handle, 1, &submitInfo, m_IsFrameInFlightFences[frameIndex]), "Failed to submit graphics queue!");
 
 		// present
 		VkPresentInfoKHR presentQueue = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
 		presentQueue.waitSemaphoreCount = 1;
-		presentQueue.pWaitSemaphores = &m_PresentationFinishSemaphores[m_CurrentFrame];
+		presentQueue.pWaitSemaphores = &m_PresentationFinishSemaphores[frameIndex];
 		presentQueue.swapchainCount = 1;
 		presentQueue.pSwapchains = &m_Swapchain;
 		presentQueue.pImageIndices = &m_CurrentSwapchainImageIndex;
@@ -974,7 +774,6 @@ namespace RHI {
 		VkResult presentResult = vkQueuePresentKHR(m_PresentQueue.handle, &presentQueue);
 		// todo present result
 
-		m_CurrentFrame = (m_CurrentFrame + 1) % m_MaxFramesInFlight;
 
 	}
 	void RHIVulkan::DestroyMemory(RMemory* memory)

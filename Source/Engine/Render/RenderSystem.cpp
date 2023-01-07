@@ -55,8 +55,8 @@ namespace Engine {
 	void RenderSystem::Tick(){
 		// begin render pass;
 		GET_RHI(rhi);
-		uint32_t swapchainImageIndex = rhi->PrepareRendering();
-		RHI::RCommandBuffer* cmd = rhi->GetCurrentCommandBuffer();
+		uint32_t swapchainImageIndex = rhi->PrepareRendering(m_CurrentFrameIndex);
+		RHI::RCommandBuffer* cmd = rhi->GetCurrentCommandBuffer(m_CurrentFrameIndex);
 		rhi->BeginCommandBuffer(cmd, 0);
 		RHI::RSClearValue clearValue;
 		clearValue.color = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -67,11 +67,11 @@ namespace Engine {
 		rhi->CmdBeginRenderPass(cmd, m_MainPass, m_SwapchianFramebuffers[swapchainImageIndex],
 			{ {0, 0}, rhi->GetSwapchainExtent() }, 1, &clearValue);
 
-		m_UIRenderer.Tick();
+		m_UIRenderer.Tick(cmd);
 
 		rhi->CmdEndRenderPass(cmd);
 		rhi->EndCommandBuffer(cmd);
-		rhi->QueueSubmitRendering(cmd);
+		rhi->QueueSubmitRendering(cmd, m_CurrentFrameIndex);
 
 		m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 

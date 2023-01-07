@@ -10,11 +10,10 @@
 #include "Core/Container/Container.h"
 
 namespace RHI{
-	class RHIVulkan: public RHIInstance {
+	class RHIVulkan final: public RHIInstance {
 #pragma region rhi initialize
 	private:
 		uint8_t m_MaxFramesInFlight{ 3 };
-		uint8_t m_CurrentFrame {0};
 		bool m_EnableValidationLayers{ false };
 		bool m_EnableDebugUtils{ false };
 		bool m_EnableGeometryShader{ false };
@@ -29,18 +28,15 @@ namespace RHI{
 		VkDebugUtilsMessengerEXT m_DebugMessenger = nullptr;
 		VkSurfaceKHR m_Surface;
 		VkPhysicalDevice m_PhysicalDevice;
-		// physical device's info
-		struct SPhyicalDeviceInfo {
-			int score{ -1 };
-			int graphicsIndex{ -1 };
-			int presentIndex{ -1 };
-			int computeIndex{ -1 };
-			uint32_t imageCount{ 0 };
-			VkSurfaceFormatKHR swapchainFormat{ VK_FORMAT_UNDEFINED };
-			VkPresentModeKHR swapchainPresentMode{ VK_PRESENT_MODE_MAX_ENUM_KHR };
-			VkSurfaceTransformFlagBitsKHR swapchainTransform{ VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR };
-			VkExtent2D swapchainExtent{ 0, 0 };
-		} m_PhysicalDeviceInfo;
+
+		// physical devices's info
+		uint32_t m_GraphicsIndex;
+		uint32_t m_PresentIndex;
+		uint32_t m_ComputeIndex;
+		uint32_t m_ImageCount;
+		VkSurfaceFormatKHR m_SwapchainFormat;
+		VkPresentModeKHR m_SwapchainPresentMode;
+		VkSurfaceTransformFlagBitsKHR m_SwapchainTransform;
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
 
 		RQueueVk m_GraphicsQueue;
@@ -90,15 +86,12 @@ namespace RHI{
 		PFN_vkCmdClearAttachments   _vkCmdClearAttachments;
 
 	private:
-		bool CheckValidationLayerSupport();
 		TVector<const char*> GetRequiredExtensions();
 		void CreateInstance();
 		void InitializeDebugMessenger();
 		void CreateWindowSurface();
-		SPhyicalDeviceInfo GetPhysicalDeviceInfo(VkPhysicalDevice physicalDevice);
 		void InitializePhysicalDevice();
 		void CreateLogicalDevice();
-		VkFormat FindDepthFormat();
 		void CreateCommandPools();
 		void CreateCommandBuffers();
 		void CreateDescriptorPool();
@@ -114,16 +107,20 @@ namespace RHI{
 		void Initialize(const RSInitInfo* initInfo) override;
 		void Release() override;
 		RSVkImGuiInitInfo GetImGuiInitInfo();
-		RCommandBuffer* GetCurrentCommandBuffer() override;
+		RCommandBuffer* GetCurrentCommandBuffer(uint8_t idx) override;
 		uint8_t GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
-		RFormat GetSwapchainImageFormat() override { return (RFormat)m_PhysicalDeviceInfo.swapchainFormat.format; }
+		RFormat GetSwapchainImageFormat() override { return (RFormat)m_SwapchainFormat.format; }
 		const RSExtent2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
 		RImageView* GetSwapchainImageView(uint8_t i) override;
 		uint32_t GetSwapchainMaxImageCount() override;
+		RQueue* GetGraphicsQueue() override;
 
 		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
-		RQueue* GetGraphicsQueue() override;
+		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
+		void AllocateDescriptorSets(uint32_t count, RDescriptorSet* descriptorSets)override;
+		void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)override;
+
 		void QueueSubmit(RQueue* queue,
 			uint32_t cmdCount, RCommandBuffer* cmds,
 			uint32_t waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
@@ -144,8 +141,8 @@ namespace RHI{
 		void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion) override;
 		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) override;
 		void ImmediateCommit(CommandBufferFunc func) override;
-		uint32_t PrepareRendering() override;
-		void QueueSubmitRendering(RCommandBuffer* cmd) override;
+		uint32_t PrepareRendering(uint8_t frameIndex) override;
+		void QueueSubmitRendering(RCommandBuffer* cmd, uint8_t frameIndex) override;
 
 		void DestroyMemory(RMemory* memory)override;
 

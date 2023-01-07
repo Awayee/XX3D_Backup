@@ -4,6 +4,7 @@
 
 namespace RHI {
 	class RRenderPass;
+	class RCommandBuffer;
 }
 
 namespace Engine {
@@ -15,6 +16,6 @@ namespace Engine {
 		UIRenderer() = default;
 		void Initialize(UIBase* ui, RHI::RRenderPass* pass = nullptr);
 		void Release();
-		void Tick();
+		void Tick(RHI::RCommandBuffer* cmd);
 	};
 }

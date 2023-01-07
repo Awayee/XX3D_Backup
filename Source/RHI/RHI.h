@@ -10,7 +10,7 @@ namespace RHI{
 	public:
 		virtual void Initialize(const RSInitInfo* initInfo)=0;
 		virtual void Release() = 0;
-		virtual RCommandBuffer* GetCurrentCommandBuffer() = 0;
+		virtual RCommandBuffer* GetCurrentCommandBuffer(uint8_t idx) = 0;
 		virtual uint8_t GetMaxFramesInFlight() = 0;
 		virtual const RSExtent2D& GetSwapchainExtent() = 0;
 		virtual RFormat GetSwapchainImageFormat() = 0;
@@ -19,6 +19,11 @@ namespace RHI{
 
 		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
+		virtual RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings) = 0;
+		virtual void AllocateDescriptorSets(uint32_t count, RDescriptorSet* descriptorSets) = 0;
+		virtual void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
+		//virtual RPipeline* CreateGraphicsPipeline() = 0;
+
 		virtual RQueue* GetGraphicsQueue() = 0;
 		virtual void QueueSubmit(RQueue* queue, 
 			uint32_t cmdCount, RCommandBuffer* cmds, 
@@ -47,8 +52,8 @@ namespace RHI{
 		typedef void(*CommandBufferFunc)(RCommandBuffer*);
 		virtual void ImmediateCommit(CommandBufferFunc func) = 0;
 
-		virtual uint32_t PrepareRendering() = 0;
-		virtual void QueueSubmitRendering(RCommandBuffer* cmd) = 0;
+		virtual uint32_t PrepareRendering(uint8_t frameIndex) = 0; // return image index of the swapchain
+		virtual void QueueSubmitRendering(RCommandBuffer* cmd, uint8_t frameIndex) = 0;
 
 		virtual void DestroyMemory(RMemory* memory) = 0;
 

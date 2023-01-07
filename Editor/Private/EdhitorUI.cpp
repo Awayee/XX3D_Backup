@@ -23,6 +23,7 @@ namespace Editor {
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
 		io.Fonts->AddFontFromFileTTF(Resource::GetConfigManager()->GetDefaultFontPath().generic_string().c_str(), contentScale * 16, nullptr, nullptr);
 		ASSERT(io.Fonts->Build(), "Failed to build fonts");
+		io.IniFilename = nullptr; // Do not save settings
 
 		//ImGuiStyle& style = ImGui::GetStyle();
 		//style.WindowPadding = ImVec2(1.0, 0);

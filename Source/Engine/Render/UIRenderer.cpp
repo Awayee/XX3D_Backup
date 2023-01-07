@@ -16,7 +16,7 @@ namespace Engine {
 		});
 		ImGuiDestroyFontUploadObjects();
 	}
-	void UIRenderer::Tick()
+	void UIRenderer::Tick(RHI::RCommandBuffer* cmd)
 	{
 		if(nullptr == m_UIContent) {
 			return;
@@ -25,7 +25,6 @@ namespace Engine {
 		Engine::ImGuiNewFrame();
 		m_UIContent->Tick();
 		ImGui::Render();
-		RHI::RCommandBuffer* cmd = RHI::GetInstance()->GetCurrentCommandBuffer();
 		Engine::ImGuiRenderDrawData(ImGui::GetDrawData(), cmd);
 	}
 	void UIRenderer::Release()
