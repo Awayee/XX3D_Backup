@@ -46,7 +46,7 @@ namespace Engine {
 
 	void RenderSystem::Tick(){
 		// window is hided, pause rendering
-		if(!m_WindowAvaliable) {
+		if(!m_WindowAvailable) {
 			return;
 		}
 
@@ -123,8 +123,8 @@ namespace Engine {
 
 	void RenderSystem::OnWindowSizeChanged(uint32_t w, uint32_t h)
 	{
-		m_WindowAvaliable = (0 != w && 0 != h);
-		if(!m_WindowAvaliable) {
+		m_WindowAvailable = (0 != w && 0 != h);
+		if(!m_WindowAvailable) {
 			return;
 		}
 

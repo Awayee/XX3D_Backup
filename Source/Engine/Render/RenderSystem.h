@@ -14,8 +14,7 @@ namespace Engine {
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
 		TVector<RHI::RFramebuffer*> m_SwapchianFramebuffers;
 		uint8_t m_CurrentFrameIndex{0};
-		bool m_WindowAvaliable{ true };
-		bool m_WindowSizeChanged{ false };
+		bool m_WindowAvailable{ true };
 
 	public:
 		RenderSystem() = default;
