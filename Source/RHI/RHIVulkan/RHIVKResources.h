@@ -1,5 +1,5 @@
 #pragma once
-#include "../RHIResources.h"
+#include "../RHIClasses.h"
 
 #ifdef USE_VMA
 #include <vk_mem_alloc.h>
@@ -97,6 +97,7 @@ namespace RHI {
 	class RPipelineVk: public RPipeline {
 	public:
 		VkPipeline handle;
+		friend class RHIVulkan;
 	};
 
 	class RDescriptorSetLayoutVk: public RDescriptorSetLayout {
@@ -107,6 +108,11 @@ namespace RHI {
 	class RDescriptorSetVk: public RDescriptorSet {
 	public:
 		VkDescriptorSet handle;
+	};
+
+	class RPipelineLayoutVk: public RPipelineLayout {
+	public:
+		VkPipelineLayout handle;
 	};
 
 }

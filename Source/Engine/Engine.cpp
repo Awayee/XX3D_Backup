@@ -11,7 +11,7 @@ namespace Engine {
 		initInfo.width = 1024;
 		initInfo.height = 768;
 		initInfo.title = "xxEngine";
-		initInfo.resizeable = false;
+		initInfo.resizeable = true;
 		m_Window->Initialize(initInfo);
 
 

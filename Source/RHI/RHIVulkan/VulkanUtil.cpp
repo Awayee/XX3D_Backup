@@ -1,62 +1,7 @@
 #pragma once
-#include "Core/macro.h"
-#include<vulkan/vulkan.h>
-#include "Core/Container/Container.h"
+#include "VulkanUtil.h"
 
 namespace RHI {
-
-#define VK_CHECK(x, s)\
-	if(VK_SUCCESS != x) throw s
-
-	const uint32_t VK_API_VER = VK_API_VERSION_1_2;
-
-#define VK_FREE(ptr) delete ptr; ptr = nullptr
-
-	// debug callback
-	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT,
-		VkDebugUtilsMessageTypeFlagsEXT,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* data)
-	{
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-		return VK_FALSE;
-	}
-
-	void SetDebugInfo(VkDebugUtilsMessengerCreateInfoEXT& debugInfo) {
-		debugInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		debugInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		debugInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		debugInfo.pfnUserCallback = DebugCallback;
-	}
-
-
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-		const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-		const VkAllocationCallbacks* pAllocator,
-		VkDebugUtilsMessengerEXT* pDebugMessenger)
-	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-		if (func != nullptr)
-		{
-			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-		}
-		else
-		{
-			return VK_ERROR_EXTENSION_NOT_PRESENT;
-		}
-	}
-
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-		VkDebugUtilsMessengerEXT     debugMessenger,
-		const VkAllocationCallbacks* pAllocator)
-	{
-		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-		if (func != nullptr)
-		{
-			func(instance, debugMessenger, pAllocator);
-		}
-	}
-
 	void FindQueueFamilyIndex(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, int* pGraphicsIndex, int* pPresentIndex, int* pComputeIndex)
 	{
 		*pGraphicsIndex = -1;
@@ -102,7 +47,7 @@ namespace RHI {
 		}
 		return isSupport;
 	}
-	inline VkFormat FindDepthFormat(VkPhysicalDevice physicalDevice) {
+	VkFormat FindDepthFormat(VkPhysicalDevice physicalDevice) {
 		// find depth format
 		const TVector<VkFormat> candidates{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
 		VkImageTiling tiling{ VK_IMAGE_TILING_OPTIMAL };
@@ -125,7 +70,7 @@ namespace RHI {
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	inline bool CheckValidationLayerSupport(const TVector<const char*>& validationLayers)
+	bool CheckValidationLayerSupport(const TVector<const char*>& validationLayers)
 	{
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -152,18 +97,6 @@ namespace RHI {
 		}
 		return true;
 	}
-
-	struct SPhyicalDeviceInfo {
-		int score{ -1 };
-		int graphicsIndex{ -1 };
-		int presentIndex{ -1 };
-		int computeIndex{ -1 };
-		uint32_t imageCount{ 0 };
-		VkSurfaceFormatKHR swapchainFormat{ VK_FORMAT_UNDEFINED };
-		VkPresentModeKHR swapchainPresentMode{ VK_PRESENT_MODE_MAX_ENUM_KHR };
-		VkSurfaceTransformFlagBitsKHR swapchainTransform{ VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR };
-		VkExtent2D swapchainExtent{ 0, 0 };
-	};
 
 	SPhyicalDeviceInfo GetPhysicalDeviceInfo(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const TVector<const char*>& extensions){
 		SPhyicalDeviceInfo info;
@@ -391,5 +324,4 @@ namespace RHI {
 			1,
 			&barrier);
 	}
-
 }

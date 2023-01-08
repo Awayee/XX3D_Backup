@@ -16,30 +16,19 @@ namespace Engine {
 			initInfo.maxFramesInFlight = MAX_FRAMES_IN_FLIGHT;
 			RHI::GetInstance()->Initialize(&initInfo);
 		}
+		CreateRenderPasses();
+		CreateSwapchainFramebuffers();
+		CreateCommandBuffers();
 
-		GET_RHI(rhi);
-
-		// create render pass
-		RHI::RSAttachment attachment{};
-		attachment.format = rhi->GetSwapchainImageFormat();
-		attachment.initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		attachment.finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		attachment.type = RHI::ATTACHMENT_COLOR;
-		m_MainPass = rhi->CreateRenderPass(1, &attachment);
-
-		// create swapchain framebuffers
-		auto imageCount = rhi->GetSwapchainMaxImageCount();
-		auto swapchainExtent = rhi->GetSwapchainExtent();
-		m_SwapchianFramebuffers.resize(imageCount);
-		for(uint8_t i=0; i< imageCount; ++i) {
-			RHI::RImageView* imageView = rhi->GetSwapchainImageView(i);
-			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, 1, &imageView, swapchainExtent.width, swapchainExtent.height, 1);
-		}
+		// register window func
+		window->RegisterOnWindowSizeFunc([this](int w, int h) {
+			this->OnWindowSizeChanged((uint32_t)w, (uint32_t)h);
+		});
 
 	}
 	RenderSystem::~RenderSystem()
 	{
-		RHI::RHIInstance* rhi = RHI::GetInstance();
+		GET_RHI(rhi);
 		// wait cmds submit
 		rhi->QueueWaitIdle(rhi->GetGraphicsQueue());
 		m_UIRenderer.Release();
@@ -47,17 +36,28 @@ namespace Engine {
 			rhi->DestoryFramebuffer(framebuffer);
 		}
 		m_SwapchianFramebuffers.clear();
-
+		for(auto& cmd: m_CommandBuffers) {
+			rhi->FreeCommandBuffer(cmd);
+		}
 		rhi->DestroyRenderPass(m_MainPass);
 
 		rhi->Release();
 	}
 
 	void RenderSystem::Tick(){
-		// begin render pass;
+		// window is hided, pause rendering
+		if(!m_WindowAvaliable) {
+			return;
+		}
+
 		GET_RHI(rhi);
-		uint32_t swapchainImageIndex = rhi->PrepareRendering(m_CurrentFrameIndex);
-		RHI::RCommandBuffer* cmd = rhi->GetCurrentCommandBuffer(m_CurrentFrameIndex);
+		// begin render pass;
+		int swapchainImageIndex = rhi->PreparePresent(m_CurrentFrameIndex);
+		if(-1 == swapchainImageIndex) {
+			OnWindowSizeChanged(0, 0);
+			return;
+		}
+		RHI::RCommandBuffer* cmd = m_CommandBuffers[m_CurrentFrameIndex];
 		rhi->BeginCommandBuffer(cmd, 0);
 
 		// todo depth
@@ -73,13 +73,73 @@ namespace Engine {
 
 		rhi->CmdEndRenderPass(cmd);
 		rhi->EndCommandBuffer(cmd);
-		rhi->QueueSubmitRendering(cmd, m_CurrentFrameIndex);
-
+		int res = rhi->QueueSubmitPresent(cmd, m_CurrentFrameIndex);
+		if(-1 == res) {
+			OnWindowSizeChanged(0, 0);
+		}
 		m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 
 	}
 	void RenderSystem::InitUIPass(UIBase* ui)
 	{
 		m_UIRenderer.Initialize(ui, m_MainPass);
+	}
+
+	void RenderSystem::CreateRenderPasses()
+	{
+		GET_RHI(rhi);
+		// create render pass
+		RHI::RSAttachment attachment{};
+		attachment.format = rhi->GetSwapchainImageFormat();
+		attachment.initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		attachment.finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachment.type = RHI::ATTACHMENT_COLOR;
+
+		m_MainPass = rhi->CreateRenderPass(1, &attachment);
+	}
+
+	void RenderSystem::CreateSwapchainFramebuffers()
+	{
+		GET_RHI(rhi);
+		// create swapchain framebuffers
+		auto imageCount = rhi->GetSwapchainMaxImageCount();
+		auto swapchainExtent = rhi->GetSwapchainExtent();
+		m_SwapchianFramebuffers.resize(imageCount);
+		for (uint8_t i = 0; i < imageCount; ++i) {
+			RHI::RImageView* imageView = rhi->GetSwapchainImageView(i);
+			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, 1, &imageView, swapchainExtent.width, swapchainExtent.height, 1);
+		}
+	}
+
+	void RenderSystem::CreateCommandBuffers()
+	{
+		GET_RHI(rhi);
+		// create command buffers
+		m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+		for (uint8_t i = 0; i < m_CommandBuffers.size(); ++i) {
+			m_CommandBuffers[i] = rhi->AllocateCommandBuffer(RHI::COMMAND_BUFFER_LEVEL_PRIMARY);
+		}
+	}
+
+	void RenderSystem::OnWindowSizeChanged(uint32_t w, uint32_t h)
+	{
+		m_WindowAvaliable = (0 != w && 0 != h);
+		if(!m_WindowAvaliable) {
+			return;
+		}
+
+		// recreate resources
+		GET_RHI(rhi);
+		rhi->ResizeSwapchain(w, h);
+		for (auto* cmd : m_CommandBuffers) {
+			rhi->FreeCommandBuffer(cmd);
+		}
+		for (auto* fb : m_SwapchianFramebuffers) {
+			rhi->DestoryFramebuffer(fb);
+		}
+		rhi->DestroyRenderPass(m_MainPass);
+		CreateRenderPasses();
+		CreateSwapchainFramebuffers();
+		CreateCommandBuffers();
 	}
 }

@@ -49,7 +49,7 @@ namespace Editor {
 		//ImGui::Text("Hello World!");
 		//ImGui::End();
 		
-		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 		static float f = 0.0f;
 		static int counter = 0;

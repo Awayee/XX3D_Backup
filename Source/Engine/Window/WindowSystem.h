@@ -1,4 +1,6 @@
 #pragma once
+#include <functional>
+
 #include "InputEnum.h"
 
 
@@ -27,25 +29,25 @@ namespace Engine {
 		virtual void SetTitle(const char* title) = 0;
 		virtual void GetWindowSize(int* w, int* h) = 0;
 
-        //typedef std::function<void()>                   OnResetFunc;
-        //typedef std::function<void(EKeyCode, EInputType)> OnKeyFunc;
-        //typedef std::function<void(EButtonCode, EInputType)>      OnMouseButtonFunc;
-        //typedef std::function<void(double, double)>     OnCursorPosFunc;
-        //typedef std::function<void(int)>                OnCursorEnterFunc;
-        //typedef std::function<void(double, double)>     OnScrollFunc;
-        //typedef std::function<void(int, const char**)>  OnDropFunc;
-        //typedef std::function<void(int, int)>           OnWindowSizeFunc;
-        //typedef std::function<void()>                   OnWindowCloseFunc;
+        typedef std::function<void()>                   OnResetFunc;
+        typedef std::function<void(EKeyCode, EInputType)> OnKeyFunc;
+        typedef std::function<void(EButtonCode, EInputType)>      OnMouseButtonFunc;
+        typedef std::function<void(double, double)>     OnCursorPosFunc;
+        typedef std::function<void(int)>                OnCursorEnterFunc;
+        typedef std::function<void(double, double)>     OnScrollFunc;
+        typedef std::function<void(int, const char**)>  OnDropFunc;
+        typedef std::function<void(int, int)>           OnWindowSizeFunc;
+        typedef std::function<void()>                   OnWindowCloseFunc;
 
-        typedef void(*OnResetFunc)();
-        typedef void(*OnKeyFunc)(EKeyCode, EInputType);
-        typedef void(*OnMouseButtonFunc)(EButtonCode, EInputType);
-        typedef void(*OnCursorPosFunc)(double, double);
-        typedef void(*OnCursorEnterFunc)(bool);
-        typedef void(*OnScrollFunc)(double, double);
-        typedef void(*OnDropFunc)(int, const char**);
-        typedef void(*OnWindowSizeFunc)(int, int);
-        typedef void(*OnWindowCloseFunc)();
+        //typedef void(*OnResetFunc)();
+        //typedef void(*OnKeyFunc)(EKeyCode, EInputType);
+        //typedef void(*OnMouseButtonFunc)(EButtonCode, EInputType);
+        //typedef void(*OnCursorPosFunc)(double, double);
+        //typedef void(*OnCursorEnterFunc)(bool);
+        //typedef void(*OnScrollFunc)(double, double);
+        //typedef void(*OnDropFunc)(int, const char**);
+        //typedef void(*OnWindowSizeFunc)(int, int);
+        //typedef void(*OnWindowCloseFunc)();
 
         virtual void RegisterOnResetFunc(OnResetFunc func) { }
         virtual void RegisterOnKeyFunc(OnKeyFunc func) {  }

@@ -1,5 +1,5 @@
 #pragma once
-#include "RHIResources.h"
+#include "RHIClasses.h"
 #include "Core/Container/Container.h"
 
 namespace RHI{
@@ -10,12 +10,13 @@ namespace RHI{
 	public:
 		virtual void Initialize(const RSInitInfo* initInfo)=0;
 		virtual void Release() = 0;
-		virtual RCommandBuffer* GetCurrentCommandBuffer(uint8_t idx) = 0;
 		virtual uint8_t GetMaxFramesInFlight() = 0;
 		virtual const RSExtent2D& GetSwapchainExtent() = 0;
 		virtual RFormat GetSwapchainImageFormat() = 0;
 		virtual RImageView* GetSwapchainImageView(uint8_t i) = 0;
 		virtual uint32_t GetSwapchainMaxImageCount() = 0;
+		virtual RQueue* GetGraphicsQueue() = 0;
+		virtual void ResizeSwapchain(uint32_t width, uint32_t height) = 0;
 
 		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
@@ -23,10 +24,13 @@ namespace RHI{
 		virtual RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) = 0;
 		virtual void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) = 0;
 		virtual void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet*const* descriptorSets) = 0;
-		virtual void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout*const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
-		//virtual RPipeline* CreateGraphicsPipeline() = 0;
+		virtual RPipelineLayout* CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout*const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
+		virtual void DestroyPipelineLayout(RPipelineLayout* pipelineLayout) = 0;
+		virtual RPipeline* CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& createInfo, RPipelineLayout* layout, RRenderPass* renderPass, uint32_t subpass,
+			RPipeline* basePipeline, int32_t basePipelineIndex) = 0;
+		virtual RPipeline* CreateComputePipeline(const RPipelineShaderInfo& shader, RPipelineLayout* layout, RPipeline* basePipeline, uint32_t basePipelineIndex) = 0;
+		virtual void DestroyPipeline(RPipeline* pipeline) = 0;
 
-		virtual RQueue* GetGraphicsQueue() = 0;
 		virtual void QueueSubmit(RQueue* queue, 
 			uint32_t cmdCount, RCommandBuffer* cmds, 
 			uint32_t waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags, 
@@ -54,13 +58,13 @@ namespace RHI{
 		typedef void(*CommandBufferFunc)(RCommandBuffer*);
 		virtual void ImmediateCommit(CommandBufferFunc func) = 0;
 
-		virtual uint32_t PrepareRendering(uint8_t frameIndex) = 0; // return image index of the swapchain
-		virtual void QueueSubmitRendering(RCommandBuffer* cmd, uint8_t frameIndex) = 0;
+		virtual int PreparePresent(uint8_t frameIndex) = 0; // return image index of the swapchain, return -1 if out of date.
+		virtual int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) = 0; // return -1 if out of date
 
 		virtual void DestroyMemory(RMemory* memory) = 0;
 
 		// buffer
-		virtual RBuffer* CreatBuffer(size_t size, RBufferUsage usage) = 0;
+		virtual RBuffer* CreateBuffer(size_t size, RBufferUsage usage) = 0;
 		virtual void CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags,
 			RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* data) = 0;
 		virtual void DestroyBuffer(RBuffer* buffer) = 0;
@@ -73,7 +77,7 @@ namespace RHI{
 		virtual RImageView* CreateImageView(RImage* image, RImageViewType viewType, RImageAspectFlags aspectMast,
 			uint32_t baseMiplevel, uint32_t levelCount, uint32_t baseLayer,uint32_t layerCount) = 0;
 		virtual void DestroyImageView(RImageView* imageView) = 0;
-		virtual RSampler* CreateSampler(const RSSamplerInfo* samplerInfo) = 0;
+		virtual RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) = 0;
 
 	};
 }

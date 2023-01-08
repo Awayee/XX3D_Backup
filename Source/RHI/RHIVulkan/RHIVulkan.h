@@ -93,7 +93,6 @@ namespace RHI{
 		void InitializePhysicalDevice();
 		void CreateLogicalDevice();
 		void CreateCommandPools();
-		void CreateCommandBuffers();
 		void CreateDescriptorPool();
 		void CreateSyncResources();
 		void CreateMemoryAllocator();
@@ -107,23 +106,32 @@ namespace RHI{
 		void Initialize(const RSInitInfo* initInfo) override;
 		void Release() override;
 		RSVkImGuiInitInfo GetImGuiInitInfo();
-		RCommandBuffer* GetCurrentCommandBuffer(uint8_t idx) override;
 		uint8_t GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
 		RFormat GetSwapchainImageFormat() override { return (RFormat)m_SwapchainFormat.format; }
 		const RSExtent2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
 		RImageView* GetSwapchainImageView(uint8_t i) override;
 		uint32_t GetSwapchainMaxImageCount() override;
 		RQueue* GetGraphicsQueue() override;
+		void ResizeSwapchain(uint32_t width, uint32_t height) override;
 
 		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
+
+		// descriptor set
 		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
 		RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) override;
 		void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
 		void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) override;
 
-		void CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges)override;
+		// pipeline
+		RPipelineLayout* CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)override;
+		void DestroyPipelineLayout(RPipelineLayout* pipelineLayout) override;
+		RPipeline* CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& createInfo, RPipelineLayout* layout, RRenderPass* renderPass, uint32_t subpass,
+			RPipeline* basePipeline, int32_t basePipelineIndex) override;
+		RPipeline* CreateComputePipeline(const RPipelineShaderInfo& shader, RPipelineLayout* layout, RPipeline* basePipeline, uint32_t basePipelineIndex) override;
+		void DestroyPipeline(RPipeline* pipeline) override;
 
+		// command buffer
 		void QueueSubmit(RQueue* queue,
 			uint32_t cmdCount, RCommandBuffer* cmds,
 			uint32_t waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
@@ -144,13 +152,11 @@ namespace RHI{
 		void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion) override;
 		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) override;
 		void ImmediateCommit(CommandBufferFunc func) override;
-		uint32_t PrepareRendering(uint8_t frameIndex) override;
-		void QueueSubmitRendering(RCommandBuffer* cmd, uint8_t frameIndex) override;
-
-		void DestroyMemory(RMemory* memory)override;
+		int PreparePresent(uint8_t frameIndex) override;
+		int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) override;
 
 		// buffer
-		RBuffer* CreatBuffer(size_t size, RBufferUsage usage) override;
+		RBuffer* CreateBuffer(size_t size, RBufferUsage usage) override;
 		void CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags,
 			RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)override;
 		void DestroyBuffer(RBuffer* buffer) override;
@@ -163,6 +169,8 @@ namespace RHI{
 		RImageView* CreateImageView(RImage* image, RImageViewType viewType, RImageAspectFlags aspectMask,
 			uint32_t baseMipLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount) override;
 		void DestroyImageView(RImageView* imageView) override;
-		RSampler* CreateSampler(const RSSamplerInfo* samplerInfo) override;
+		RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) override;
+
+		void DestroyMemory(RMemory* memory)override;
 	};
 }
