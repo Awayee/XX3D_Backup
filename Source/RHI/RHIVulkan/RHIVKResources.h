@@ -13,6 +13,8 @@ namespace RHI {
 		vkHandle handle;\
 	}
 
+	class RHIVulkan;
+
 	struct RSVkImGuiInitInfo {
 		void* windowHandle;
 		VkInstance instance;
@@ -55,13 +57,14 @@ namespace RHI {
 
 	class RImageVk: public RImage {
 	public:
-		friend class RHIVulkan;
+		friend RHIVulkan;
 		VkImage handle;
 	};
 
 	class RImageViewVk: public RImageView {
 	public:
 		VkImageView handle;
+		friend RHIVulkan;
 	};
 
 	class RFramebufferVk: public RFramebuffer {
@@ -97,7 +100,7 @@ namespace RHI {
 	class RPipelineVk: public RPipeline {
 	public:
 		VkPipeline handle;
-		friend class RHIVulkan;
+		friend RHIVulkan;
 	};
 
 	class RDescriptorSetLayoutVk: public RDescriptorSetLayout {

@@ -294,4 +294,23 @@ namespace RHI {
 		const RDynamicState* pDynamicStates;
 	};
 
+
+	class RSampler;
+	class RImageView;
+	class RBuffer;
+
+	// use for update descriptor set
+	union RDescriptorInfo {
+		struct {
+			RSampler* sampler;
+			RImageView* imageView;
+		}imageInfo{ nullptr, nullptr };
+
+		struct {
+			RBuffer* buffer;
+			size_t offset;
+			size_t range;
+		}bufferInfo;
+	};
+
 }

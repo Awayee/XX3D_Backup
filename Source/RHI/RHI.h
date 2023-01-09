@@ -20,10 +20,16 @@ namespace RHI{
 
 		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
+
+		// descriptor set
 		virtual RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings) = 0;
 		virtual RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) = 0;
-		virtual void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) = 0;
-		virtual void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet*const* descriptorSets) = 0;
+		virtual void FreeDescriptorSet(RDescriptorSet* descriptorSet) = 0;
+		//virtual void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet*const* descriptorSets) = 0;
+		//virtual void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) = 0;
+		virtual void UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32_t binding, uint32_t arrayElement, uint32_t arrayCount, RDescriptorType type, const RDescriptorInfo& descriptorInfo) = 0;
+
+		// pipeline
 		virtual RPipelineLayout* CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout*const* pSetLayouts, uint32_t pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
 		virtual void DestroyPipelineLayout(RPipelineLayout* pipelineLayout) = 0;
 		virtual RPipeline* CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& createInfo, RPipelineLayout* layout, RRenderPass* renderPass, uint32_t subpass,

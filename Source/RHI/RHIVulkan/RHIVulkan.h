@@ -65,6 +65,8 @@ namespace RHI{
 		TVector<RImageViewVk> m_SwapchainImageViews;
 		VkRect2D m_Scissor;
 
+		bool m_IsRecording{ false }; // recording mode, some functions will not execute immediately
+
 		// function pointers
 		PFN_vkCmdBeginDebugUtilsLabelEXT _vkCmdBeginDebugUtilsLabelEXT;
 		PFN_vkCmdEndDebugUtilsLabelEXT   _vkCmdEndDebugUtilsLabelEXT;
@@ -120,8 +122,10 @@ namespace RHI{
 		// descriptor set
 		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
 		RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) override;
-		void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
-		void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) override;
+		//void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
+		//void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) override;
+		void FreeDescriptorSet(RDescriptorSet* descriptorSet) override;
+		void UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32_t binding, uint32_t arrayElement, uint32_t count, RDescriptorType type, const RDescriptorInfo& descriptorInfo) override;
 
 		// pipeline
 		RPipelineLayout* CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)override;

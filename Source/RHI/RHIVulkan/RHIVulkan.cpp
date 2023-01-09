@@ -517,6 +517,62 @@ namespace RHI {
 		return descriptorSet;
 	}
 
+	void RHIVulkan::FreeDescriptorSet(RDescriptorSet* descriptorSet)
+	{
+		RDescriptorSetVk* descirptorSetVk = (RDescriptorSetVk*)descriptorSet;
+		vkFreeDescriptorSets(m_Device, m_DescriptorPool, 1, &descirptorSetVk->handle);
+		delete descirptorSetVk;
+	}
+
+	void RHIVulkan::UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32_t binding, uint32_t arrayElement, uint32_t count, RDescriptorType type, const RDescriptorInfo& descriptorInfo)
+	{
+		VkDescriptorSet handle = ((RDescriptorSetVk*)descriptorSet)->handle;
+		VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr};
+		write.dstSet = handle;
+		write.dstBinding = binding;
+		write.dstArrayElement = arrayElement;
+		write.descriptorCount = count;
+		write.descriptorType = (VkDescriptorType)type;
+		switch(type) {
+			// buffer
+		case (DESCRIPTOR_TYPE_UNIFORM_BUFFER):
+		case (DESCRIPTOR_TYPE_STORAGE_BUFFER):
+		case (DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC):
+		case (DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC): {
+			VkDescriptorBufferInfo bufferInfo{
+				((RBufferVk*)descriptorInfo.bufferInfo.buffer)->handle,
+				descriptorInfo.bufferInfo.offset, descriptorInfo.bufferInfo.range };
+			write.pBufferInfo = &bufferInfo;
+			vkUpdateDescriptorSets(m_Device, 1, &write, 0, nullptr);
+			break;
+		}
+
+			// image
+		case (DESCRIPTOR_TYPE_SAMPLER):
+		case (DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER):
+		case (DESCRIPTOR_TYPE_SAMPLED_IMAGE):
+		case (DESCRIPTOR_TYPE_STORAGE_IMAGE): {
+			VkDescriptorImageInfo imageInfo{};
+			if (nullptr != descriptorInfo.imageInfo.sampler) {
+				imageInfo.sampler = ((RSamplerVk*)descriptorInfo.imageInfo.sampler)->handle;
+			}
+			if (nullptr != descriptorInfo.imageInfo.imageView) {
+				RImageViewVk* imageViewVk = (RImageViewVk*)descriptorInfo.imageInfo.imageView;
+				imageInfo.imageView = imageViewVk->handle;
+				imageInfo.imageLayout = (VkImageLayout)imageViewVk->GetLayout();
+			}
+			vkUpdateDescriptorSets(m_Device, 1, &write, 0, nullptr);
+			break;
+		}
+
+			// buffer view TODO
+		case (DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER):
+		case (DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER):{ }
+		default: break;
+		}
+	}
+
+	/*
 	void RHIVulkan::AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)
 	{
 		TArray<VkDescriptorSetLayout> layoutsVk(count);
@@ -542,10 +598,12 @@ namespace RHI {
 		TArray<VkDescriptorSet> descriptorSetsVk(count);
 		for(uint32_t i=0; i<count; ++i) {
 			descriptorSetsVk[i] = ((RDescriptorSetVk*)descriptorSets[i])->handle;
-			delete (descriptorSets + i);
+			delete descriptorSets[i];
 		}
 		vkFreeDescriptorSets(m_Device, m_DescriptorPool, count, descriptorSetsVk.Data());
 	}
+	*/
+	
 	RPipelineLayout* RHIVulkan::CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)
 	{
 		uint32_t i;
@@ -912,13 +970,14 @@ namespace RHI {
 	}
 	void RHIVulkan::CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32_t baseLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount, RImageAspectFlags aspect)
 	{
+		RImageVk* imageVk = (RImageVk*)image;
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = (VkImageLayout)oldLayout;
-		barrier.newLayout = (VkImageLayout)oldLayout;
+		barrier.newLayout = (VkImageLayout)newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = ((RImageVk*)image)->handle;
+		barrier.image = imageVk->handle;
 		barrier.subresourceRange.aspectMask = aspect;
 		barrier.subresourceRange.baseMipLevel = baseLevel;
 		barrier.subresourceRange.levelCount = levelCount;
@@ -928,7 +987,9 @@ namespace RHI {
 		VkPipelineStageFlags dstStage;
 		GetPipelineBarrierStage(barrier.oldLayout, barrier.newLayout, barrier.srcAccessMask, barrier.dstAccessMask, srcStage, dstStage);
 		vkCmdPipelineBarrier(((RCommandBufferVk*)cmd)->handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		imageVk->m_Layout = newLayout;
 	}
+
 	void RHIVulkan::CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32_t mipLevel, uint32_t baseLayout, uint32_t layerCount)
 	{
 		RImageVk* imageVk = (RImageVk*)image;
@@ -1132,6 +1193,7 @@ namespace RHI {
 		image->m_Type = type;
 		image->m_Extent = extent;
 		image->m_Format = format;
+		image->m_Layout = IMAGE_LAYOUT_UNDEFINED;
 		return image;
 	}
 
@@ -1186,8 +1248,11 @@ namespace RHI {
 		if (VK_SUCCESS != vkCreateImageView(m_Device, &imageViewCreateInfo, nullptr, &handle)) {
 			return nullptr;
 		}
+		RDescriptorInfo desInfo;
+
 		RImageViewVk* imageView = new RImageViewVk;
 		imageView->handle = handle;
+		imageView->m_Layout = image->GetLayout();
 		return imageView;
 	}
 

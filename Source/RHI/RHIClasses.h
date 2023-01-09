@@ -20,16 +20,21 @@ namespace RHI{
 		RImageType m_Type;
 		RFormat m_Format;
 		RSExtent3D m_Extent;
+		RImageLayout m_Layout;
 	public:
 		virtual ~RImage() {}
 		RImageType GetType() { return m_Type; }
 		RFormat GetFormat() { return m_Format; }
 		const RSExtent3D GetExtent() { return m_Extent; }
+		RImageLayout GetLayout() { return m_Layout; }
 	};
 
 	class RImageView {
+	protected:
+		RImageLayout m_Layout;
 	public:
 		virtual ~RImageView() {};
+		RImageLayout GetLayout() { return m_Layout; }
 	};
 
 	class RCommandBuffer {
