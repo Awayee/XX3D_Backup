@@ -304,13 +304,13 @@ namespace RHI {
 		struct {
 			RSampler* sampler;
 			RImageView* imageView;
-		}imageInfo{ nullptr, nullptr };
+		};
 
 		struct {
 			RBuffer* buffer;
 			size_t offset;
 			size_t range;
-		}bufferInfo;
+		};
 	};
 
 }

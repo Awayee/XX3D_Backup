@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/macro.h"
-#include<vulkan/vulkan.h>
 #include "Core/Container/Container.h"
-#include "RHI/RHIClasses.h"
+#include <vulkan/vulkan.h>
+#include "RHI/RHIVulkan/RHIVKResources.h"
 
 namespace RHI {
 

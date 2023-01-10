@@ -1,7 +1,6 @@
 #include "RHIVulkan.h"
 #include "VulkanUtil.h"
 #include <GLFW/glfw3.h>
-#include "Core/macro.h"
 #ifdef USE_VMA
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -540,8 +539,8 @@ namespace RHI {
 		case (DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC):
 		case (DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC): {
 			VkDescriptorBufferInfo bufferInfo{
-				((RBufferVk*)descriptorInfo.bufferInfo.buffer)->handle,
-				descriptorInfo.bufferInfo.offset, descriptorInfo.bufferInfo.range };
+				((RBufferVk*)descriptorInfo.buffer)->handle,
+				descriptorInfo.offset, descriptorInfo.range };
 			write.pBufferInfo = &bufferInfo;
 			vkUpdateDescriptorSets(m_Device, 1, &write, 0, nullptr);
 			break;
@@ -553,14 +552,15 @@ namespace RHI {
 		case (DESCRIPTOR_TYPE_SAMPLED_IMAGE):
 		case (DESCRIPTOR_TYPE_STORAGE_IMAGE): {
 			VkDescriptorImageInfo imageInfo{};
-			if (nullptr != descriptorInfo.imageInfo.sampler) {
-				imageInfo.sampler = ((RSamplerVk*)descriptorInfo.imageInfo.sampler)->handle;
+			if (nullptr != descriptorInfo.sampler) {
+				imageInfo.sampler = ((RSamplerVk*)descriptorInfo.sampler)->handle;
 			}
-			if (nullptr != descriptorInfo.imageInfo.imageView) {
-				RImageViewVk* imageViewVk = (RImageViewVk*)descriptorInfo.imageInfo.imageView;
+			if (nullptr != descriptorInfo.imageView) {
+				RImageViewVk* imageViewVk = (RImageViewVk*)descriptorInfo.imageView;
 				imageInfo.imageView = imageViewVk->handle;
 				imageInfo.imageLayout = (VkImageLayout)imageViewVk->GetLayout();
 			}
+			write.pImageInfo = &imageInfo;
 			vkUpdateDescriptorSets(m_Device, 1, &write, 0, nullptr);
 			break;
 		}

@@ -116,6 +116,9 @@ namespace RHI{
 		RQueue* GetGraphicsQueue() override;
 		void ResizeSwapchain(uint32_t width, uint32_t height) override;
 
+		void RecordBegin() override {};
+		void RecordEnd() override {};
+
 		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 

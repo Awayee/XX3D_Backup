@@ -18,6 +18,17 @@ namespace RHI{
 		virtual RQueue* GetGraphicsQueue() = 0;
 		virtual void ResizeSwapchain(uint32_t width, uint32_t height) = 0;
 
+		/**
+		 * \brief when RecordBegin is called, some functions are not executed until call RecordEnd, in order to reduce the interaction with graphics API, such as:
+		 * RecordBegin();
+		 * AllocateDescriptorSet(layout0);
+		 * AllocateDescriptorSet(layout1);
+		 * AllocateDescriptorSet(Layout2);
+		 * RecordEnd();
+		 */
+		virtual void RecordBegin() = 0;
+		virtual void RecordEnd() = 0;
+
 		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
 
