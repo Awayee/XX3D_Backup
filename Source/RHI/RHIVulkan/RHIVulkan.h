@@ -86,6 +86,9 @@ namespace RHI{
 		PFN_vkCmdBindDescriptorSets _vkCmdBindDescriptorSets;
 		PFN_vkCmdDrawIndexed        _vkCmdDrawIndexed;
 		PFN_vkCmdClearAttachments   _vkCmdClearAttachments;
+		PFN_vkCmdDraw				_vkCmdDraw;
+		PFN_vkCmdDispatch			_vkCmdDispatch;
+		PFN_vkCmdCopyBuffer			_vkCmdCopyBuffer;
 
 	private:
 		TVector<const char*> GetRequiredExtensions();
@@ -158,6 +161,17 @@ namespace RHI{
 		void CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32_t mipLevel, uint32_t baseLayout, uint32_t layerCount) override;
 		void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion) override;
 		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) override;
+
+		void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) override;
+		void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32_t firstSet) override;
+		void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32_t first, size_t offset) override;
+		void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, size_t offset) override;
+		void CmdDraw(RCommandBuffer* cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t firstInstance) override;
+		void CmdDrawIndexed(RCommandBuffer* cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) override;
+		void CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)override;
+		void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) override;
+		void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) override;
+
 		void ImmediateCommit(CommandBufferFunc func) override;
 		int PreparePresent(uint8_t frameIndex) override;
 		int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) override;

@@ -175,6 +175,9 @@ namespace RHI {
 		_vkCmdBindIndexBuffer = (PFN_vkCmdBindIndexBuffer)vkGetDeviceProcAddr(m_Device, "vkCmdBindIndexBuffer");
 		_vkCmdBindDescriptorSets = (PFN_vkCmdBindDescriptorSets)vkGetDeviceProcAddr(m_Device, "vkCmdBindDescriptorSets");
 		_vkCmdClearAttachments = (PFN_vkCmdClearAttachments)vkGetDeviceProcAddr(m_Device, "vkCmdClearAttachments");
+		_vkCmdDraw = (PFN_vkCmdDraw)vkGetDeviceProcAddr(m_Device, "vkCmdDraw");
+		_vkCmdDispatch = (PFN_vkCmdDispatch)vkGetDeviceProcAddr(m_Device, "vkCmdDispatch");
+		_vkCmdCopyBuffer = (PFN_vkCmdCopyBuffer)vkGetDeviceProcAddr(m_Device, "vkCmdCopyBuffer");
 
 		m_DepthFormat = FindDepthFormat(m_PhysicalDevice);
 	}
@@ -1024,6 +1027,74 @@ namespace RHI {
 		RImageVk* imageVk = (RImageVk*)image;
 		GenerateMipMap(((RCommandBufferVk*)cmd)->handle, imageVk->handle, levelCount, imageVk->m_Extent.width, imageVk->m_Extent.height, aspect, baseLayer, layerCount);
 	}
+
+	void RHIVulkan::CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline)
+	{
+		RPipelineVk* pipelineVk = (RPipelineVk*)pipeline;
+		_vkCmdBindPipeline(((RCommandBufferVk*)cmd)->handle, (VkPipelineBindPoint)pipelineVk->GetType(), pipelineVk->handle);
+	}
+
+	void RHIVulkan::CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32_t firstSet)
+	{
+		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
+		_vkCmdBindDescriptorSets(handle, (VkPipelineBindPoint)pipelineType, ((RPipelineLayoutVk*)layout)->handle,
+			firstSet, 1, &((RDescriptorSetVk*)descriptorSet)->handle, 0, nullptr);
+	}
+
+	void RHIVulkan::CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32_t first, size_t offset)
+	{
+		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
+		_vkCmdBindVertexBuffers(handle, first, 1, &((RBufferVk*)buffer)->handle, &offset);
+	}
+
+	void RHIVulkan::CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, size_t offset)
+	{
+		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
+		_vkCmdBindIndexBuffer(handle, ((RBufferVk*)buffer)->handle, offset, VK_INDEX_TYPE_UINT32);
+	}
+
+	void RHIVulkan::CmdDraw(RCommandBuffer* cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t firstInstance)
+	{
+		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
+		_vkCmdDraw(handle, vertexCount, instanceCount, firstIndex, firstInstance);
+	}
+
+	void RHIVulkan::CmdDrawIndexed(RCommandBuffer* cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)
+	{
+		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
+		_vkCmdDrawIndexed(handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+	}
+
+	void RHIVulkan::CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+	{
+		_vkCmdDispatch(((RCommandBufferVk*)cmd)->handle, groupCountX, groupCountY, groupCountZ);
+	}
+
+	void RHIVulkan::CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect)
+	{
+		VkClearAttachment clearAttachment;
+		clearAttachment.aspectMask = aspect;
+		clearAttachment.clearValue.color.float32[0] = color[0];
+		clearAttachment.clearValue.color.float32[1] = color[1];
+		clearAttachment.clearValue.color.float32[2] = color[2];
+		clearAttachment.clearValue.color.float32[3] = color[3];
+		VkClearRect clearRect;
+		clearRect.rect.extent.width = rect.extent.width;
+		clearRect.rect.extent.height = rect.extent.height;
+		clearRect.rect.offset.x = rect.offset.x;
+		clearRect.rect.offset.y = rect.offset.y;
+		clearRect.baseArrayLayer = 0;
+		clearRect.layerCount = 1;
+		_vkCmdClearAttachments(((RCommandBufferVk*)cmd)->handle, 1, &clearAttachment, 1, &clearRect);
+	}
+
+	void RHIVulkan::CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size)
+	{
+		VkBufferCopy copy{ srcOffset, dstOffset, size };
+		vkCmdCopyBuffer(((RCommandBufferVk*)cmd)->handle,
+			((RBufferVk*)srcBuffer)->handle, ((RBufferVk*)dstBuffer)->handle, 1, &copy);
+	}
+
 	void RHIVulkan::ImmediateCommit(CommandBufferFunc func)
 	{
 		RCommandBufferVk cmd;

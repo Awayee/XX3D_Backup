@@ -72,6 +72,16 @@ namespace RHI{
 		virtual void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRregion) = 0;
 		virtual void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) = 0;
 
+		virtual void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) = 0;
+		virtual void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32_t firstSet) = 0;
+		virtual void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32_t first, size_t offset) = 0;
+		virtual void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, size_t offset) = 0;
+		virtual void CmdDraw(RCommandBuffer* cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t firstInstance) = 0;
+		virtual void CmdDrawIndexed(RCommandBuffer* cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)= 0;
+		virtual void CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
+		virtual void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) = 0;
+		virtual void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) = 0;
+
 		typedef void(*CommandBufferFunc)(RCommandBuffer*);
 		virtual void ImmediateCommit(CommandBufferFunc func) = 0;
 
