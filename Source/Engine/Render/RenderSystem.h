@@ -2,6 +2,7 @@
 #include "UIBase.h"
 #include "RHI/RHIInstance.h"
 #include "UIRenderer.h"
+#include "Core/Container/Container.h"
 
 namespace Engine {
 	class WindowSystemBase;

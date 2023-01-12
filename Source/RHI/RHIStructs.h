@@ -128,7 +128,7 @@ namespace RHI {
 		RVertexInputRate inputRate;
 	};
 
-	struct RVertexInputAttributeDescription
+	struct RVertexInputAttribute
 	{
 		uint32_t location;
 		uint32_t binding;
@@ -140,7 +140,7 @@ namespace RHI {
 		uint32_t bindingCount;
 		const RVertexInputBinding* bindings;
 		uint32_t attributeCount;
-		const RVertexInputAttributeDescription* attributes;
+		const RVertexInputAttribute* attributes;
 	};
 
 	struct RPipelineInputAssembly
@@ -238,14 +238,14 @@ namespace RHI {
 		uint32_t bindingCount;
 		const RVertexInputBinding* bindings;
 		uint32_t attributeCount;
-		const RVertexInputAttributeDescription* attributes;
+		const RVertexInputAttribute* attributes;
 
 		// input assembly
 		RPrimitiveTopology topology{ PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
 		bool primitiveRestartEnable{ false };
 
 		// tessellation
-		uint32_t patchControlPoints;
+		uint32_t patchControlPoints{0};
 
 		// viewport
 		RSViewport viewport;
@@ -290,8 +290,8 @@ namespace RHI {
 		float blendConstants[4];
 
 		// dynamic
-		uint32_t dynamicStateCount;
-		const RDynamicState* pDynamicStates;
+		uint32_t dynamicStateCount{0};
+		const RDynamicState* pDynamicStates{nullptr};
 	};
 
 
