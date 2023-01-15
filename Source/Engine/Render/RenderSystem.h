@@ -1,7 +1,6 @@
 #pragma once
 #include "UIBase.h"
 #include "RHI/RHIInstance.h"
-#include "UIRenderer.h"
 #include "Core/Container/Container.h"
 
 namespace Engine {
@@ -9,13 +8,13 @@ namespace Engine {
 
 	class RenderSystem {
 	private:
-		UIRenderer m_UIRenderer;
 		//RenderPasses
 		RHI::RRenderPass* m_MainPass{nullptr};
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
 		TVector<RHI::RFramebuffer*> m_SwapchianFramebuffers;
 		uint8_t m_CurrentFrameIndex{0};
 		bool m_WindowAvailable{ true };
+		UIBase* m_UIContent;
 
 	public:
 		RenderSystem() = default;

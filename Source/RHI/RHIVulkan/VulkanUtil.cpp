@@ -123,15 +123,27 @@ namespace RHI {
 		}
 		//present mode
 		uint32_t presentModeCount;
-		VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr), "vkGetPhysicalDeviceSurfacePresentModesKHR");
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
 		TVector<VkPresentModeKHR> presentModes(presentModeCount);
-		VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data()), "vkGetPhysicalDeviceSurfacePresentModesKHR");
-		for (const auto& mode : presentModes) {
-			if (mode != VK_PRESENT_MODE_MAX_ENUM_KHR) {
-				info.swapchainPresentMode = mode;
-				break;
-			}
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
+		if(presentModes.empty()) {
+			return info;
 		}
+		TSort(presentModes.begin(), presentModes.end(), [](const VkPresentModeKHR& v1, const VkPresentModeKHR& v2) {
+			VkPresentModeKHR sortList[4]{
+				VK_PRESENT_MODE_IMMEDIATE_KHR,
+				VK_PRESENT_MODE_MAILBOX_KHR,
+				VK_PRESENT_MODE_FIFO_KHR,
+				VK_PRESENT_MODE_FIFO_RELAXED_KHR
+			};
+			int idx1{ INT16_MAX }, idx2{ INT16_MAX };
+			for(int i=0; i < std::size(sortList); ++i) {
+				if (i == v1) idx1 = i;
+				if (i == v2) idx2 = i;
+			}
+			return idx1 < idx2;
+		});
+		info.swapchainPresentMode = presentModes[0];
 
 		//extent
 		VkSurfaceCapabilitiesKHR capabilities;

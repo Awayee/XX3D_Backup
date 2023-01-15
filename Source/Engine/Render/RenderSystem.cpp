@@ -1,4 +1,5 @@
 #include "RenderSystem.h"
+#include "ImGuiImpl.h"
 #include "Engine/Window/WindowSystem.h"
 #include "RenderMacro.h"
 
@@ -31,7 +32,9 @@ namespace Engine {
 		GET_RHI(rhi);
 		// wait cmds submit
 		rhi->QueueWaitIdle(rhi->GetGraphicsQueue());
-		m_UIRenderer.Release();
+
+		ImGuiRelease();
+
 		for(auto& framebuffer: m_SwapchianFramebuffers) {
 			rhi->DestoryFramebuffer(framebuffer);
 		}
@@ -69,7 +72,12 @@ namespace Engine {
 		rhi->CmdBeginRenderPass(cmd, m_MainPass, m_SwapchianFramebuffers[swapchainImageIndex],
 			{ {0, 0}, rhi->GetSwapchainExtent() }, 1, &clearValue);
 
-		m_UIRenderer.Tick(cmd);
+		if(nullptr != m_UIContent) {
+			Engine::ImGuiNewFrame();
+			m_UIContent->Tick();
+			ImGui::Render();
+			Engine::ImGuiRenderDrawData(ImGui::GetDrawData(), cmd);
+		}
 
 		rhi->CmdEndRenderPass(cmd);
 		rhi->EndCommandBuffer(cmd);
@@ -82,7 +90,14 @@ namespace Engine {
 	}
 	void RenderSystem::InitUIPass(UIBase* ui)
 	{
-		m_UIRenderer.Initialize(ui, m_MainPass);
+		m_UIContent = ui;
+		Engine::ImGuiInitialize(m_MainPass, 0);
+		GET_RHI(rhi);
+		// upload font
+		rhi->ImmediateCommit([](RHI::RCommandBuffer* cmd) {
+			ImGuiCreateFontsTexture(cmd);
+			});
+		ImGuiDestroyFontUploadObjects();
 	}
 
 	void RenderSystem::CreateRenderPasses()

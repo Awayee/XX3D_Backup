@@ -18,7 +18,7 @@ namespace RHI{
 		virtual void ResizeSwapchain(uint32_t width, uint32_t height) = 0;
 
 		/**
-		 * \brief when RecordBegin is called, some functions are not executed until call RecordEnd, in order to reduce the interaction with graphics API, such as:
+		 * \brief if RecordBegin is called, some functions will not execute until call RecordEnd, in order to reduce the interaction with graphics API, such as:
 		 * RecordBegin();
 		 * AllocateDescriptorSet(layout0);
 		 * AllocateDescriptorSet(layout1);
