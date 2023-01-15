@@ -127,7 +127,7 @@ namespace RHI {
 		TVector<VkPresentModeKHR> presentModes(presentModeCount);
 		VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data()), "vkGetPhysicalDeviceSurfacePresentModesKHR");
 		for (const auto& mode : presentModes) {
-			if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+			if (mode != VK_PRESENT_MODE_MAX_ENUM_KHR) {
 				info.swapchainPresentMode = mode;
 				break;
 			}
@@ -153,6 +153,8 @@ namespace RHI {
 
 		VkPhysicalDeviceProperties properties;
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+		// discrete gpu is first
 
 		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
 			info.score += 100;
