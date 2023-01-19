@@ -3,19 +3,24 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+set(PROJECT_NAME "XX3D")
 
-project (xxEngine)
+project (${PROJECT_NAME})
 
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF)
 
-set(THIRD_PARTY ${xxEngine_SOURCE_DIR}/ThirdParty)
-set(SOURCE_DIR ${xxEngine_SOURCE_DIR}/Source)
-set(ASSETS_DIR ${xxEngine_SOURCE_DIR}/Assets)
+set(THIRD_PARTY ${${PROJECT_NAME}_SOURCE_DIR}/ThirdParty)
+set(SOURCE_DIR  ${${PROJECT_NAME}_SOURCE_DIR}/Source)
+set(ASSETS_DIR  ${${PROJECT_NAME}_SOURCE_DIR}/Assets)
 
-add_definitions(-DASSETS_PATH="${ASSETS_DIR}/" -DUSE_VMA)
+add_definitions(
+    -DASSETS_PATH="${ASSETS_DIR}/" 
+    -DUSE_VMA
+    -DPROJECT_NAME="${PROJECT_NAME}"
+)
 
 macro (DEPENDENCY TARGET_NAME DEPENDENCY_NAME)
 add_dependencies(${TARGET_NAME} ${DEPENDENCY_NAME})

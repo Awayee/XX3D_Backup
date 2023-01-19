@@ -9,7 +9,7 @@ namespace Engine {
 		// init rhi
 		{
 			RHI::RSInitInfo initInfo;
-			initInfo.applicationName = "xxEngine";
+			initInfo.applicationName = PROJECT_NAME;
 			initInfo.enableDebug = true;
 			initInfo.enableGeometryShader = true;
 			window->GetWindowSize(&initInfo.windowWidth, &initInfo.windowHeight);
