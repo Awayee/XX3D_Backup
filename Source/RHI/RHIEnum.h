@@ -1,12 +1,6 @@
 #pragma once
 
 namespace RHI{
-	enum RBufferUsage
-	{
-		RBufferUsage_None=1,
-		RBufferUsage_Dynamic=2,
-	};
-
 	enum RFormat {
         FORMAT_UNDEFINED = 0,
         FORMAT_R4G4_UNORM_PACK8 = 1,

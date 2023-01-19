@@ -1095,7 +1095,7 @@ namespace RHI {
 			((RBufferVk*)srcBuffer)->handle, ((RBufferVk*)dstBuffer)->handle, 1, &copy);
 	}
 
-	void RHIVulkan::ImmediateCommit(CommandBufferFunc func)
+	void RHIVulkan::ImmediateCommit(const CommandBufferFunc& func)
 	{
 		RCommandBufferVk cmd;
 
@@ -1180,13 +1180,13 @@ namespace RHI {
 		}
 		return 0;
 	}
-	void RHIVulkan::DestroyMemory(RMemory* memory)
+	void RHIVulkan::FreeMemory(RMemory* memory)
 	{
 		vmaFreeMemory(m_Vma, reinterpret_cast<RMemoryVma*>(memory)->handle);
 		delete memory;
 	}
 
-	RBuffer* RHIVulkan::CreateBuffer(size_t size, RBufferUsage usage)
+	RBuffer* RHIVulkan::CreateBuffer(size_t size, RBufferUsageFlags usage)
 	{
 		VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 		bufferCreateInfo.size = size;
@@ -1202,7 +1202,27 @@ namespace RHI {
 		return buffer;
 	}
 
-	void RHIVulkan::CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags, RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)
+	RMemory* RHIVulkan::CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, size_t dataSize, void* pData)
+	{
+		VmaAllocationCreateInfo info;
+		info.flags = 0;
+		info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		info.requiredFlags = (VkMemoryPropertyFlags)memoryProperty;
+		info.preferredFlags = (VkMemoryPropertyFlags)memoryProperty;
+		info.memoryTypeBits = 0;
+		info.pool = nullptr;
+		info.pUserData = pData;
+		info.priority = 1.0f;
+		VmaAllocation handle; 
+		if(VK_SUCCESS != vmaAllocateMemoryForBuffer(m_Vma, ((RBufferVk*)buffer)->handle, &info, &handle, nullptr)) {
+			return nullptr;
+		}
+		RMemoryVma* memory = new RMemoryVma;
+		memory->handle = handle;
+		return memory;
+	}
+
+	void RHIVulkan::CreateBufferWithMemory(size_t size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags, RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)
 	{
 		VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 		bufferCreateInfo.size = size;
@@ -1276,10 +1296,6 @@ namespace RHI {
 	RMemory* RHIVulkan::CreateImageMemory(RImage* image, RMemoryPropertyFlags memoryProperty, void* pData)
 	{
 		VkImage imageVk = reinterpret_cast<RImageVk*>(image)->handle;
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_Device, imageVk, &memRequirements);
-		RMemoryVma* memory = new RMemoryVma;
-
 		VmaAllocationCreateInfo info;
 		info.flags = 0;
 		info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -1289,8 +1305,12 @@ namespace RHI {
 		info.pool = nullptr;
 		info.pUserData = pData;
 		info.priority = 1.0f;
-		vmaAllocateMemoryForImage(m_Vma, imageVk, &info, &memory->handle, nullptr);
-		vmaBindImageMemory(m_Vma, memory->handle, imageVk);
+		VmaAllocation handle;
+		if (VK_SUCCESS != vmaAllocateMemoryForImage(m_Vma, imageVk, &info, &handle, nullptr) ||
+			VK_SUCCESS != vmaBindImageMemory(m_Vma, handle, imageVk)) {
+			return nullptr;
+		}
+		RMemoryVma* memory = new RMemoryVma;
 		return reinterpret_cast<RMemory*>(memory);
 	}
 

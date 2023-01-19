@@ -172,13 +172,14 @@ namespace RHI{
 		void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) override;
 		void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) override;
 
-		void ImmediateCommit(CommandBufferFunc func) override;
+		void ImmediateCommit(const CommandBufferFunc& func) override;
 		int PreparePresent(uint8_t frameIndex) override;
 		int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) override;
 
 		// buffer
-		RBuffer* CreateBuffer(size_t size, RBufferUsage usage) override;
-		void CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags,
+		RBuffer* CreateBuffer(size_t size, RBufferUsageFlags usage) override;
+		RMemory* CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, size_t dataSize, void* pData) override;
+		void CreateBufferWithMemory(size_t size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags,
 			RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)override;
 		void DestroyBuffer(RBuffer* buffer) override;
 
@@ -192,6 +193,6 @@ namespace RHI{
 		void DestroyImageView(RImageView* imageView) override;
 		RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) override;
 
-		void DestroyMemory(RMemory* memory)override;
+		void FreeMemory(RMemory* memory)override;
 	};
 }

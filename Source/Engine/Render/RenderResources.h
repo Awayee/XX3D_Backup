@@ -4,7 +4,9 @@
 #include "RHI/RHI.h"
 namespace Engine {
 
-	struct SVertex {
+	typedef uint32_t IndexType;
+
+	struct Vertex {
 		MATH::Vector3 position;
 		MATH::Vector3 normal;
 		MATH::Vector3 tangent;
@@ -13,8 +15,16 @@ namespace Engine {
 		static TVector<RHI::RVertexInputAttribute> GetInputAttributes();
 	};
 
-	struct SPrimitive {
-		TVector<SVertex> m_Vertices;
-		TVector<uint32_t> m_Indices;
+	class Primitive {
+	private:
+		uint32_t m_VertexCount;
+		uint32_t m_IndexCount;
+		RHI::RBuffer* m_VertexBuffer;
+		RHI::RMemory* m_VertexBufferMemory;
+		RHI::RBuffer* m_IndexBuffer;
+		RHI::RMemory* m_IndexBufferMemory;
+	public:
+		Primitive(const TVector<Vertex>& vertices, const TVector<IndexType>& indices);
+		~Primitive();
 	};
 }

@@ -1,8 +1,11 @@
 #pragma once
 #include "RHIClasses.h"
+#include <functional>
 
 namespace RHI{
 	typedef void(*DebugFunc)(const char*);
+	//typedef void(*CommandBufferFunc)(RCommandBuffer*);
+	typedef  std::function<void(RCommandBuffer*)> CommandBufferFunc;
 
 	class RHIInstance
 	{
@@ -80,18 +83,17 @@ namespace RHI{
 		virtual void CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
 		virtual void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) = 0;
 		virtual void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) = 0;
-
-		typedef void(*CommandBufferFunc)(RCommandBuffer*);
-		virtual void ImmediateCommit(CommandBufferFunc func) = 0;
+		virtual void ImmediateCommit(const CommandBufferFunc& func) = 0;
 
 		virtual int PreparePresent(uint8_t frameIndex) = 0; // return image index of the swapchain, return -1 if out of date.
 		virtual int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) = 0; // return -1 if out of date
 
-		virtual void DestroyMemory(RMemory* memory) = 0;
+		virtual void FreeMemory(RMemory* memory) = 0;
 
 		// buffer
-		virtual RBuffer* CreateBuffer(size_t size, RBufferUsage usage) = 0;
-		virtual void CreateBufferWithMemory(size_t size, RBufferUsage usage, RMemoryPropertyFlags memoryFlags,
+		virtual RBuffer* CreateBuffer(size_t size, RBufferUsageFlags usage) = 0;
+		virtual RMemory* CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, size_t dataSize, void* pData) = 0;
+		virtual void CreateBufferWithMemory(size_t size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags,
 			RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* data) = 0;
 		virtual void DestroyBuffer(RBuffer* buffer) = 0;
 

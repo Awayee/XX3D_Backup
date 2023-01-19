@@ -25,7 +25,7 @@ namespace RHI{
 		virtual ~RImage() {}
 		RImageType GetType() { return m_Type; }
 		RFormat GetFormat() { return m_Format; }
-		const RSExtent3D GetExtent() { return m_Extent; }
+		const RSExtent3D& GetExtent() { return m_Extent; }
 		RImageLayout GetLayout() { return m_Layout; }
 	};
 
@@ -63,6 +63,13 @@ namespace RHI{
 	};
 
 	class RBuffer {};
+
+	struct BufferRange {
+		RBuffer* buffer{nullptr};
+		size_t   offset{0};
+		size_t   range {0};
+	};
+
 	class RTexture {};
 	class RShader {};
 

@@ -5,7 +5,7 @@
 namespace Engine {
 	class RenderScene {
 	private:
-		TVector<SPrimitive> m_Primitives;
+		TVector<Primitive> m_Primitives;
 	public:
 		
 	};
