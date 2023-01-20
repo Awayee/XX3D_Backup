@@ -18,6 +18,8 @@ namespace RHI{
 		virtual RImageView* GetSwapchainImageView(uint8_t i) = 0;
 		virtual uint32_t GetSwapchainMaxImageCount() = 0;
 		virtual RQueue* GetGraphicsQueue() = 0;
+		virtual RFormat GetDepthFormat() = 0;
+
 		virtual void ResizeSwapchain(uint32_t width, uint32_t height) = 0;
 
 		/**

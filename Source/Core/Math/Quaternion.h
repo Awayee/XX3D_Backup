@@ -1,50 +1,19 @@
 #pragma once
 #include "Vector.h"
-namespace MATH {
-	class Quaternion {
+namespace Math {
+	MATH_GENERIC class Quaternion {
 	public:
-		float x{ 0.0f }, y{ 0.0f }, z{ 0.0f }, w{ 1.0f };
+		T x{ 0.0f };
+		T y{ 0.0f };
+		T z{ 0.0f };
+		T w{ 1.0f };
 		Quaternion() = default;
-		Quaternion(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {};
-        void FromAngleAxis(float a, const Vector3& axis);
-        static Quaternion AngleAxis(float a, const Vector3& axis) {
-            Quaternion q;
-            q.FromAngleAxis(a, axis);
-            return q;
-        }
-        Vector3 RotateVector3(const Vector3& v) const;
-        Quaternion Inverse() const // apply to non-zero quaternion
-        {
-            float norm = w * w + x * x + y * y + z * z;
-            if (norm > 0.0)
-            {
-                float inv_norm = 1.0f / norm;
-                return Quaternion(w * inv_norm, -x * inv_norm, -y * inv_norm, -z * inv_norm);
-            }
-            else
-            {
-                // return an invalid result to flag the error
-                return Quaternion{};
-            }
-        }
-        Vector3 Quaternion::operator*(const Vector3& v) const
-        {
-            // nVidia SDK implementation
-            Vector3 uv, uuv;
-            Vector3 qvec(x, y, z);
-            uv = qvec.Cross(v);
-            uuv = qvec.Cross(uv);
-            uv *= (2.0f * w);
-            uuv *= 2.0f;
-
-            return v + uv + uuv;
-        }
-        Quaternion operator*(const Quaternion& rhs) const
-        {
-            return Quaternion(w * rhs.w - x * rhs.x - y * rhs.y - z * rhs.z,
-                w * rhs.x + x * rhs.w + y * rhs.z - z * rhs.y,
-                w * rhs.y + y * rhs.w + z * rhs.x - x * rhs.z,
-                w * rhs.z + z * rhs.w + x * rhs.y - y * rhs.x);
-        }
+		Quaternion(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {};
+        void FromAngleAxis(T a, const Vector3<T>& axis);
+        static Quaternion<T> AngleAxis(T a, const Vector3<T>& axis);
+        Vector3<T> RotateFVector3(const Vector3<T>& v) const;
+        Quaternion<T> Inverse() const; // apply to non-zero quaternion
+        Vector3<T> operator*(const Vector3<T>& v) const;
+		Quaternion<T> operator*(const Quaternion<T>& rhs) const;
 	};
 }

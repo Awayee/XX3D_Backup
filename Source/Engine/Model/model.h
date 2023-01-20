@@ -11,7 +11,7 @@ namespace Engine {
 
 	public:
 		Model(const char* file);
-		Model(const char* file, MATH::Vector3& pos);
+		Model(const char* file, Math::FVector3& pos);
 		~Model();
 	};
 }

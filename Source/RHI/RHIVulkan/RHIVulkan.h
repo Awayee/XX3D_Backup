@@ -117,6 +117,8 @@ namespace RHI{
 		RImageView* GetSwapchainImageView(uint8_t i) override;
 		uint32_t GetSwapchainMaxImageCount() override;
 		RQueue* GetGraphicsQueue() override;
+		RFormat GetDepthFormat() override { return (RFormat)m_DepthFormat; };
+
 		void ResizeSwapchain(uint32_t width, uint32_t height) override;
 
 		void RecordBegin() override {};

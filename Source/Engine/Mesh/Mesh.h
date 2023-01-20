@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Math/CoreMath.h"
+#include "Core/Math/Math.h"
 #include "Core/Memory/SmartPointer.h"
 #include "Engine/Render/RenderResources.h"
 

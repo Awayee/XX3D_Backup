@@ -12,6 +12,10 @@ namespace Engine {
 		RHI::RRenderPass* m_MainPass{nullptr};
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
 		TVector<RHI::RFramebuffer*> m_SwapchianFramebuffers;
+		RHI::RImage* m_DepthImage;
+		RHI::RImageView* m_DepthImageView;
+		RHI::RFramebuffer* m_DepthFramebuffer;
+
 		uint8_t m_CurrentFrameIndex{0};
 		bool m_WindowAvailable{ true };
 		UIBase* m_UIContent;

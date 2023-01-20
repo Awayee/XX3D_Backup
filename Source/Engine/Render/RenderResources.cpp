@@ -58,7 +58,7 @@ namespace Engine {
 		});
 		rhi->DestroyBuffer(stagingBuffer);
 		rhi->FreeMemory(stagingMemory);
-		if(stagingBuffer1) {
+		if(nullptr != stagingBuffer1) {
 			rhi->DestroyBuffer(stagingBuffer1);
 			rhi->FreeMemory(stagingMemory1);
 		}

@@ -5,8 +5,9 @@
 #include "Vector.h"
 #include "Quaternion.h"
 #include "Matrix.h"
+#include <glm/glm.hpp>
 
-namespace MATH {
+namespace Math {
 	const float PI = 3.14159265358979323846264338327950288f;
 	//const float Deg2Rad = PI / 180.0f;
 	const float Deg2Rad = 0.017453292519943295f;
