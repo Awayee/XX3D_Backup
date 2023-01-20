@@ -33,3 +33,5 @@ add_subdirectory("ThirdParty")
 add_subdirectory("Source")
 add_subdirectory("Editor")
 add_subdirectory("Runtime")
+
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "Editor")
