@@ -1,5 +1,5 @@
 #include "RenderResources.h"
-#include "RHI/RHIInstance.h"
+#include "RHI/RHI.h"
 
 namespace Engine {
 	RHI::RVertexInputBinding Vertex::GetInputBindings() { return { 0, sizeof(Vertex), RHI::VERTEX_INPUT_RATE_VERTEX }; }

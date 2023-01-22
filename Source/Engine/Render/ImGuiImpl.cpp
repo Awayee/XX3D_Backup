@@ -1,6 +1,6 @@
 #include "ImGuiImpl.h"
 #include "Resource/Config/Config.h"
-#include "RHI/RHIInstance.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIVulkan/RHIVulkan.h"
 
 #include <backends/imgui_impl_vulkan.h>
@@ -11,7 +11,7 @@
 namespace Engine {
 
 #define BRANCH_VULKAN \
-	if(Resource::RHI_Vulkan == Resource::GetConfigManager()->GetRHIType()) {
+	if(RHI_Vulkan == GetConfig()->GetRHIType()) {
 
 #define BRANCH_END return ;}
 
@@ -43,8 +43,9 @@ namespace Engine {
 		ImGui_ImplGlfw_Shutdown();
 		BRANCH_END
 	}
-	void ImGuiRenderDrawData(ImDrawData* data, RHI::RCommandBuffer* cmd) {
-		BRANCH_VULKAN ImGui_ImplVulkan_RenderDrawData(data, reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->handle); BRANCH_END
+	void ImGuiRenderDrawData(RHI::RCommandBuffer* cmd) {
+		ImGui::Render();
+		BRANCH_VULKAN ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->handle); BRANCH_END
 	}
 	void ImGuiCreateFontsTexture(RHI::RCommandBuffer* cmd)
 	{

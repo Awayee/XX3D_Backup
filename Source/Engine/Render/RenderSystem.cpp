@@ -2,6 +2,7 @@
 #include "ImGuiImpl.h"
 #include "Engine/Window/WindowSystem.h"
 #include "RenderMacro.h"
+#include "Resource/Config/Config.h"
 
 namespace Engine {
 	RenderSystem::RenderSystem(WindowSystemBase* window)
@@ -17,8 +18,9 @@ namespace Engine {
 			initInfo.maxFramesInFlight = MAX_FRAMES_IN_FLIGHT;
 			RHI::GetInstance()->Initialize(&initInfo);
 		}
+		CreateDepthImage();
 		CreateRenderPasses();
-		CreateSwapchainFramebuffers();
+		CreateFramebuffers();
 		CreateCommandBuffers();
 
 		// register window func
@@ -30,19 +32,23 @@ namespace Engine {
 	RenderSystem::~RenderSystem()
 	{
 		GET_RHI(rhi);
-		// wait cmds submit
 		rhi->QueueWaitIdle(rhi->GetGraphicsQueue());
 
 		ImGuiRelease();
 
 		for(auto& framebuffer: m_SwapchianFramebuffers) {
-			rhi->DestoryFramebuffer(framebuffer);
+			rhi->DestroyFramebuffer(framebuffer);
 		}
 		m_SwapchianFramebuffers.clear();
 		for(auto& cmd: m_CommandBuffers) {
 			rhi->FreeCommandBuffer(cmd);
 		}
-		rhi->DestroyRenderPass(m_MainPass);
+		m_DepthImage.reset();
+
+		for(auto pass: m_Passes) {
+			if(pass) rhi->DestroyRenderPass(pass);
+		}
+		m_Passes.clear();
 
 		rhi->Release();
 	}
@@ -63,20 +69,27 @@ namespace Engine {
 		RHI::RCommandBuffer* cmd = m_CommandBuffers[m_CurrentFrameIndex];
 		rhi->BeginCommandBuffer(cmd, 0);
 
-		// todo depth
-		RHI::RSClear clearValue;
-		clearValue.clearValue = { 0.0f, 0.0f, 0.0f, 0.0f };
-		//RHI::RSClear clearValues[2];
-		//clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
-		//clearValues[1].depthStencil = { 1.0f, 0 };
-		rhi->CmdBeginRenderPass(cmd, m_MainPass, m_SwapchianFramebuffers[swapchainImageIndex],
-			{ {0, 0}, rhi->GetSwapchainExtent() }, 1, &clearValue);
+		// render scene forward
+		RHI::RSClear clearValues[2];
+		clearValues[0].clearType = RHI::CLEAR_VALUE_COLOR;
+		clearValues[0].clearValue.color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		clearValues[1].clearType = RHI::CLEAR_VALUE_DEPTH_STENCIL;
+		clearValues[1].clearValue.depthStencil = { 1.0f, 0 };
+		rhi->CmdBeginRenderPass(cmd, m_Passes[PASS_MAIN], m_SwapchianFramebuffers[swapchainImageIndex],
+			{ {0, 0}, rhi->GetSwapchainExtent() }, 2, clearValues);
 
+		if(RENDER_DEFERRED == GetConfig()->GetRenderPath()) {
+			RenderSceneDeferred(cmd);
+		}
+		else if (RENDER_FORWARD == GetConfig()->GetRenderPath()) {
+			RenderSceneForward(cmd);
+		}
+
+		// render ui
 		if(nullptr != m_UIContent) {
 			Engine::ImGuiNewFrame();
 			m_UIContent->Tick();
-			ImGui::Render();
-			Engine::ImGuiRenderDrawData(ImGui::GetDrawData(), cmd);
+			Engine::ImGuiRenderDrawData(cmd);
 		}
 
 		rhi->CmdEndRenderPass(cmd);
@@ -91,7 +104,7 @@ namespace Engine {
 	void RenderSystem::InitUIPass(UIBase* ui)
 	{
 		m_UIContent = ui;
-		Engine::ImGuiInitialize(m_MainPass, 0);
+		Engine::ImGuiInitialize(m_Passes[PASS_MAIN], 0);
 		GET_RHI(rhi);
 		// upload font
 		rhi->ImmediateCommit([](RHI::RCommandBuffer* cmd) {
@@ -100,20 +113,33 @@ namespace Engine {
 		ImGuiDestroyFontUploadObjects();
 	}
 
+	void RenderSystem::CreateDepthImage()
+	{
+		GET_RHI(rhi);
+		m_DepthImage.reset(new Texture2D(rhi->GetDepthFormat(), rhi->GetSwapchainExtent().width, rhi->GetSwapchainExtent().height,
+			RHI::IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, nullptr));
+	}
+
 	void RenderSystem::CreateRenderPasses()
 	{
 		GET_RHI(rhi);
-		// create render pass
-		RHI::RSAttachment attachment{};
-		attachment.format = rhi->GetSwapchainImageFormat();
-		attachment.initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		attachment.finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		attachment.type = RHI::ATTACHMENT_COLOR;
 
-		m_MainPass = rhi->CreateRenderPass(1, &attachment);
+		// create render pass
+		RHI::RSAttachment attachment[2];
+		attachment[0].format = rhi->GetSwapchainImageFormat();
+		attachment[0].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		attachment[0].finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachment[0].type = RHI::ATTACHMENT_COLOR;
+		attachment[1].format = rhi->GetDepthFormat();
+		attachment[1].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		attachment[1].finalLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachment[1].type = RHI::ATTACHMENT_DEPTH;
+
+		m_Passes.resize(PASS_COUNT);
+		m_Passes[PASS_MAIN] = rhi->CreateRenderPass(2, attachment);
 	}
 
-	void RenderSystem::CreateSwapchainFramebuffers()
+	void RenderSystem::CreateFramebuffers()
 	{
 		GET_RHI(rhi);
 		// create swapchain framebuffers
@@ -121,8 +147,8 @@ namespace Engine {
 		auto swapchainExtent = rhi->GetSwapchainExtent();
 		m_SwapchianFramebuffers.resize(imageCount);
 		for (uint8_t i = 0; i < imageCount; ++i) {
-			RHI::RImageView* imageView = rhi->GetSwapchainImageView(i);
-			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_MainPass, 1, &imageView, swapchainExtent.width, swapchainExtent.height, 1);
+			RHI::RImageView* imageVies[2] = { rhi->GetSwapchainImageView(i), m_DepthImage->GetImageView() };
+			m_SwapchianFramebuffers[i] = rhi->CreateFrameBuffer(m_Passes[PASS_MAIN], 2, imageVies, swapchainExtent.width, swapchainExtent.height, 1);
 		}
 	}
 
@@ -146,15 +172,24 @@ namespace Engine {
 		// recreate resources
 		GET_RHI(rhi);
 		rhi->ResizeSwapchain(w, h);
-		for (auto* cmd : m_CommandBuffers) {
-			rhi->FreeCommandBuffer(cmd);
+		for (auto cmd : m_CommandBuffers) {
+			if(cmd)rhi->FreeCommandBuffer(cmd);
 		}
-		for (auto* fb : m_SwapchianFramebuffers) {
-			rhi->DestoryFramebuffer(fb);
+		for (auto fb : m_SwapchianFramebuffers) {
+			if(fb)rhi->DestroyFramebuffer(fb);
 		}
-		rhi->DestroyRenderPass(m_MainPass);
+		for(auto pass: m_Passes) {
+			if(pass) rhi->DestroyRenderPass(pass);
+		}
+		CreateDepthImage();
 		CreateRenderPasses();
-		CreateSwapchainFramebuffers();
+		CreateFramebuffers();
 		CreateCommandBuffers();
+	}
+	void RenderSystem::RenderSceneForward(RHI::RCommandBuffer* cmd)
+	{
+	}
+	void RenderSystem::RenderSceneDeferred(RHI::RCommandBuffer* cmd)
+	{
 	}
 }

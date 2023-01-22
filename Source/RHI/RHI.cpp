@@ -1,21 +1,21 @@
-#include "RHIInstance.h"
+#include "RHI.h"
 #include "RHIVulkan/RHIVulkan.h"
 #include "Resource/Config/Config.h"
 #include "Core/macro.h"
-#include <memory>
-#include <mutex>
+#include "Core/Memory/SmartPointer.h"
+#include "Core/Concurrency/Concurrency.h"
 
 namespace RHI{
 
 	RHIInstance* GetInstance() {
-		static std::unique_ptr<RHIInstance> s_Instance;
-		static std::mutex s_InstanceMutex;
+		static TUniquePtr<RHIInstance> s_Instance;
+		static Mutex s_InstanceMutex;
 
 		if(nullptr == s_Instance) {
-			std::lock_guard<std::mutex> lock(s_InstanceMutex);
+			MutexLock lock(s_InstanceMutex);
 			if(nullptr == s_Instance) {
-				Resource::RHIType rhiType = Resource::GetConfigManager()->GetRHIType();
-				if(Resource::RHI_Vulkan == rhiType) {
+				ERHIType rhiType = GetConfig()->GetRHIType();
+				if(RHI_Vulkan == rhiType) {
 					s_Instance.reset(new RHIVulkan());
 				}
 				else {

@@ -34,6 +34,7 @@ namespace RHI{
 		virtual void RecordEnd() = 0;
 
 		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
+		virtual RRenderPass* CreateRenderPass(const RRenderPassData& data) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
 
 		// descriptor set
@@ -59,7 +60,7 @@ namespace RHI{
 			RFence* fence) = 0;
 		virtual void QueueWaitIdle(RQueue* queue) = 0;
 		virtual RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers) = 0;
-		virtual void DestoryFramebuffer(RFramebuffer* framebuffer) = 0;
+		virtual void DestroyFramebuffer(RFramebuffer* framebuffer) = 0;
 		// cmd
 		virtual RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level) = 0;
 		virtual void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) = 0;
@@ -85,8 +86,11 @@ namespace RHI{
 		virtual void CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
 		virtual void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) = 0;
 		virtual void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) = 0;
-		virtual void ImmediateCommit(const CommandBufferFunc& func) = 0;
+		// cmd debug
+		virtual void CmdBeginDebugLabel(RCommandBuffer* cmd, const char* msg, const float* color = nullptr) = 0;
+		virtual void CmdEndDebugLabel(RCommandBuffer* cmd) = 0;
 
+		virtual void ImmediateCommit(const CommandBufferFunc& func) = 0;
 		virtual int PreparePresent(uint8_t frameIndex) = 0; // return image index of the swapchain, return -1 if out of date.
 		virtual int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) = 0; // return -1 if out of date
 
@@ -110,4 +114,10 @@ namespace RHI{
 		virtual RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) = 0;
 
 	};
+
+	RHIInstance* GetInstance();
 }
+
+#define RHI_INSTANCE RHI::GetInstance()
+
+#define GET_RHI(x) RHI::RHIInstance* x = RHI::GetInstance()

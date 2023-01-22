@@ -5,7 +5,6 @@
 #include "Vector.h"
 #include "Quaternion.h"
 #include "Matrix.h"
-#include <glm/glm.hpp>
 
 namespace Math {
 	const float PI = 3.14159265358979323846264338327950288f;

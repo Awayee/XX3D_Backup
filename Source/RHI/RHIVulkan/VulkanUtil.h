@@ -19,7 +19,7 @@ namespace RHI {
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* data)
 	{
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+		ERROR("[Vulkan Error] %s", pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 
@@ -115,6 +115,31 @@ namespace RHI {
 		depthStencilInfo.minDepthBounds = info.minDepthBounds;
 		depthStencilInfo.maxDepthBounds = info.maxDepthBounds;
 		return depthStencilInfo;
+	}
+
+	inline VkAttachmentDescription ResolveAttachmentDesc(const RSAttachment& attachment) {
+		VkAttachmentDescription desc;
+		desc.flags = 0;
+		desc.format =                      (VkFormat)attachment.format;
+		desc.samples =        (VkSampleCountFlagBits)attachment.sampleCount;
+		desc.loadOp =            (VkAttachmentLoadOp)attachment.loadOp;
+		desc.storeOp =          (VkAttachmentStoreOp)attachment.storeOp;
+		desc.stencilLoadOp =     (VkAttachmentLoadOp)attachment.stencilLoadOp;
+		desc.stencilStoreOp =   (VkAttachmentStoreOp)attachment.stencilStoreOp;
+		desc.initialLayout =          (VkImageLayout)attachment.initialLayout;
+		desc.finalLayout =            (VkImageLayout)attachment.finalLayout;
+		return desc;
+	}
+
+	inline VkSubpassDependency ResolveSubpassDependency(const RSubPassDependency& dependency) {
+		VkSubpassDependency d;
+		d.srcSubpass = dependency.SrcSubPass;
+		d.srcStageMask = dependency.SrcStage;
+		d.srcAccessMask = dependency.SrcAccess;
+		d.dstSubpass = dependency.DstSubPass;
+		d.dstStageMask = dependency.DstStage;
+		d.dstAccessMask = dependency.DstAccess;
+		return d;
 	}
 
 	void FindQueueFamilyIndex(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, int* pGraphicsIndex, int* pPresentIndex, int* pComputeIndex);

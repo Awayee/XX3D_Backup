@@ -7,6 +7,7 @@
 #else
 #include <vulkan/vulkan.h>
 #endif
+#include "Core/Memory/SmartPointer.h"
 
 namespace RHI {
 
@@ -426,7 +427,7 @@ namespace RHI {
 		info.attachmentCount = attachmentCount;
 		TArray<VkAttachmentDescription> descs(attachmentCount);
 		TVector<VkAttachmentReference> colorRefs;
-		std::unique_ptr<VkAttachmentReference> depthRefPtr;
+		TUniquePtr<VkAttachmentReference> depthRefPtr;
 		for(uint32_t i=0; i<attachmentCount; ++i) {
 			descs[i].flags = 0;
 			descs[i].format = (VkFormat)attachments[i].format;
@@ -441,7 +442,7 @@ namespace RHI {
 				colorRefs.push_back({i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
 			}
 			else if (attachments[i].type == ATTACHMENT_DEPTH) {
-				depthRefPtr.reset(new VkAttachmentReference{i, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL });
+				depthRefPtr.reset(new VkAttachmentReference{i, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
 			}
 		}
 		info.pAttachments = descs.Data();
@@ -472,6 +473,64 @@ namespace RHI {
 		RRenderPassVk* pass = new RRenderPassVk;
 		pass->handle = handle;
 		return reinterpret_cast<RRenderPass*>(pass);
+	}
+	RRenderPass* RHIVulkan::CreateRenderPass(const RRenderPassData& data)
+	{
+		uint32_t i;
+		TVector<VkAttachmentDescription> attachments;
+
+		// sub passes
+		TArray<VkSubpassDescription> subPasses(data.SubPasses.size());
+		TArray<TVector<VkAttachmentReference>> inputAttachments(data.SubPasses.size());
+		TArray<TVector<VkAttachmentReference>> colorAttachments(data.SubPasses.size());
+		TArray<VkAttachmentReference> depthAttachments(data.SubPasses.size());
+
+		for(i=0; i<data.SubPasses.size(); ++i) {
+			subPasses[i].pipelineBindPoint = (VkPipelineBindPoint)data.SubPasses[i].Type;
+			uint32_t j;
+			for(j=0; j<data.SubPasses[i].InputAttachments.size(); ++j) {
+				VkAttachmentDescription desc = ResolveAttachmentDesc(data.SubPasses[i].InputAttachments[j]);
+				inputAttachments[i].push_back({ (uint32_t)(attachments.size()), desc.finalLayout });
+				attachments.push_back(std::move(desc));
+			}
+			subPasses[i].inputAttachmentCount = data.SubPasses[i].InputAttachments.size();
+			subPasses[i].pInputAttachments = inputAttachments[i].data();
+
+			for(j=0; j<data.SubPasses[i].ColorAttachments.size(); ++j) {
+				VkAttachmentDescription desc = ResolveAttachmentDesc(data.SubPasses[i].InputAttachments[j]);
+				colorAttachments[i].push_back({ (uint32_t)(attachments.size()), desc.finalLayout });
+				attachments.push_back(std::move(desc));
+			}
+			subPasses[i].colorAttachmentCount = data.SubPasses[i].ColorAttachments.size();
+			subPasses[i].pColorAttachments = colorAttachments[i].data();
+
+			if(!data.SubPasses[i].DepthStencilAttachments.empty()) {
+				auto desc = ResolveAttachmentDesc(data.SubPasses[i].DepthStencilAttachments[0]);
+				depthAttachments[i] = { (uint32_t)(attachments.size()), desc.finalLayout };
+				attachments.push_back(std::move(desc));
+			}
+		}
+
+		// sub pass dependencies
+		TArray<VkSubpassDependency> dependencies(data.Dependencies.size());
+		for(i=0; i<data.Dependencies.size(); ++i) {
+			dependencies[i] = ResolveSubpassDependency(data.Dependencies[i]);
+		}
+
+		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, nullptr };
+		info.attachmentCount = attachments.size();
+		info.pAttachments = attachments.data();
+		info.subpassCount = data.SubPasses.size();
+		info.pSubpasses = subPasses.Data();
+		info.dependencyCount = data.Dependencies.size();
+		info.pDependencies = dependencies.Data();
+		VkRenderPass handle;
+		if(VK_SUCCESS != vkCreateRenderPass(m_Device, &info, nullptr, &handle)) {
+			return nullptr;
+		}
+		RRenderPassVk* renderPass = new RRenderPassVk;
+		renderPass->handle = handle;
+		return renderPass;
 	}
 	void RHIVulkan::DestroyRenderPass(RRenderPass* pass)
 	{
@@ -901,7 +960,7 @@ namespace RHI {
 		return framebuffer;
 	}
 
-	void RHIVulkan::DestoryFramebuffer(RFramebuffer* framebuffer)
+	void RHIVulkan::DestroyFramebuffer(RFramebuffer* framebuffer)
 	{
 		RFramebufferVk* framebufferVk = (RFramebufferVk*)framebuffer;
 		vkDestroyFramebuffer(m_Device, framebufferVk->handle, nullptr);
@@ -954,10 +1013,10 @@ namespace RHI {
 		TArray<VkClearValue> clearValuesVk(clearValueCount);
 		for(uint32_t i=0; i<clearValueCount; ++i) {
 			if(clearValues[i].clearType == CLEAR_VALUE_COLOR) {
-				clearValuesVk[i].color.float32[0] = clearValues[i].clearValue.color[0];
-				clearValuesVk[i].color.float32[1] = clearValues[i].clearValue.color[1];
-				clearValuesVk[i].color.float32[2] = clearValues[i].clearValue.color[2];
-				clearValuesVk[i].color.float32[3] = clearValues[i].clearValue.color[3];
+				clearValuesVk[i].color.float32[0] = clearValues[i].clearValue.color.r;
+				clearValuesVk[i].color.float32[1] = clearValues[i].clearValue.color.g;
+				clearValuesVk[i].color.float32[2] = clearValues[i].clearValue.color.b;
+				clearValuesVk[i].color.float32[3] = clearValues[i].clearValue.color.a;
 			}
 			else {
 				clearValuesVk[i].depthStencil.depth = clearValues[i].clearValue.depthStencil.depth;
@@ -1093,6 +1152,27 @@ namespace RHI {
 		VkBufferCopy copy{ srcOffset, dstOffset, size };
 		vkCmdCopyBuffer(((RCommandBufferVk*)cmd)->handle,
 			((RBufferVk*)srcBuffer)->handle, ((RBufferVk*)dstBuffer)->handle, 1, &copy);
+	}
+
+	void RHIVulkan::CmdBeginDebugLabel(RCommandBuffer* cmd, const char* msg, const float* color)
+	{
+		if(m_EnableDebugUtils) {
+			VkDebugUtilsLabelEXT labelInfo{ VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT, nullptr };
+			labelInfo.pLabelName = msg;
+			if(nullptr != color) {
+				for(int i=0; i<4; ++i) {
+					labelInfo.color[i] = color[i];
+				}
+			}
+			_vkCmdBeginDebugUtilsLabelEXT(((RCommandBufferVk*)cmd)->handle, &labelInfo);
+		}
+	}
+
+	void RHIVulkan::CmdEndDebugLabel(RCommandBuffer* cmd)
+	{
+		if(m_EnableDebugUtils) {
+			_vkCmdEndDebugUtilsLabelEXT(((RCommandBufferVk*)cmd)->handle);
+		}
 	}
 
 	void RHIVulkan::ImmediateCommit(const CommandBufferFunc& func)
@@ -1290,7 +1370,7 @@ namespace RHI {
 
 	RImage* RHIVulkan::CreateImage2D(RFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, RSampleCountFlagBits samples, RImageTiling tiling, RImageUsageFlags usage)
 	{
-		return CreateImage(IMAGE_TYPE_2D, format, {width, height, 0}, mipLevels, 1, samples, tiling, usage);
+		return CreateImage(IMAGE_TYPE_2D, format, {width, height, 1}, mipLevels, 1, samples, tiling, usage);
 	}
 
 	RMemory* RHIVulkan::CreateImageMemory(RImage* image, RMemoryPropertyFlags memoryProperty, void* pData)
@@ -1311,6 +1391,7 @@ namespace RHI {
 			return nullptr;
 		}
 		RMemoryVma* memory = new RMemoryVma;
+		memory->handle = handle;
 		return reinterpret_cast<RMemory*>(memory);
 	}
 

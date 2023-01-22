@@ -8,6 +8,19 @@ namespace RHI{
 	class RRenderPass {
 	};
 
+
+	// render pass create pre data
+	struct RRenderPassData {
+		struct SubPassInfo {
+			RPipelineType Type;
+			TVector<RSAttachment> InputAttachments;
+			TVector<RSAttachment> ColorAttachments;
+			TVector<RSAttachment> DepthStencilAttachments;
+		};
+		TVector<SubPassInfo> SubPasses;
+		TVector<RSubPassDependency> Dependencies;
+	};
+
 	class RPipeline {
 	protected:
 		RPipelineType m_Type;

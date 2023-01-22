@@ -1,5 +1,6 @@
 #pragma once
 #include "RHIEnum.h"
+#include "Core/Container/Container.h"
 #include <cstdint>
 
 namespace RHI {
@@ -23,6 +24,15 @@ namespace RHI {
 		RAttachmentStoreOp storeOp{ ATTACHMENT_STORE_OP_STORE };
 		RAttachmentLoadOp stencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
 		RAttachmentStoreOp stencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
+	};
+
+	struct RSubPassDependency {
+		uint32_t SrcSubPass;
+		RPipelineStageFlags SrcStage;
+		RAccessFlags SrcAccess;
+		uint32_t DstSubPass;
+		RPipelineStageFlags DstStage;
+		RAccessFlags DstAccess;
 	};
 
 	struct RSOffset2D {
@@ -62,7 +72,12 @@ namespace RHI {
 	struct RSClear {
 		RClearValueType clearType;
 		union {
-			float color[4];
+			struct {
+				float r;
+				float g;
+				float b;
+				float a;
+			}color;
 			struct {
 				float depth;
 				uint32_t stencil;
@@ -136,57 +151,6 @@ namespace RHI {
 		uint32_t offset;
 	};
 
-	struct RVertexInput {
-		uint32_t bindingCount;
-		const RVertexInputBinding* bindings;
-		uint32_t attributeCount;
-		const RVertexInputAttribute* attributes;
-	};
-
-	struct RPipelineInputAssembly
-	{
-		RPrimitiveTopology topology{PRIMITIVE_TOPOLOGY_TRIANGLE_LIST};
-		bool primitiveRestartEnable{false};
-	};
-
-	struct RPipelineTessellation {
-		uint32_t patchControlPoints;
-	};
-
-	struct RPipelineViewport {
-		RSViewport viewport;
-		RSRect2D Scissor;
-	};
-
-	//struct RPipelineViewport {
-	//	uint32_t viewportCount;
-	//	const RSViewport* pViewports;
-	//	uint32_t scissorCount;
-	//	const RSRect2D* pScissors;
-	//};
-
-	struct RPipelineRasterizationState {
-		bool depthClampEnable;
-		bool rasterizerDiscardEnable;
-		RPolygonMode polygonMode;
-		RCullModeFlags cullMode;
-		bool clockwise{false};
-		bool depthBiasEnable{false};
-		float depthBiasConstantFactor{0.0f};
-		float depthBiasClamp{0.0f};
-		float depthBiasSlopeFactor{0.0f};
-		float lineWidth{1.0f};
-	};
-
-	struct RPipelineMultisample {
-		RSampleCountFlagBits rasterizationSamples;
-		bool sampleShadingEnable;
-		float minSampleShading;
-		const RSampleMask* pSampleMask;
-		bool alphaToCoverageEnable;
-		bool alphaToOneEnable;
-	};
-
 	struct RStencilOpState {
 		RStencilOp failOp;
 		RStencilOp passOp;
@@ -195,18 +159,6 @@ namespace RHI {
 		uint32_t   compareMask;
 		uint32_t   writeMask;
 		uint32_t   reference;
-	};
-
-	struct RPipelineDepthStencil {
-		bool depthTestEnable;
-		bool depthWriteEnable;
-		RCompareOp depthCompareOp;
-		bool depthBoundsTestEnable;
-		bool stencilTestEnable;
-		RStencilOpState front;
-		RStencilOpState back;
-		float minDepthBounds;
-		float maxDepthBounds;
 	};
 
 	struct RColorBlendAttachmentState {
@@ -218,14 +170,6 @@ namespace RHI {
 		RBlendFactor            dstAlphaBlendFactor;
 		RBlendOp                alphaBlendOp;
 		RColorComponentFlags    colorWriteMask;
-	};
-
-	struct RPipelineColorBlend {
-		bool logicOpEnable;
-		RLogicOp logicOp;
-		uint32_t attachmentCount;
-		const RColorBlendAttachmentState* pAttachments;
-		float blendConstants[4];
 	};
 
 	struct RGraphicsPipelineCreateInfo {

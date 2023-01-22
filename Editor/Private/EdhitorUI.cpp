@@ -2,7 +2,7 @@
 #include "Core/macro.h"
 #include <stb_image.h>
 #include "Resource/Config/Config.h"
-#include "RHI/RHIInstance.h"
+#include "RHI/RHI.h"
 
 namespace Editor {
 	EditorUI::EditorUI(Engine::WindowSystemBase* window)
@@ -21,7 +21,7 @@ namespace Editor {
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_None;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
-		io.Fonts->AddFontFromFileTTF(Resource::GetConfigManager()->GetDefaultFontPath().generic_string().c_str(), contentScale * 16, nullptr, nullptr);
+		io.Fonts->AddFontFromFileTTF(GetConfig()->GetDefaultFontPath().generic_string().c_str(), contentScale * 16, nullptr, nullptr);
 		ASSERT(io.Fonts->Build(), "Failed to build fonts");
 		io.IniFilename = nullptr; // Do not save settings
 

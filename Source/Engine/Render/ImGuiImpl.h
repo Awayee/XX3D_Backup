@@ -6,7 +6,7 @@ namespace Engine {
 	void ImGuiInitialize(RHI::RRenderPass* pass, uint32_t subpass);
 	void ImGuiRelease();
 	void ImGuiNewFrame();
-	void ImGuiRenderDrawData(ImDrawData* data, RHI::RCommandBuffer* cmd);
+	void ImGuiRenderDrawData(RHI::RCommandBuffer* cmd);
 	void ImGuiCreateFontsTexture(RHI::RCommandBuffer* cmd);
 	void ImGuiDestroyFontUploadObjects();
 }

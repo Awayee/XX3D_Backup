@@ -125,6 +125,7 @@ namespace RHI{
 		void RecordEnd() override {};
 
 		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
+		RRenderPass* CreateRenderPass(const RRenderPassData& data) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 
 		// descriptor set
@@ -151,7 +152,7 @@ namespace RHI{
 			RFence* fence) override;
 		void QueueWaitIdle(RQueue* queue)override;
 		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers) override;
-		void DestoryFramebuffer(RFramebuffer* framebuffer) override;
+		void DestroyFramebuffer(RFramebuffer* framebuffer) override;
 		RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level)override;
 		void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) override;
 		void EndCommandBuffer(RCommandBuffer* cmd) override;
@@ -173,6 +174,8 @@ namespace RHI{
 		void CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)override;
 		void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) override;
 		void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) override;
+		void CmdBeginDebugLabel(RCommandBuffer* cmd, const char* msg, const float* color) override;
+		void CmdEndDebugLabel(RCommandBuffer* cmd) override;
 
 		void ImmediateCommit(const CommandBufferFunc& func) override;
 		int PreparePresent(uint8_t frameIndex) override;

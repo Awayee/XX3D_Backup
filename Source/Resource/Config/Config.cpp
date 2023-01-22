@@ -10,50 +10,56 @@
 
 #define ENGINE_CONFIG_PATH "Engine/EngineConfig.ini"
 
-namespace Resource {
-
-	ConfigManager::ConfigManager(const char* path) {
-		// get asset root path firstly
-		m_AssetPath = ASSETS_PATH;
-		FPath configPath = m_AssetPath / path;
-		TUnorderedMap<FString, FString> configMap;
-		LoadIniFile(configPath, configMap);
-
-		m_DefaultFontPath = m_AssetPath / configMap["DefaultFont"];
-
-		// parse rhi type
-		RHIType rhiType = RHI_None;
-		std::string& rhiTypeStr = configMap["RHIType"];
-		if("Vulkan" == rhiTypeStr) {
-			rhiType = RHI_Vulkan;
-		}
-		else if ("DX11" == rhiTypeStr) {
-			rhiType = RHI_DX11;
-		}
-		else if ("DX12" == rhiTypeStr) {
-			rhiType = RHI_DX12;
-		}
-		else if ("GL" == rhiTypeStr) {
-			rhiType = RHI_GL;
-		}
-		m_RHIType = rhiType;
+inline ERHIType ParseRHIType(const std::string& rhiTypeStr) {
+	if ("Vulkan" == rhiTypeStr) {
+		return RHI_Vulkan;
 	}
-
-	ConfigManager::~ConfigManager()
-	{
+	if ("DX11" == rhiTypeStr) {
+		return RHI_DX11;
 	}
+	if ("DX12" == rhiTypeStr) {
+		return RHI_DX12;
+	}
+	if ("GL" == rhiTypeStr) {
+		return RHI_GL;
+	}
+	return RHI_NONE;
+}
+
+inline ERenderPath ParseRenderPath(const std::string& renderPathStr) {
+	if("Deffered" == renderPathStr) {
+		return RENDER_DEFERRED;
+	}
+	if("Forward" == renderPathStr) {
+		return RENDER_FORWARD;
+	}
+	return RENDER_NONE;
+}
+
+ConfigManager::ConfigManager(const char* path) {
+	// get asset root path firstly
+	m_AssetPath = ASSETS_PATH;
+	FPath configPath = m_AssetPath / path;
+	TUnorderedMap<FString, FString> configMap;
+	LoadIniFile(configPath, configMap);
+	m_DefaultFontPath = m_AssetPath / configMap["DefaultFont"];
+	m_RHIType = ParseRHIType(configMap["RHIType"]);
+	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);
+}
+
+ConfigManager::~ConfigManager()
+{
+}
 
 
-	ConfigManager* GetConfigManager() {
-		static std::unique_ptr<ConfigManager> s_ConfigManager;
-		static std::mutex s_ConfigManagerMutex;
+ConfigManager* GetConfig() {
+	static std::unique_ptr<ConfigManager> s_ConfigManager;
+	static std::mutex s_ConfigManagerMutex;
+	if(nullptr == s_ConfigManager) {
+		std::lock_guard<std::mutex> lock(s_ConfigManagerMutex);
 		if(nullptr == s_ConfigManager) {
-			std::lock_guard<std::mutex> lock(s_ConfigManagerMutex);
-			if(nullptr == s_ConfigManager) {
-				s_ConfigManager.reset(new ConfigManager(ENGINE_CONFIG_PATH));
-			}
+			s_ConfigManager.reset(new ConfigManager(ENGINE_CONFIG_PATH));
 		}
-		return s_ConfigManager.get();
 	}
-
+	return s_ConfigManager.get();
 }
