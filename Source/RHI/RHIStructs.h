@@ -14,27 +14,6 @@ namespace RHI {
 		uint8_t maxFramesInFlight;
 	};
 
-	struct RSAttachment {
-		RFormat format;
-		RImageLayout initialLayout{IMAGE_LAYOUT_UNDEFINED};
-		RImageLayout finalLayout;
-		RAttachmentType type;
-		RSampleCountFlagBits sampleCount{ SAMPLE_COUNT_1_BIT };
-		RAttachmentLoadOp loadOp{ ATTACHMENT_LOAD_OP_CLEAR };
-		RAttachmentStoreOp storeOp{ ATTACHMENT_STORE_OP_STORE };
-		RAttachmentLoadOp stencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
-		RAttachmentStoreOp stencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
-	};
-
-	struct RSubPassDependency {
-		uint32_t SrcSubPass;
-		RPipelineStageFlags SrcStage;
-		RAccessFlags SrcAccess;
-		uint32_t DstSubPass;
-		RPipelineStageFlags DstStage;
-		RAccessFlags DstAccess;
-	};
-
 	struct RSOffset2D {
 		int32_t x;
 		int32_t y;
@@ -70,19 +49,48 @@ namespace RHI {
 	};
 
 	struct RSClear {
-		RClearValueType clearType;
+		RClearValueType Type;
 		union {
 			struct {
 				float r;
 				float g;
 				float b;
 				float a;
-			}color;
+			}Color;
 			struct {
 				float depth;
 				uint32_t stencil;
-			}depthStencil;
-		}clearValue;
+			}DepthStencil;
+		};
+	};
+
+	struct RSAttachment {
+		RFormat format;
+		RImageLayout initialLayout{ IMAGE_LAYOUT_UNDEFINED };
+		RImageLayout finalLayout;
+		RImageLayout refLayout;
+		RSampleCountFlagBits sampleCount{ SAMPLE_COUNT_1_BIT };
+		RAttachmentLoadOp loadOp{ ATTACHMENT_LOAD_OP_CLEAR };
+		RAttachmentStoreOp storeOp{ ATTACHMENT_STORE_OP_STORE };
+		RAttachmentLoadOp stencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
+		RAttachmentStoreOp stencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
+		RSClear clear{ CLEAR_VALUE_NONE };
+	};
+
+	struct RSubPass {
+		RPipelineType Type;
+		TVector<RSAttachment> InputAttachments;
+		TVector<RSAttachment> ColorAttachments;
+		TVector<RSAttachment> DepthStencilAttachments;
+	};
+
+	struct RSubPassDependency {
+		uint32_t SrcSubPass;
+		RPipelineStageFlags SrcStage;
+		RAccessFlags SrcAccess;
+		uint32_t DstSubPass;
+		RPipelineStageFlags DstStage;
+		RAccessFlags DstAccess;
 	};
 
 	struct RSImageBlit {

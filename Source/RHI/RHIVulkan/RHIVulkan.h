@@ -124,8 +124,7 @@ namespace RHI{
 		void RecordBegin() override {};
 		void RecordEnd() override {};
 
-		RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) override;
-		RRenderPass* CreateRenderPass(const RRenderPassData& data) override;
+		RRenderPass* CreateRenderPass(uint32_t subpassCount, const RSubPass* subpasses, uint32_t dependencyCount, RSubPassDependency* dependencies) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 
 		// descriptor set
@@ -157,7 +156,8 @@ namespace RHI{
 		void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) override;
 		void EndCommandBuffer(RCommandBuffer* cmd) override;
 		void FreeCommandBuffer(RCommandBuffer* cmd) override;
-		void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClear* clearValues)override;
+		void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D area) override;
+		void CmdNextPass(RCommandBuffer* cmd) override;
 		void CmdEndRenderPass(RCommandBuffer* cmd) override;
 		void CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout,
 			uint32_t baseLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount, RImageAspectFlags aspect) override;

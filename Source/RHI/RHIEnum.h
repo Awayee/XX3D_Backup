@@ -620,7 +620,8 @@ namespace RHI{
 
     enum RClearValueType {
         CLEAR_VALUE_COLOR,
-        CLEAR_VALUE_DEPTH_STENCIL
+        CLEAR_VALUE_DEPTH_STENCIL,
+        CLEAR_VALUE_NONE
     };
 
     enum RVertexInputRate {
@@ -841,4 +842,6 @@ namespace RHI{
         PIPELINE_COMPUTE = 1,
         PIPELINE_RAY_TRACING = 1000165000
     };
+
+#define SUBPASS_INTERNAL (~0u)
 }

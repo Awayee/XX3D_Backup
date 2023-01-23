@@ -421,117 +421,77 @@ namespace RHI {
 	}
 
 #pragma endregion
-	RRenderPass* RHIVulkan::CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments)
-	{
-		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, nullptr, 0 };
-		info.attachmentCount = attachmentCount;
-		TArray<VkAttachmentDescription> descs(attachmentCount);
-		TVector<VkAttachmentReference> colorRefs;
-		TUniquePtr<VkAttachmentReference> depthRefPtr;
-		for(uint32_t i=0; i<attachmentCount; ++i) {
-			descs[i].flags = 0;
-			descs[i].format = (VkFormat)attachments[i].format;
-			descs[i].samples = (VkSampleCountFlagBits)attachments[i].sampleCount;
-			descs[i].loadOp = (VkAttachmentLoadOp)attachments[i].loadOp;
-			descs[i].storeOp = (VkAttachmentStoreOp)attachments[i].storeOp;
-			descs[i].stencilLoadOp = (VkAttachmentLoadOp)attachments[i].stencilLoadOp;
-			descs[i].stencilStoreOp = (VkAttachmentStoreOp)attachments[i].stencilStoreOp;
-			descs[i].initialLayout = (VkImageLayout)attachments[i].initialLayout;
-			descs[i].finalLayout = (VkImageLayout)attachments[i].finalLayout;
-			if(attachments[i].type == ATTACHMENT_COLOR) {
-				colorRefs.push_back({i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
-			}
-			else if (attachments[i].type == ATTACHMENT_DEPTH) {
-				depthRefPtr.reset(new VkAttachmentReference{i, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
-			}
-		}
-		info.pAttachments = descs.Data();
 
-		// just 1 subpass
-		VkSubpassDescription subpass{};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = static_cast<uint32_t>(colorRefs.size());
-		subpass.pColorAttachments = colorRefs.data();
-		subpass.pDepthStencilAttachment = depthRefPtr.get();
-		info.subpassCount = 1;
-		info.pSubpasses = &subpass;
-
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		info.dependencyCount = 1;
-		info.pDependencies = &dependency;
-
-		VkRenderPass handle;
-		if(VK_SUCCESS != vkCreateRenderPass(m_Device, &info, nullptr, &handle)) {
-			return nullptr;
-		}
-		RRenderPassVk* pass = new RRenderPassVk;
-		pass->handle = handle;
-		return reinterpret_cast<RRenderPass*>(pass);
-	}
-	RRenderPass* RHIVulkan::CreateRenderPass(const RRenderPassData& data)
+	RRenderPass* RHIVulkan::CreateRenderPass(uint32_t subpassCount, const RSubPass* subpasses, uint32_t dependencyCount, RSubPassDependency* dependencies)
 	{
 		uint32_t i;
 		TVector<VkAttachmentDescription> attachments;
-
+		TVector<VkClearValue> clears;
 		// sub passes
-		TArray<VkSubpassDescription> subPasses(data.SubPasses.size());
-		TArray<TVector<VkAttachmentReference>> inputAttachments(data.SubPasses.size());
-		TArray<TVector<VkAttachmentReference>> colorAttachments(data.SubPasses.size());
-		TArray<VkAttachmentReference> depthAttachments(data.SubPasses.size());
-
-		for(i=0; i<data.SubPasses.size(); ++i) {
-			subPasses[i].pipelineBindPoint = (VkPipelineBindPoint)data.SubPasses[i].Type;
+		TArray<VkSubpassDescription> subpassesVk(subpassCount);
+		TArray<TVector<VkAttachmentReference>> inputAttachments(subpassCount);
+		TArray<TVector<VkAttachmentReference>> colorAttachments(subpassCount);
+		TArray<VkAttachmentReference> depthAttachments(subpassCount);
+		for (i = 0; i < subpassCount; ++i) {
+			subpassesVk[i].flags = 0;
+			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)subpasses[i].Type;
 			uint32_t j;
-			for(j=0; j<data.SubPasses[i].InputAttachments.size(); ++j) {
-				VkAttachmentDescription desc = ResolveAttachmentDesc(data.SubPasses[i].InputAttachments[j]);
-				inputAttachments[i].push_back({ (uint32_t)(attachments.size()), desc.finalLayout });
+			for (j = 0; j < subpasses[i].InputAttachments.size(); ++j) {
+				VkAttachmentDescription desc = ResolveAttachmentDesc(subpasses[i].InputAttachments[j]);
+				inputAttachments[i].push_back({ (uint32_t)(attachments.size()), (VkImageLayout)subpasses[i].InputAttachments[j].refLayout });
 				attachments.push_back(std::move(desc));
+				clears.push_back(ResolveClearValue(subpasses[i].InputAttachments[j].clear));
 			}
-			subPasses[i].inputAttachmentCount = data.SubPasses[i].InputAttachments.size();
-			subPasses[i].pInputAttachments = inputAttachments[i].data();
+			subpassesVk[i].inputAttachmentCount = subpasses[i].InputAttachments.size();
+			subpassesVk[i].pInputAttachments = inputAttachments[i].data();
 
-			for(j=0; j<data.SubPasses[i].ColorAttachments.size(); ++j) {
-				VkAttachmentDescription desc = ResolveAttachmentDesc(data.SubPasses[i].InputAttachments[j]);
-				colorAttachments[i].push_back({ (uint32_t)(attachments.size()), desc.finalLayout });
+			for (j = 0; j < subpasses[i].ColorAttachments.size(); ++j) {
+				VkAttachmentDescription desc = ResolveAttachmentDesc(subpasses[i].ColorAttachments[j]);
+				colorAttachments[i].push_back({ (uint32_t)(attachments.size()), (VkImageLayout)subpasses[i].ColorAttachments[j].refLayout });
 				attachments.push_back(std::move(desc));
+				clears.push_back(ResolveClearValue(subpasses[i].ColorAttachments[j].clear));
 			}
-			subPasses[i].colorAttachmentCount = data.SubPasses[i].ColorAttachments.size();
-			subPasses[i].pColorAttachments = colorAttachments[i].data();
+			subpassesVk[i].colorAttachmentCount = subpasses[i].ColorAttachments.size();
+			subpassesVk[i].pColorAttachments = colorAttachments[i].data();
 
-			if(!data.SubPasses[i].DepthStencilAttachments.empty()) {
-				auto desc = ResolveAttachmentDesc(data.SubPasses[i].DepthStencilAttachments[0]);
-				depthAttachments[i] = { (uint32_t)(attachments.size()), desc.finalLayout };
+			if (!subpasses[i].DepthStencilAttachments.empty()) {
+				auto desc = ResolveAttachmentDesc(subpasses[i].DepthStencilAttachments[0]);
+				depthAttachments[i] = { (uint32_t)(attachments.size()), (VkImageLayout)subpasses[i].DepthStencilAttachments[0].refLayout };
+				subpassesVk[i].pDepthStencilAttachment = &depthAttachments[i];
 				attachments.push_back(std::move(desc));
+				clears.push_back(ResolveClearValue(subpasses[i].DepthStencilAttachments[0].clear));
 			}
+			else {
+				subpassesVk[i].pDepthStencilAttachment = nullptr;
+			}
+			subpassesVk[i].pResolveAttachments = nullptr;
+			subpassesVk[i].preserveAttachmentCount = 0;
+			subpassesVk[i].pPreserveAttachments = nullptr;
 		}
 
 		// sub pass dependencies
-		TArray<VkSubpassDependency> dependencies(data.Dependencies.size());
-		for(i=0; i<data.Dependencies.size(); ++i) {
-			dependencies[i] = ResolveSubpassDependency(data.Dependencies[i]);
+		TArray<VkSubpassDependency> dependenciesVk(dependencyCount);
+		for (i = 0; i < dependencyCount; ++i) {
+			dependenciesVk[i] = ResolveSubpassDependency(dependencies[i]);
 		}
 
 		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, nullptr };
 		info.attachmentCount = attachments.size();
 		info.pAttachments = attachments.data();
-		info.subpassCount = data.SubPasses.size();
-		info.pSubpasses = subPasses.Data();
-		info.dependencyCount = data.Dependencies.size();
-		info.pDependencies = dependencies.Data();
+		info.subpassCount = subpassCount;
+		info.pSubpasses = subpassesVk.Data();
+		info.dependencyCount = dependencyCount;
+		info.pDependencies = dependenciesVk.Data();
 		VkRenderPass handle;
-		if(VK_SUCCESS != vkCreateRenderPass(m_Device, &info, nullptr, &handle)) {
+		if (VK_SUCCESS != vkCreateRenderPass(m_Device, &info, nullptr, &handle)) {
 			return nullptr;
 		}
 		RRenderPassVk* renderPass = new RRenderPassVk;
 		renderPass->handle = handle;
+		renderPass->m_Clears = std::move(clears);
 		return renderPass;
 	}
+
 	void RHIVulkan::DestroyRenderPass(RRenderPass* pass)
 	{
 		RRenderPassVk* vkPass = static_cast<RRenderPassVk*>(pass);
@@ -957,6 +917,7 @@ namespace RHI {
 
 		RFramebufferVk* framebuffer = new RFramebufferVk;
 		framebuffer->handle = handle;
+		framebuffer->m_Attachments.assign(pImageViews, pImageViews+imageViewCount);
 		return framebuffer;
 	}
 
@@ -1001,31 +962,26 @@ namespace RHI {
 		vkFreeCommandBuffers(m_Device, vkCmd->m_Pool, 1, &vkCmd->handle);
 		delete vkCmd;
 	}
-	void RHIVulkan::CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D renderArea, uint32_t clearValueCount, const RSClear* clearValues)
+
+	void RHIVulkan::CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D area)
 	{
-		VkRect2D vkRenderArea{ {renderArea.offset.x, renderArea.offset.y}, {renderArea.extent.width, renderArea.extent.height} };
+		RRenderPassVk* passVk = reinterpret_cast<RRenderPassVk*>(pass);
+		VkRect2D vkRenderArea{ {area.offset.x, area.offset.y}, {area.extent.width, area.extent.height} };
 		VkRenderPassBeginInfo passInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		passInfo.pNext = nullptr;
-		passInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->handle;
+		passInfo.renderPass = passVk->handle;
 		passInfo.framebuffer = reinterpret_cast<RFramebufferVk*>(framebuffer)->handle;
 		passInfo.renderArea = vkRenderArea;
-		passInfo.clearValueCount = clearValueCount;
-		TArray<VkClearValue> clearValuesVk(clearValueCount);
-		for(uint32_t i=0; i<clearValueCount; ++i) {
-			if(clearValues[i].clearType == CLEAR_VALUE_COLOR) {
-				clearValuesVk[i].color.float32[0] = clearValues[i].clearValue.color.r;
-				clearValuesVk[i].color.float32[1] = clearValues[i].clearValue.color.g;
-				clearValuesVk[i].color.float32[2] = clearValues[i].clearValue.color.b;
-				clearValuesVk[i].color.float32[3] = clearValues[i].clearValue.color.a;
-			}
-			else {
-				clearValuesVk[i].depthStencil.depth = clearValues[i].clearValue.depthStencil.depth;
-				clearValuesVk[i].depthStencil.stencil = clearValues[i].clearValue.depthStencil.stencil;
-			}
-		}
-		passInfo.pClearValues = clearValuesVk.Data();
+		passInfo.clearValueCount = static_cast<uint32_t>(passVk->m_Clears.size());
+		passInfo.pClearValues = passVk->m_Clears.data();
 		_vkCmdBeginRenderPass(((RCommandBufferVk*)cmd)->handle, &passInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
+
+	void RHIVulkan::CmdNextPass(RCommandBuffer* cmd)
+	{
+		_vkCmdNextSubpass(((RCommandBufferVk*)cmd)->handle, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
 	void RHIVulkan::CmdEndRenderPass(RCommandBuffer* cmd)
 	{
 		_vkCmdEndRenderPass(((RCommandBufferVk*)cmd)->handle);

@@ -33,8 +33,7 @@ namespace RHI{
 		virtual void RecordBegin() = 0;
 		virtual void RecordEnd() = 0;
 
-		virtual RRenderPass* CreateRenderPass(uint32_t attachmentCount, const RSAttachment* attachments) = 0;
-		virtual RRenderPass* CreateRenderPass(const RRenderPassData& data) = 0;
+		virtual RRenderPass* CreateRenderPass(uint32_t subpassCount, const RSubPass* subpasses, uint32_t dependencyCount, RSubPassDependency* dependencies) = 0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
 
 		// descriptor set
@@ -66,9 +65,8 @@ namespace RHI{
 		virtual void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) = 0;
 		virtual void EndCommandBuffer(RCommandBuffer* cmd) = 0;
 		virtual void FreeCommandBuffer(RCommandBuffer* cmd) = 0;
-		virtual void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer,
-			RSRect2D renderArea, uint32_t clearValueCount, const RSClear* clearValues) = 0;
-
+		virtual void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D area) = 0;
+		virtual void CmdNextPass(RCommandBuffer* cmd) = 0;
 		virtual void CmdEndRenderPass(RCommandBuffer* cmd) = 0;
 
 		virtual void CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout,

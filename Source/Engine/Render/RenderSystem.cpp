@@ -1,4 +1,7 @@
 #include "RenderSystem.h"
+
+#include <vulkan/vulkan_core.h>
+
 #include "ImGuiImpl.h"
 #include "Engine/Window/WindowSystem.h"
 #include "RenderMacro.h"
@@ -69,14 +72,7 @@ namespace Engine {
 		RHI::RCommandBuffer* cmd = m_CommandBuffers[m_CurrentFrameIndex];
 		rhi->BeginCommandBuffer(cmd, 0);
 
-		// render scene forward
-		RHI::RSClear clearValues[2];
-		clearValues[0].clearType = RHI::CLEAR_VALUE_COLOR;
-		clearValues[0].clearValue.color = { 0.0f, 0.0f, 0.0f, 0.0f };
-		clearValues[1].clearType = RHI::CLEAR_VALUE_DEPTH_STENCIL;
-		clearValues[1].clearValue.depthStencil = { 1.0f, 0 };
-		rhi->CmdBeginRenderPass(cmd, m_Passes[PASS_MAIN], m_SwapchianFramebuffers[swapchainImageIndex],
-			{ {0, 0}, rhi->GetSwapchainExtent() }, 2, clearValues);
+		rhi->CmdBeginRenderPass(cmd, m_Passes[PASS_MAIN], m_SwapchianFramebuffers[swapchainImageIndex], { {0, 0}, rhi->GetSwapchainExtent() });
 
 		if(RENDER_DEFERRED == GetConfig()->GetRenderPath()) {
 			RenderSceneDeferred(cmd);
@@ -122,21 +118,37 @@ namespace Engine {
 
 	void RenderSystem::CreateRenderPasses()
 	{
+		m_Passes.resize(PASS_COUNT);
+
 		GET_RHI(rhi);
 
-		// create render pass
-		RHI::RSAttachment attachment[2];
-		attachment[0].format = rhi->GetSwapchainImageFormat();
-		attachment[0].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		attachment[0].finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		attachment[0].type = RHI::ATTACHMENT_COLOR;
-		attachment[1].format = rhi->GetDepthFormat();
-		attachment[1].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		attachment[1].finalLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		attachment[1].type = RHI::ATTACHMENT_DEPTH;
+		// main subpass
+		RHI::RSubPass subpass;
+		subpass.Type = RHI::PIPELINE_GRAPHICS;
+		RHI::RSAttachment atm;
+		atm.format = rhi->GetSwapchainImageFormat();
+		atm.initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		atm.finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		atm.refLayout = RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		atm.clear.Type = RHI::CLEAR_VALUE_COLOR;
+		atm.clear.Color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		subpass.ColorAttachments.push_back(atm);
+		atm.format = rhi->GetDepthFormat();
+		atm.finalLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		atm.refLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		atm.clear.Type = RHI::CLEAR_VALUE_DEPTH_STENCIL;
+		atm.clear.DepthStencil = { 1.0f, 0 };
+		subpass.DepthStencilAttachments.push_back(atm);
+		
+		RHI::RSubPassDependency dependency;
+		dependency.SrcSubPass = SUBPASS_INTERNAL;
+		dependency.DstSubPass = 0;
+		dependency.SrcStage = RHI::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | RHI::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.DstStage = RHI::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | RHI::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.SrcAccess = 0;
+		dependency.DstAccess = RHI::ACCESS_COLOR_ATTACHMENT_WRITE_BIT | RHI::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-		m_Passes.resize(PASS_COUNT);
-		m_Passes[PASS_MAIN] = rhi->CreateRenderPass(2, attachment);
+		m_Passes[PASS_MAIN] = rhi->CreateRenderPass(1, &subpass, 1, &dependency);
 	}
 
 	void RenderSystem::CreateFramebuffers()

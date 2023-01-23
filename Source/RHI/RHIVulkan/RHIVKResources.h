@@ -41,6 +41,9 @@ namespace RHI {
 	class RRenderPassVk: public RRenderPass {
 	public:
 		VkRenderPass handle;
+	private:
+		TVector<VkClearValue> m_Clears;
+		friend RHIVulkan;
 	};
 
 	class RMemoryVk: public RMemory {
@@ -70,6 +73,7 @@ namespace RHI {
 	class RFramebufferVk: public RFramebuffer {
 	public:
 		VkFramebuffer handle;
+		friend RHIVulkan;
 	};
 
 	class RQueueVk: public RQueue {

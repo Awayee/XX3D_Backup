@@ -1,24 +1,12 @@
 #pragma once
 #include "RHIStructs.h"
+#include "Core/macro.h"
 
 namespace RHI{
 	class RWindowHandle {
 	};
 
 	class RRenderPass {
-	};
-
-
-	// render pass create pre data
-	struct RRenderPassData {
-		struct SubPassInfo {
-			RPipelineType Type;
-			TVector<RSAttachment> InputAttachments;
-			TVector<RSAttachment> ColorAttachments;
-			TVector<RSAttachment> DepthStencilAttachments;
-		};
-		TVector<SubPassInfo> SubPasses;
-		TVector<RSubPassDependency> Dependencies;
 	};
 
 	class RPipeline {
@@ -47,7 +35,7 @@ namespace RHI{
 		RImageLayout m_Layout;
 	public:
 		virtual ~RImageView() {};
-		RImageLayout GetLayout() { return m_Layout; }
+		RImageLayout GetLayout() const { return m_Layout; }
 	};
 
 	class RCommandBuffer {
@@ -61,7 +49,10 @@ namespace RHI{
 	};
 
 	class RFramebuffer {
-		
+	protected:
+		TVector<const RImageView*> m_Attachments;
+	public:
+		const RImageView* GetAttachment(uint32_t i) { ASSERT(i < m_Attachments.size()); return m_Attachments[i]; }
 	};
 	class RSampler {
 		

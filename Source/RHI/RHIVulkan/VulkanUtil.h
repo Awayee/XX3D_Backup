@@ -132,7 +132,7 @@ namespace RHI {
 	}
 
 	inline VkSubpassDependency ResolveSubpassDependency(const RSubPassDependency& dependency) {
-		VkSubpassDependency d;
+		VkSubpassDependency d{};
 		d.srcSubpass = dependency.SrcSubPass;
 		d.srcStageMask = dependency.SrcStage;
 		d.srcAccessMask = dependency.SrcAccess;
@@ -140,6 +140,21 @@ namespace RHI {
 		d.dstStageMask = dependency.DstStage;
 		d.dstAccessMask = dependency.DstAccess;
 		return d;
+	}
+
+	inline VkClearValue ResolveClearValue(const RSClear& clear) {
+		VkClearValue clearVk;
+		if(CLEAR_VALUE_COLOR == clear.Type) {
+			clearVk.color.float32[0] = clear.Color.r;
+			clearVk.color.float32[1] = clear.Color.g;
+			clearVk.color.float32[2] = clear.Color.b;
+			clearVk.color.float32[3] = clear.Color.a;
+		}
+		else if(CLEAR_VALUE_DEPTH_STENCIL == clear.Type) {
+			clearVk.depthStencil.depth = clear.DepthStencil.depth;
+			clearVk.depthStencil.stencil = clear.DepthStencil.stencil;
+		}
+		return clearVk;
 	}
 
 	void FindQueueFamilyIndex(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, int* pGraphicsIndex, int* pPresentIndex, int* pComputeIndex);
