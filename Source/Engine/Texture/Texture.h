@@ -9,7 +9,7 @@ namespace Engine {
 		RHI::RMemory* m_ImageMemory;
 	public:
 		Texture2D() = delete;
-		Texture2D(RHI::RFormat format, uint32_t width, uint32_t height, RHI::RImageUsageFlags usage, void* pData);
+		Texture2D(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage, RHI::RImageAspectFlags aspect, void* pData);
 		~Texture2D();
 		RHI::RImage* GetImage() { return m_Image; }
 		RHI::RImageView* GetImageView() { return m_ImageView; }

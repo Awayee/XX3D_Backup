@@ -20,7 +20,7 @@ namespace RHI {
 
 	TVector<const char*> RHIVulkan::GetRequiredExtensions()
 	{
-		uint32_t     glfwExtensionCount = 0;
+		uint32     glfwExtensionCount = 0;
 		const char** glfwExtensions;
 		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -50,12 +50,12 @@ namespace RHI {
 		createInfo.pApplicationInfo = &appInfo; // the appInfo is stored here
 
 		auto extensions = GetRequiredExtensions();
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+		createInfo.enabledExtensionCount = static_cast<uint32>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 		if(m_EnableValidationLayers) {
-			createInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
+			createInfo.enabledLayerCount = static_cast<uint32>(m_ValidationLayers.size());
 			createInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 			SetDebugInfo(debugCreateInfo);
 			debugCreateInfo.pUserData = (void*)this;
@@ -90,7 +90,7 @@ namespace RHI {
 
 	void RHIVulkan::InitializePhysicalDevice()
 	{
-		uint32_t deviceCount = 0;
+		uint32 deviceCount = 0;
 		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr), "no avaliable physical device");
 		TVector<VkPhysicalDevice> devices(deviceCount);
 		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data()), "no avaliable physical device");
@@ -113,9 +113,9 @@ namespace RHI {
 		LOG("Picked GPU: %s %u", m_PhysicalDeviceProperties.deviceName, m_PhysicalDeviceProperties.deviceID);
 
 		// record device info
-		m_GraphicsIndex = static_cast<uint32_t>(deviceInfo.graphicsIndex);
-		m_PresentIndex = static_cast<uint32_t>(deviceInfo.presentIndex);
-		m_ComputeIndex = static_cast<uint32_t>(deviceInfo.computeIndex);
+		m_GraphicsIndex = static_cast<uint32>(deviceInfo.graphicsIndex);
+		m_PresentIndex = static_cast<uint32>(deviceInfo.presentIndex);
+		m_ComputeIndex = static_cast<uint32>(deviceInfo.computeIndex);
 		m_ImageCount = deviceInfo.imageCount;
 		m_SwapchainFormat = deviceInfo.swapchainFormat;
 		m_SwapchainPresentMode = deviceInfo.swapchainPresentMode;
@@ -126,11 +126,11 @@ namespace RHI {
 
 	void RHIVulkan::CreateLogicalDevice()
 	{
-		TUnorderedSet<uint32_t> queueFamilies{m_GraphicsIndex, m_PresentIndex, m_ComputeIndex};
+		TUnorderedSet<uint32> queueFamilies{m_GraphicsIndex, m_PresentIndex, m_ComputeIndex};
 		TVector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		queueCreateInfos.reserve(queueFamilies.size());
 		float queuePriority = 1.0f;
-		for(uint32_t queueFamily: queueFamilies) {
+		for(uint32 queueFamily: queueFamilies) {
 			VkDeviceQueueCreateInfo queueCreateInfo{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 			queueCreateInfo.queueFamilyIndex = queueFamily;
 			queueCreateInfo.queueCount = 1;
@@ -146,9 +146,9 @@ namespace RHI {
 
 		VkDeviceCreateInfo deviceCreateInfo{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 		deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-		deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+		deviceCreateInfo.queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size());
 		deviceCreateInfo.pEnabledFeatures = &features;
-		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size());
+		deviceCreateInfo.enabledExtensionCount = static_cast<uint32>(m_DeviceExtensions.size());
 		deviceCreateInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 		deviceCreateInfo.enabledLayerCount = 0;
 
@@ -203,7 +203,7 @@ namespace RHI {
 			commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			commandPoolCreateInfo.queueFamilyIndex = m_GraphicsIndex;
 			m_CommandPools.resize(m_MaxFramesInFlight);
-			for (uint32_t i = 0; i < m_MaxFramesInFlight; ++i) {
+			for (uint32 i = 0; i < m_MaxFramesInFlight; ++i) {
 				VK_CHECK(vkCreateCommandPool(m_Device, &commandPoolCreateInfo, nullptr, &m_CommandPools[i]), "VkCreateCommandPool");
 			}
 		}
@@ -215,10 +215,10 @@ namespace RHI {
 		// should be big enough, and thus we can sub-allocate DescriptorSet from
 		// DescriptorPool merely as we sub-allocate Buffer/Image from DeviceMemory.
 
-		uint32_t maxVertexBlendingMeshCount{ 256 };
-		uint32_t maxMaterialCount{ 256 };
+		uint32 maxVertexBlendingMeshCount{ 256 };
+		uint32 maxMaterialCount{ 256 };
 
-		uint32_t poolCount = 7;
+		uint32 poolCount = 7;
 		TArray<VkDescriptorPoolSize> poolSizes(poolCount);
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 		poolSizes[0].descriptorCount = 3 + 2 + 2 + 2 + 1 + 1 + 3 + 3;
@@ -256,7 +256,7 @@ namespace RHI {
 		m_PresentationFinishSemaphores.resize(m_MaxFramesInFlight);
 		m_ImageAvaliableForTextureCopySemaphores.resize(m_MaxFramesInFlight);
 		m_IsFrameInFlightFences.resize(m_MaxFramesInFlight);
-		for(uint32_t i=0; i< m_MaxFramesInFlight; ++i) {
+		for(uint32 i=0; i< m_MaxFramesInFlight; ++i) {
 			VK_CHECK(vkCreateSemaphore(m_Device, &semaphoreCreateInfo, nullptr, &m_ImageAvaliableSemaphores[i]), "ImageAvaliableSemaphore");
 			VK_CHECK(vkCreateSemaphore(m_Device, &semaphoreCreateInfo, nullptr, &m_PresentationFinishSemaphores[i]), "PresentationFinishSemaphore");
 			VK_CHECK(vkCreateSemaphore(m_Device, &semaphoreCreateInfo, nullptr, &m_ImageAvaliableForTextureCopySemaphores[i]), "ImageAvaliableForTextureCopySemaphore");
@@ -288,7 +288,7 @@ namespace RHI {
 		createInfo.imageExtent.height = m_SwapchainExtent.height;
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		uint32_t queueFamilyIndices[] = { m_GraphicsIndex, m_PresentIndex};
+		uint32 queueFamilyIndices[] = { m_GraphicsIndex, m_PresentIndex};
 
 		if (queueFamilyIndices[0] != queueFamilyIndices[1])
 		{
@@ -307,7 +307,7 @@ namespace RHI {
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 		VK_CHECK(vkCreateSwapchainKHR(m_Device, &createInfo, nullptr, &m_Swapchain), "CreateSwapchain");
 		// swapchain images
-		uint32_t image_count;
+		uint32 image_count;
 		vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &image_count, nullptr);
 		m_SwapchainImages.resize(image_count);
 		vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &image_count, m_SwapchainImages.data());
@@ -316,7 +316,7 @@ namespace RHI {
 		m_SwapchainImageViews.resize(m_SwapchainImages.size());
 
 		// create imageview (one for each this time) for all swapchain images
-		for (size_t i = 0; i < m_SwapchainImages.size(); i++)
+		for (uint64 i = 0; i < m_SwapchainImages.size(); i++)
 		{
 			VkImageViewCreateInfo imageViewCreateInfo{ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 			imageViewCreateInfo.image = m_SwapchainImages[i];
@@ -422,11 +422,75 @@ namespace RHI {
 
 #pragma endregion
 
-	RRenderPass* RHIVulkan::CreateRenderPass(uint32_t subpassCount, const RSubPass* subpasses, uint32_t dependencyCount, RSubPassDependency* dependencies)
+	RRenderPass* RHIVulkan::CreateRenderPass(uint32 attachmentCount, const RSAttachment* attachments, uint32 subpassCount, const RSubPassInfo* subpasses, uint32 dependencyCount, const RSubpassDependency* dependencies)
 	{
-		uint32_t i;
+		uint32 i;
+		TArray<VkAttachmentDescription> attachmentsVk(attachmentCount);
+		for(i=0; i<attachmentCount; ++i) {
+			attachmentsVk[i] = ResolveAttachmentDesc(attachments[i]);
+		}
+
+		TArray<VkSubpassDescription> subpassesVk(subpassCount);
+		TArray<TVector<VkAttachmentReference>> inputAttachments(subpassCount);
+		TArray<TVector<VkAttachmentReference>> colorAttachments(subpassCount);
+		TArray<VkAttachmentReference> depthAttachments(subpassCount);
+
+		for(i=0; i<subpassCount; ++i) {
+			subpassesVk[i].flags = 0;
+			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)subpasses[i].Type;
+			uint32 j;
+			for (j = 0; j < subpasses[i].InputAttachments.size(); ++j) {
+				inputAttachments[i].push_back({ subpasses[i].InputAttachments[j], (VkImageLayout)attachments[subpasses[i].InputAttachments[j]].refLayout});
+			}
+			subpassesVk[i].inputAttachmentCount = inputAttachments[i].size();
+			subpassesVk[i].pInputAttachments = inputAttachments[i].data();
+			for (j = 0; j < subpasses[i].ColorAttachments.size(); ++j) {
+				colorAttachments[i].push_back({ subpasses[i].ColorAttachments[j], (VkImageLayout)attachments[subpasses[i].ColorAttachments[j]].refLayout});
+			}
+			subpassesVk[i].colorAttachmentCount = colorAttachments[i].size();
+			subpassesVk[i].pColorAttachments = colorAttachments[i].data();
+			if(subpasses[i].DepthStencilAttachment >= 0) {
+				depthAttachments[i] = { (uint32)subpasses[i].DepthStencilAttachment, (VkImageLayout)attachments[subpasses[i].DepthStencilAttachment].refLayout};
+				subpassesVk[i].pDepthStencilAttachment = &depthAttachments[i];
+			}
+			else {
+				subpassesVk[i].pDepthStencilAttachment = VK_NULL_HANDLE;
+			}
+			// empty resolve
+			subpassesVk[i].preserveAttachmentCount = 0;
+			subpassesVk[i].pPreserveAttachments = nullptr;
+			subpassesVk[i].pResolveAttachments = nullptr;
+		}
+
+		TArray<VkSubpassDependency> dependenciesVk(dependencyCount);
+		for(i=0; i<dependencyCount;++i) {
+			dependenciesVk[i] = ResolveSubpassDependency(dependencies[i]);
+		}
+
+		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, nullptr };
+		info.attachmentCount = attachmentCount;
+		info.pAttachments = attachmentsVk.Data();
+		info.subpassCount = subpassCount;
+		info.pSubpasses = subpassesVk.Data();
+		info.dependencyCount = dependencyCount;
+		info.pDependencies = dependenciesVk.Data();
+		VkRenderPass handle;
+		if(VK_SUCCESS!=vkCreateRenderPass(m_Device, &info, nullptr, &handle)){
+			return nullptr;
+		}
+		RRenderPassVk* pass = new RRenderPassVk;
+		pass->handle = handle;
+		pass->m_Clears.resize(attachmentCount);
+		for(i=0; i< attachmentCount; ++i) {
+			pass->m_Clears[i] = ResolveClearValue(attachments[i].clear);
+		}
+		return pass;
+	}
+
+	RRenderPass* RHIVulkan::CreateRenderPass(uint32 subpassCount, const RSubpass* subpasses, uint32 dependencyCount, RSubpassDependency* dependencies)
+	{
+		uint32 i;
 		TVector<VkAttachmentDescription> attachments;
-		TVector<VkClearValue> clears;
 		// sub passes
 		TArray<VkSubpassDescription> subpassesVk(subpassCount);
 		TArray<TVector<VkAttachmentReference>> inputAttachments(subpassCount);
@@ -435,31 +499,28 @@ namespace RHI {
 		for (i = 0; i < subpassCount; ++i) {
 			subpassesVk[i].flags = 0;
 			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)subpasses[i].Type;
-			uint32_t j;
+			uint32 j;
 			for (j = 0; j < subpasses[i].InputAttachments.size(); ++j) {
 				VkAttachmentDescription desc = ResolveAttachmentDesc(subpasses[i].InputAttachments[j]);
-				inputAttachments[i].push_back({ (uint32_t)(attachments.size()), (VkImageLayout)subpasses[i].InputAttachments[j].refLayout });
+				inputAttachments[i].push_back({ (uint32)(attachments.size()), (VkImageLayout)subpasses[i].InputAttachments[j].refLayout });
 				attachments.push_back(std::move(desc));
-				clears.push_back(ResolveClearValue(subpasses[i].InputAttachments[j].clear));
 			}
 			subpassesVk[i].inputAttachmentCount = subpasses[i].InputAttachments.size();
 			subpassesVk[i].pInputAttachments = inputAttachments[i].data();
 
 			for (j = 0; j < subpasses[i].ColorAttachments.size(); ++j) {
 				VkAttachmentDescription desc = ResolveAttachmentDesc(subpasses[i].ColorAttachments[j]);
-				colorAttachments[i].push_back({ (uint32_t)(attachments.size()), (VkImageLayout)subpasses[i].ColorAttachments[j].refLayout });
+				colorAttachments[i].push_back({ (uint32)(attachments.size()), (VkImageLayout)subpasses[i].ColorAttachments[j].refLayout });
 				attachments.push_back(std::move(desc));
-				clears.push_back(ResolveClearValue(subpasses[i].ColorAttachments[j].clear));
 			}
 			subpassesVk[i].colorAttachmentCount = subpasses[i].ColorAttachments.size();
 			subpassesVk[i].pColorAttachments = colorAttachments[i].data();
 
 			if (!subpasses[i].DepthStencilAttachments.empty()) {
 				auto desc = ResolveAttachmentDesc(subpasses[i].DepthStencilAttachments[0]);
-				depthAttachments[i] = { (uint32_t)(attachments.size()), (VkImageLayout)subpasses[i].DepthStencilAttachments[0].refLayout };
+				depthAttachments[i] = { (uint32)(attachments.size()), (VkImageLayout)subpasses[i].DepthStencilAttachments[0].refLayout };
 				subpassesVk[i].pDepthStencilAttachment = &depthAttachments[i];
 				attachments.push_back(std::move(desc));
-				clears.push_back(ResolveClearValue(subpasses[i].DepthStencilAttachments[0].clear));
 			}
 			else {
 				subpassesVk[i].pDepthStencilAttachment = nullptr;
@@ -488,7 +549,6 @@ namespace RHI {
 		}
 		RRenderPassVk* renderPass = new RRenderPassVk;
 		renderPass->handle = handle;
-		renderPass->m_Clears = std::move(clears);
 		return renderPass;
 	}
 
@@ -498,14 +558,14 @@ namespace RHI {
 		vkDestroyRenderPass(m_Device, vkPass->handle, nullptr);
 		delete vkPass;
 	}
-	RDescriptorSetLayout* RHIVulkan::CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)
+	RDescriptorSetLayout* RHIVulkan::CreateDescriptorSetLayout(uint32 bindingCount, const RSDescriptorSetLayoutBinding* bindings)
 	{
 		VkDescriptorSetLayoutCreateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 		info.pNext = nullptr;
 		info.flags = 0;
 		info.bindingCount = bindingCount;
 		TArray<VkDescriptorSetLayoutBinding> bindingsVk(bindingCount);
-		for(uint32_t i=0; i< bindingCount; ++i) {
+		for(uint32 i=0; i< bindingCount; ++i) {
 			bindingsVk[i].binding = bindings[i].binding;
 			bindingsVk[i].descriptorType = (VkDescriptorType)bindings[i].descriptorType;
 			bindingsVk[i].descriptorCount = bindings[i].descriptorCount;
@@ -545,7 +605,7 @@ namespace RHI {
 		delete descirptorSetVk;
 	}
 
-	void RHIVulkan::UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32_t binding, uint32_t arrayElement, uint32_t count, RDescriptorType type, const RDescriptorInfo& descriptorInfo)
+	void RHIVulkan::UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32 binding, uint32 arrayElement, uint32 count, RDescriptorType type, const RDescriptorInfo& descriptorInfo)
 	{
 		VkDescriptorSet handle = ((RDescriptorSetVk*)descriptorSet)->handle;
 		VkWriteDescriptorSet write{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr};
@@ -595,10 +655,10 @@ namespace RHI {
 	}
 
 	/*
-	void RHIVulkan::AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)
+	void RHIVulkan::AllocateDescriptorSets(uint32 count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)
 	{
 		TArray<VkDescriptorSetLayout> layoutsVk(count);
-		for(uint32_t i=0; i< count; ++i) {
+		for(uint32 i=0; i< count; ++i) {
 			layoutsVk[i] = ((RDescriptorSetLayoutVk*)layouts[i])->handle;
 		}
 		VkDescriptorSetAllocateInfo info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -610,15 +670,15 @@ namespace RHI {
 		if(VK_SUCCESS != vkAllocateDescriptorSets(m_Device, &info, descriptorSetsVk.Data())) {
 			return;
 		}
-		for(uint32_t i=0; i< count; ++i) {
+		for(uint32 i=0; i< count; ++i) {
 			RDescriptorSetVk* descriptorSetVk = (RDescriptorSetVk*)descriptorSets[i];
 			descriptorSetVk->handle = descriptorSetsVk[i];
 		}
 	}
-	void RHIVulkan::FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets)
+	void RHIVulkan::FreeDescriptorSets(uint32 count, RDescriptorSet** descriptorSets)
 	{
 		TArray<VkDescriptorSet> descriptorSetsVk(count);
-		for(uint32_t i=0; i<count; ++i) {
+		for(uint32 i=0; i<count; ++i) {
 			descriptorSetsVk[i] = ((RDescriptorSetVk*)descriptorSets[i])->handle;
 			delete descriptorSets[i];
 		}
@@ -626,9 +686,9 @@ namespace RHI {
 	}
 	*/
 	
-	RPipelineLayout* RHIVulkan::CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)
+	RPipelineLayout* RHIVulkan::CreatePipelineLayout(uint32 setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32 pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)
 	{
-		uint32_t i;
+		uint32 i;
 		VkPipelineLayoutCreateInfo info{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 		info.flags = 0;
 		info.pNext = nullptr;
@@ -667,9 +727,9 @@ namespace RHI {
 		delete pipelineLayoutVk;
 	}
 
-	RPipeline* RHIVulkan::CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& info, RPipelineLayout* layout, RRenderPass* renderPass, uint32_t subpass, RPipeline* basePipeline, int32_t basePipelineIndex)
+	RPipeline* RHIVulkan::CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& info, RPipelineLayout* layout, RRenderPass* renderPass, uint32 subpass, RPipeline* basePipeline, int32_t basePipelineIndex)
 	{
-		uint32_t i; // iter
+		uint32 i; // iter
 		// shader stages
 		TArray<VkShaderModuleCreateInfo> shaderModuleInfos(info.shaderCount);
 		TArray<VkShaderModule> shaderModules(info.shaderCount);
@@ -784,7 +844,7 @@ namespace RHI {
 		return pipeline;
 	}
 
-	RPipeline* RHIVulkan::CreateComputePipeline(const RPipelineShaderInfo& shader, RPipelineLayout* layout, RPipeline* basePipeline, uint32_t basePipelineIndex)
+	RPipeline* RHIVulkan::CreateComputePipeline(const RPipelineShaderInfo& shader, RPipelineLayout* layout, RPipeline* basePipeline, uint32 basePipelineIndex)
 	{
 		VkComputePipelineCreateInfo createInfo{ VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO, nullptr, 0 };
 		// shader stages
@@ -829,27 +889,27 @@ namespace RHI {
 		return reinterpret_cast<RQueue*>(&m_GraphicsQueue);
 	}
 
-	void RHIVulkan::ResizeSwapchain(uint32_t width, uint32_t height)
+	void RHIVulkan::ResizeSwapchain(uint32 width, uint32 height)
 	{
 		if (VK_SUCCESS != _vkWaitForFences(m_Device, m_IsFrameInFlightFences.size(), m_IsFrameInFlightFences.data(), VK_TRUE, UINT64_MAX))
 		{
 			ERROR("_vkWaitForFences failed");
 			return;
 		}
-		m_SwapchainExtent.width = static_cast<uint32_t>(width);
-		m_SwapchainExtent.height = static_cast<uint32_t>(height);
+		m_SwapchainExtent.width = static_cast<uint32>(width);
+		m_SwapchainExtent.height = static_cast<uint32>(height);
 		ClearSwapchain();
 		CreateSwapchain();
 	}
 
 	void RHIVulkan::QueueSubmit(RQueue* queue,
-		uint32_t cmdCount, RCommandBuffer* cmds,
-		uint32_t waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
-		uint32_t signalSemaphoreCount, RSemaphore* signalSemaphores,
+		uint32 cmdCount, RCommandBuffer* cmds,
+		uint32 waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
+		uint32 signalSemaphoreCount, RSemaphore* signalSemaphores,
 		RFence* fence) {
 		VkSubmitInfo submitInfo{ VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		submitInfo.pNext = nullptr;
-		uint32_t i;
+		uint32 i;
 
 		// wait semaphores
 		TArray<VkSemaphore> vkWaitSmps(waitSemaphoreCount);
@@ -886,25 +946,25 @@ namespace RHI {
 		VK_CHECK(vkQueueWaitIdle(reinterpret_cast<RQueueVk*>(queue)->handle), "vkQueueWaitIdle");
 	}
 
-	RImageView* RHIVulkan::GetSwapchainImageView(uint8_t i)
+	RImageView* RHIVulkan::GetSwapchainImageView(uint8 i)
 	{
 		ASSERT(i < m_SwapchainImageViews.size(), "i < m_MaxFramesInFlight");
 		return reinterpret_cast<RImageView*>(&m_SwapchainImageViews[i]);
 	}
-	uint32_t RHIVulkan::GetSwapchainMaxImageCount()
+	uint32 RHIVulkan::GetSwapchainMaxImageCount()
 	{
-		return (uint32_t)m_SwapchainImages.size();
+		return (uint32)m_SwapchainImages.size();
 	}
-	RFramebuffer* RHIVulkan::CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers)
+	RFramebuffer* RHIVulkan::CreateFrameBuffer(RRenderPass* pass, uint32 attachmentCount, const RImageView* const* pAttachments, uint32 width, uint32 height, uint32 layers)
 	{
 		VkFramebufferCreateInfo framebufferInfo{ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 		framebufferInfo.renderPass = reinterpret_cast<RRenderPassVk*>(pass)->handle;
-		TArray<VkImageView> vkImageViews(imageViewCount);
-		for(uint32_t i=0; i< imageViewCount; ++i) {
-			const RImageViewVk* imageViewVk = (const RImageViewVk*)(pImageViews[i]);
+		TArray<VkImageView> vkImageViews(attachmentCount);
+		for(uint32 i=0; i< attachmentCount; ++i) {
+			const RImageViewVk* imageViewVk = (const RImageViewVk*)(pAttachments[i]);
 			vkImageViews[i] = imageViewVk->handle;
 		}
-		framebufferInfo.attachmentCount = imageViewCount;
+		framebufferInfo.attachmentCount = attachmentCount;
 		framebufferInfo.pAttachments = vkImageViews.Data();
 		framebufferInfo.width = width;
 		framebufferInfo.height = height;
@@ -917,7 +977,7 @@ namespace RHI {
 
 		RFramebufferVk* framebuffer = new RFramebufferVk;
 		framebuffer->handle = handle;
-		framebuffer->m_Attachments.assign(pImageViews, pImageViews+imageViewCount);
+		framebuffer->m_Attachments.assign(pAttachments, pAttachments+attachmentCount);
 		return framebuffer;
 	}
 
@@ -972,12 +1032,12 @@ namespace RHI {
 		passInfo.renderPass = passVk->handle;
 		passInfo.framebuffer = reinterpret_cast<RFramebufferVk*>(framebuffer)->handle;
 		passInfo.renderArea = vkRenderArea;
-		passInfo.clearValueCount = static_cast<uint32_t>(passVk->m_Clears.size());
+		passInfo.clearValueCount = static_cast<uint32>(passVk->m_Clears.size());
 		passInfo.pClearValues = passVk->m_Clears.data();
 		_vkCmdBeginRenderPass(((RCommandBufferVk*)cmd)->handle, &passInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
-	void RHIVulkan::CmdNextPass(RCommandBuffer* cmd)
+	void RHIVulkan::CmdNextSubpass(RCommandBuffer* cmd)
 	{
 		_vkCmdNextSubpass(((RCommandBufferVk*)cmd)->handle, VK_SUBPASS_CONTENTS_INLINE);
 	}
@@ -986,7 +1046,7 @@ namespace RHI {
 	{
 		_vkCmdEndRenderPass(((RCommandBufferVk*)cmd)->handle);
 	}
-	void RHIVulkan::CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32_t baseLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount, RImageAspectFlags aspect)
+	void RHIVulkan::CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32 baseLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount, RImageAspectFlags aspect)
 	{
 		RImageVk* imageVk = (RImageVk*)image;
 		VkImageMemoryBarrier barrier{};
@@ -1008,7 +1068,7 @@ namespace RHI {
 		imageVk->m_Layout = newLayout;
 	}
 
-	void RHIVulkan::CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32_t mipLevel, uint32_t baseLayout, uint32_t layerCount)
+	void RHIVulkan::CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayout, uint32 layerCount)
 	{
 		RImageVk* imageVk = (RImageVk*)image;
 		VkBufferImageCopy region{};
@@ -1037,7 +1097,7 @@ namespace RHI {
 		vkCmdBlitImage(((RCommandBufferVk*)cmd)->handle, ((RImageVk*)srcImage)->handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 			((RImageVk*)dstImage)->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 	}
-	void RHIVulkan::CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount)
+	void RHIVulkan::CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount)
 	{
 		RImageVk* imageVk = (RImageVk*)image;
 		GenerateMipMap(((RCommandBufferVk*)cmd)->handle, imageVk->handle, levelCount, imageVk->m_Extent.width, imageVk->m_Extent.height, aspect, baseLayer, layerCount);
@@ -1049,38 +1109,38 @@ namespace RHI {
 		_vkCmdBindPipeline(((RCommandBufferVk*)cmd)->handle, (VkPipelineBindPoint)pipelineVk->GetType(), pipelineVk->handle);
 	}
 
-	void RHIVulkan::CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32_t firstSet)
+	void RHIVulkan::CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 firstSet)
 	{
 		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
 		_vkCmdBindDescriptorSets(handle, (VkPipelineBindPoint)pipelineType, ((RPipelineLayoutVk*)layout)->handle,
 			firstSet, 1, &((RDescriptorSetVk*)descriptorSet)->handle, 0, nullptr);
 	}
 
-	void RHIVulkan::CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32_t first, size_t offset)
+	void RHIVulkan::CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset)
 	{
 		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
 		_vkCmdBindVertexBuffers(handle, first, 1, &((RBufferVk*)buffer)->handle, &offset);
 	}
 
-	void RHIVulkan::CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, size_t offset)
+	void RHIVulkan::CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint64 offset)
 	{
 		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
 		_vkCmdBindIndexBuffer(handle, ((RBufferVk*)buffer)->handle, offset, VK_INDEX_TYPE_UINT32);
 	}
 
-	void RHIVulkan::CmdDraw(RCommandBuffer* cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t firstInstance)
+	void RHIVulkan::CmdDraw(RCommandBuffer* cmd, uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance)
 	{
 		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
 		_vkCmdDraw(handle, vertexCount, instanceCount, firstIndex, firstInstance);
 	}
 
-	void RHIVulkan::CmdDrawIndexed(RCommandBuffer* cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)
+	void RHIVulkan::CmdDrawIndexed(RCommandBuffer* cmd, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32_t vertexOffset, uint32 firstInstance)
 	{
 		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
 		_vkCmdDrawIndexed(handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 	}
 
-	void RHIVulkan::CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+	void RHIVulkan::CmdDispatch(RCommandBuffer* cmd, uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ)
 	{
 		_vkCmdDispatch(((RCommandBufferVk*)cmd)->handle, groupCountX, groupCountY, groupCountZ);
 	}
@@ -1103,7 +1163,7 @@ namespace RHI {
 		_vkCmdClearAttachments(((RCommandBufferVk*)cmd)->handle, 1, &clearAttachment, 1, &clearRect);
 	}
 
-	void RHIVulkan::CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size)
+	void RHIVulkan::CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size)
 	{
 		VkBufferCopy copy{ srcOffset, dstOffset, size };
 		vkCmdCopyBuffer(((RCommandBufferVk*)cmd)->handle,
@@ -1168,7 +1228,7 @@ namespace RHI {
 		vkFreeCommandBuffers(m_Device, cmd.m_Pool, 1, &cmd.handle);
 	}
 
-	int RHIVulkan::PreparePresent(uint8_t frameIndex)
+	int RHIVulkan::PreparePresent(uint8 frameIndex)
 	{
 		_vkWaitForFences(m_Device, 1, &m_IsFrameInFlightFences[frameIndex], VK_TRUE, UINT64_MAX);
 		VkResult res = vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, m_ImageAvaliableSemaphores[frameIndex], VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
@@ -1183,7 +1243,7 @@ namespace RHI {
 		VK_CHECK(_vkResetCommandPool(m_Device, m_CommandPools[frameIndex], 0), "Failed to reset command pool!");
 		return static_cast<int>(m_CurrentSwapchainImageIndex);
 	}
-	int RHIVulkan::QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex)
+	int RHIVulkan::QueueSubmitPresent(RCommandBuffer* cmd, uint8 frameIndex)
 	{
 		VK_CHECK(_vkResetFences(m_Device, 1, &m_IsFrameInFlightFences[frameIndex]));
 
@@ -1222,7 +1282,7 @@ namespace RHI {
 		delete memory;
 	}
 
-	RBuffer* RHIVulkan::CreateBuffer(size_t size, RBufferUsageFlags usage)
+	RBuffer* RHIVulkan::CreateBuffer(uint64 size, RBufferUsageFlags usage)
 	{
 		VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 		bufferCreateInfo.size = size;
@@ -1238,7 +1298,7 @@ namespace RHI {
 		return buffer;
 	}
 
-	RMemory* RHIVulkan::CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, size_t dataSize, void* pData)
+	RMemory* RHIVulkan::CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, uint64 dataSize, void* pData)
 	{
 		VmaAllocationCreateInfo info;
 		info.flags = 0;
@@ -1258,7 +1318,7 @@ namespace RHI {
 		return memory;
 	}
 
-	void RHIVulkan::CreateBufferWithMemory(size_t size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags, RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)
+	void RHIVulkan::CreateBufferWithMemory(uint64 size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags, RBuffer*& pBuffer, RMemory*& pMemory, uint64 dataSize, void* pData)
 	{
 		VkBufferCreateInfo bufferCreateInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 		bufferCreateInfo.size = size;
@@ -1297,7 +1357,7 @@ namespace RHI {
 		delete bufferVk;
 	}
 
-	RImageVk* RHIVulkan::CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32_t mipLevels, uint32_t arrayLayers, RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage)
+	RImageVk* RHIVulkan::CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32 mipLevels, uint32 arrayLayers, RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage)
 	{
 		VkImageCreateInfo imageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 		imageInfo.pNext = nullptr;
@@ -1324,7 +1384,7 @@ namespace RHI {
 		return image;
 	}
 
-	RImage* RHIVulkan::CreateImage2D(RFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, RSampleCountFlagBits samples, RImageTiling tiling, RImageUsageFlags usage)
+	RImage* RHIVulkan::CreateImage2D(RFormat format, uint32 width, uint32 height, uint32 mipLevels, RSampleCountFlagBits samples, RImageTiling tiling, RImageUsageFlags usage)
 	{
 		return CreateImage(IMAGE_TYPE_2D, format, {width, height, 1}, mipLevels, 1, samples, tiling, usage);
 	}
@@ -1359,7 +1419,7 @@ namespace RHI {
 	}
 
 	RImageView* RHIVulkan::CreateImageView(RImage* image, RImageViewType viewType, RImageAspectFlags aspectMask,
-		uint32_t baseMipLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount)
+		uint32 baseMipLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount)
 	{
 		RImageVk* imageVk = (RImageVk*)image;
 		VkImageViewCreateInfo imageViewCreateInfo{};

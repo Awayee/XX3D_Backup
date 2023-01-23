@@ -15,7 +15,7 @@ namespace Engine {
 
 #define BRANCH_END return ;}
 
-	void ImGuiInitialize(RHI::RRenderPass* pass, uint32_t subpass)
+	void ImGuiInitialize(RHI::RRenderPass* pass, uint32 subpass)
 	{
 		BRANCH_VULKAN
 		RHI::RHIVulkan* vkRHI = reinterpret_cast<RHI::RHIVulkan*>(RHI::GetInstance());

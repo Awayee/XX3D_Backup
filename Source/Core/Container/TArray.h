@@ -75,7 +75,7 @@ public:
 		size = p.size();
 		_TArrayAllocate();
 		auto begin = p.begin();
-		for (uint32_t i = 0; i < size; i++) {
+		for (unsigned int i = 0; i < size; i++) {
 			data[i] = *(begin + i);
 		}
 	}

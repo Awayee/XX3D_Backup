@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <cstdint>
 #include "Vector.h"
 #include "Quaternion.h"
 #include "Matrix.h"

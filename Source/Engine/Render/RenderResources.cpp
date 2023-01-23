@@ -34,7 +34,7 @@ namespace Engine {
 			return;
 		}
 		GET_RHI(rhi);
-		size_t bufferSize = m_VertexCount * sizeof(Vertex);
+		uint32 bufferSize = m_VertexCount * sizeof(Vertex);
 		rhi->CreateBufferWithMemory(bufferSize, RHI::BUFFER_USAGE_VERTEX_BUFFER_BIT | RHI::BUFFER_USAGE_TRANSFER_DST_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			m_VertexBuffer, m_VertexBufferMemory, 0, nullptr);
 		RHI::RBuffer* stagingBuffer;

@@ -4,7 +4,7 @@
 #include "RHI/RHI.h"
 namespace Engine {
 
-	typedef uint32_t IndexType;
+	typedef uint32 IndexType;
 
 	struct Vertex {
 		Math::FVector3 position;
@@ -17,8 +17,8 @@ namespace Engine {
 
 	class Primitive {
 	private:
-		uint32_t m_VertexCount;
-		uint32_t m_IndexCount;
+		uint32 m_VertexCount;
+		uint32 m_IndexCount;
 		RHI::RBuffer* m_VertexBuffer;
 		RHI::RMemory* m_VertexBufferMemory;
 		RHI::RBuffer* m_IndexBuffer;
@@ -27,8 +27,8 @@ namespace Engine {
 		Primitive(const TVector<Vertex>& vertices, const TVector<IndexType>& indices);
 		RHI::RBuffer* GetVertexBuffer() const { return m_VertexBuffer; }
 		RHI::RBuffer* GetIndexBuffer()  const { return m_IndexBuffer; }
-		uint32_t GetVertexCount()const { return m_VertexCount; }
-		uint32_t GetIndexCount()const { return m_IndexCount; }
+		uint32 GetVertexCount()const { return m_VertexCount; }
+		uint32 GetIndexCount()const { return m_IndexCount; }
 		~Primitive();
 	};
 }

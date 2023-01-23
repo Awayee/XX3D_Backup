@@ -3,7 +3,7 @@
 #include <imgui.h>
 
 namespace Engine {
-	void ImGuiInitialize(RHI::RRenderPass* pass, uint32_t subpass);
+	void ImGuiInitialize(RHI::RRenderPass* pass, uint32 subpass);
 	void ImGuiRelease();
 	void ImGuiNewFrame();
 	void ImGuiRenderDrawData(RHI::RCommandBuffer* cmd);

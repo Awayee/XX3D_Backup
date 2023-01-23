@@ -10,7 +10,7 @@ namespace Engine {
 		RenderSystem* m_Renderer {nullptr};
 		std::chrono::steady_clock::time_point m_LastTickTime{ std::chrono::steady_clock::now() };
 
-		uint32_t m_FPSFrameCounter{0U};
+		uint32 m_FPSFrameCounter{0U};
 		float m_FPSDurationMs{0.0f};
 		float m_FPS{0.0f};
 	public:

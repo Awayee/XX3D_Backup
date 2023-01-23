@@ -7,6 +7,9 @@ namespace RHI{
 	};
 
 	class RRenderPass {
+	public:
+		virtual void SetAttachment(uint32 idx, RImageView* imageView) = 0;
+		virtual void SetClearValue(uint32 idx, const RSClear& clear) = 0;
 	};
 
 	class RPipeline {
@@ -52,7 +55,7 @@ namespace RHI{
 	protected:
 		TVector<const RImageView*> m_Attachments;
 	public:
-		const RImageView* GetAttachment(uint32_t i) { ASSERT(i < m_Attachments.size()); return m_Attachments[i]; }
+		const RImageView* GetAttachment(uint32 i) { ASSERT(i < m_Attachments.size()); return m_Attachments[i]; }
 	};
 	class RSampler {
 		
@@ -70,8 +73,8 @@ namespace RHI{
 
 	struct BufferRange {
 		RBuffer* buffer{nullptr};
-		size_t   offset{0};
-		size_t   range {0};
+		uint64   offset{0};
+		uint64   range {0};
 	};
 
 	class RTexture {};

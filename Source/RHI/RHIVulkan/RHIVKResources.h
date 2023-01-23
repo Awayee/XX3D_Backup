@@ -20,7 +20,7 @@ namespace RHI {
 		VkInstance instance;
 		VkDevice device;
 		VkPhysicalDevice physicalDevice;
-		uint32_t queueIndex;
+		uint32 queueIndex;
 		VkQueue queue;
 		VkDescriptorPool descriptorPool;
 	};
@@ -41,8 +41,11 @@ namespace RHI {
 	class RRenderPassVk: public RRenderPass {
 	public:
 		VkRenderPass handle;
+		void SetAttachment(uint32 idx, RImageView* imageView) override;
+		void SetClearValue(uint32 idx, const RSClear& clear) override;
 	private:
 		TVector<VkClearValue> m_Clears;
+		TVector<VkImageView> m_Attachments;
 		friend RHIVulkan;
 	};
 

@@ -30,9 +30,9 @@ namespace Math {
     }
     MATH_GENERIC bool Matrix3x3<T>::operator==(const Matrix3x3<T>& rhs) const
     {
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
             {
                 if (m_mat[row_index][col_index] != rhs.m_mat[row_index][col_index])
                     return false;
@@ -44,9 +44,9 @@ namespace Math {
     MATH_GENERIC Matrix3x3<T> Matrix3x3<T>::operator+(const Matrix3x3<T>& rhs) const
     {
         Matrix3x3<T> sum;
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
             {
                 sum.m_mat[row_index][col_index] = m_mat[row_index][col_index] + rhs.m_mat[row_index][col_index];
             }
@@ -56,9 +56,9 @@ namespace Math {
     MATH_GENERIC Matrix3x3<T> Matrix3x3<T>::operator-(const Matrix3x3<T>& rhs) const
     {
         Matrix3x3<T> diff;
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
             {
                 diff.m_mat[row_index][col_index] = m_mat[row_index][col_index] - rhs.m_mat[row_index][col_index];
             }
@@ -76,9 +76,9 @@ namespace Math {
     MATH_GENERIC Matrix3x3<T> Matrix3x3<T>::operator*(const Matrix3x3<T>& rhs) const
     {
         Matrix3x3<T> prod;
-        for (size_t rowIdx = 0; rowIdx < 3; rowIdx++)
+        for (int rowIdx = 0; rowIdx < 3; rowIdx++)
         {
-            for (size_t colIdx = 0; colIdx < 3; colIdx++)
+            for (int colIdx = 0; colIdx < 3; colIdx++)
             {
                 prod.m_mat[rowIdx][colIdx] = m_mat[rowIdx][0] * rhs.m_mat[0][colIdx] +
                     m_mat[rowIdx][1] * rhs.m_mat[1][colIdx] +
@@ -90,7 +90,7 @@ namespace Math {
     MATH_GENERIC Vector3<T> Matrix3x3<T>::operator*(const Vector3<T>& rhs) const
     {
         Vector3<float> prod;
-        for (size_t rowIdx = 0; rowIdx < 3; rowIdx++)
+        for (int rowIdx = 0; rowIdx < 3; rowIdx++)
         {
             prod[rowIdx] =
                 m_mat[rowIdx][0] * rhs.x + m_mat[rowIdx][1] * rhs.y + m_mat[rowIdx][2] * rhs.z;
@@ -100,9 +100,9 @@ namespace Math {
     MATH_GENERIC Matrix3x3<T> Matrix3x3<T>::operator*(T scalar) const
     {
         Matrix3x3<T> prod;
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
                 prod[row_index][col_index] = scalar * m_mat[row_index][col_index];
         }
         return prod;
@@ -110,9 +110,9 @@ namespace Math {
     MATH_GENERIC Matrix3x3<T> Matrix3x3<T>::Transpose() const
     {
         Matrix3x3<T> transpose_v;
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
                 transpose_v[row_index][col_index] = m_mat[col_index][row_index];
         }
         return transpose_v;
@@ -147,9 +147,9 @@ namespace Math {
         inv_mat[2][2] = m_mat[0][0] * m_mat[1][1] - m_mat[0][1] * m_mat[1][0];
 
         float inv_det = 1.0f / det;
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
                 inv_mat[row_index][col_index] *= inv_det;
         }
 
@@ -166,9 +166,9 @@ namespace Math {
     MATH_GENERIC Matrix3x3<T> operator*(T scalar, const Matrix3x3<T>& rhs)
     {
         Matrix3x3 prod;
-        for (size_t row_index = 0; row_index < 3; row_index++)
+        for (int row_index = 0; row_index < 3; row_index++)
         {
-            for (size_t col_index = 0; col_index < 3; col_index++)
+            for (int col_index = 0; col_index < 3; col_index++)
                 prod[row_index][col_index] = scalar * rhs.m_mat[row_index][col_index];
         }
         return prod;
@@ -195,14 +195,14 @@ namespace Math {
         else
         {
             // |w| <= 1/2
-            size_t s_iNext[3] = { 1, 2, 0 };
-            size_t i = 0;
+            int s_iNext[3] = { 1, 2, 0 };
+            int i = 0;
             if (m[1][1] > m[0][0])
                 i = 1;
             if (m[2][2] > m[i][i])
                 i = 2;
-            size_t j = s_iNext[i];
-            size_t k = s_iNext[j];
+            int j = s_iNext[i];
+            int k = s_iNext[j];
 
             root = std::sqrt(m[i][i] - m[j][j] - m[k][k] + 1.0f);
             float* apkQuat[3] = { &q.x, &q.y, &q.z };
@@ -273,12 +273,12 @@ namespace Math {
         m_mat[2][0] = row2.x; m_mat[2][1] = row2.y; m_mat[2][2] = row2.z; m_mat[2][3] = row2.w;
         m_mat[3][0] = row3.x; m_mat[3][1] = row3.y; m_mat[3][2] = row3.z; m_mat[3][3] = row3.w;
     }
-    MATH_GENERIC T* Matrix4x4<T>::operator[](size_t row_index)
+    MATH_GENERIC T* Matrix4x4<T>::operator[](int row_index)
 	{
 		ASSERT(row_index < 4);
 		return m_mat[row_index];
 	}
-    MATH_GENERIC const T* Matrix4x4<T>::operator[](size_t row_index) const
+    MATH_GENERIC const T* Matrix4x4<T>::operator[](int row_index) const
 	{
 		ASSERT(row_index < 4);
 		return m_mat[row_index];
@@ -677,8 +677,8 @@ namespace Math {
 
         if (det < 0.0)
         {
-            for (size_t row_index = 0; row_index < 3; row_index++)
-                for (size_t rol_index = 0; rol_index < 3; rol_index++)
+            for (int row_index = 0; row_index < 3; row_index++)
+                for (int rol_index = 0; rol_index < 3; rol_index++)
                     out_Q[row_index][rol_index] = -out_Q[row_index][rol_index];
         }
 

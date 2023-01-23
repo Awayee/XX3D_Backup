@@ -7,11 +7,11 @@ namespace RHI {
 		*pGraphicsIndex = -1;
 		*pPresentIndex = -1;
 		*pComputeIndex = -1;
-		uint32_t queueFamilyCount = 0;
+		uint32 queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 		TVector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-		for (uint32_t i = 0; i < queueFamilyCount; i++) {
+		for (uint32 i = 0; i < queueFamilyCount; i++) {
 			if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				*pGraphicsIndex = i;
 			}
@@ -29,7 +29,7 @@ namespace RHI {
 	}
 
 	bool CheckExtensionSupported(VkPhysicalDevice device, const TVector<const char*>& extensions) {
-		uint32_t extensionCount;
+		uint32 extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 		TVector<VkExtensionProperties> availableExtensions(extensionCount);
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
@@ -72,7 +72,7 @@ namespace RHI {
 
 	bool CheckValidationLayerSupport(const TVector<const char*>& validationLayers)
 	{
-		uint32_t layerCount;
+		uint32 layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
 		TVector<VkLayerProperties> availableLayers(layerCount);
@@ -111,7 +111,7 @@ namespace RHI {
 
 		// query swapchain info
 		// format
-		uint32_t formatCount;
+		uint32 formatCount;
 		VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr), "vkGetPhysicalDeviceSurfaceFormatsKHR");
 		TVector<VkSurfaceFormatKHR> formats(formatCount);
 		VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, formats.data()), "vkGetPhysicalDeviceSurfaceFormatsKHR");
@@ -122,7 +122,7 @@ namespace RHI {
 			}
 		}
 		//present mode
-		uint32_t presentModeCount;
+		uint32 presentModeCount;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
 		TVector<VkPresentModeKHR> presentModes(presentModeCount);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
@@ -148,7 +148,7 @@ namespace RHI {
 		//extent
 		VkSurfaceCapabilitiesKHR capabilities;
 		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities), "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
-		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+		if (capabilities.currentExtent.width != std::numeric_limits<uint32>::max()) {
 			info.swapchainExtent = capabilities.currentExtent;
 		}
 		info.imageCount = capabilities.minImageCount + 1;
@@ -237,8 +237,8 @@ namespace RHI {
 		}
 	}
 
-	void GenerateMipMap(VkCommandBuffer cmd, VkImage image, uint32_t levelCount, uint32_t width, uint32_t height, VkImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) {
-		for (uint32_t i = 1; i < levelCount; i++)
+	void GenerateMipMap(VkCommandBuffer cmd, VkImage image, uint32 levelCount, uint32 width, uint32 height, VkImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) {
+		for (uint32 i = 1; i < levelCount; i++)
 		{
 			VkImageBlit imageBlit{};
 			imageBlit.srcSubresource.aspectMask = aspect;

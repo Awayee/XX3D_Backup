@@ -12,23 +12,23 @@
 
 namespace Engine {
 
-	uint32_t GetPrimitiveCount(const tinygltf::Model& model, const tinygltf::Node& node) {
-		uint32_t count = 0;
+	uint32 GetPrimitiveCount(const tinygltf::Model& model, const tinygltf::Node& node) {
+		uint32 count = 0;
 		if (node.mesh > -1) {
 			count = model.meshes[node.mesh].primitives.size();
 		}
 		if (!node.children.empty()) {
-			for (uint32_t i = 0; i < node.children.size(); i++) {
+			for (uint32 i = 0; i < node.children.size(); i++) {
 				count += GetPrimitiveCount(model, model.nodes[node.children[i]]);
 			}
 		}
 		return count;
 	}
 
-	void LoadGLTFNode(const tinygltf::Model& model, const tinygltf::Node& node, TVector<SPrimitiveData>& primitives, uint32_t& index) {
+	void LoadGLTFNode(const tinygltf::Model& model, const tinygltf::Node& node, TVector<SPrimitiveData>& primitives, uint32& index) {
 		if (node.mesh > -1) {
 			const tinygltf::Mesh& mesh = model.meshes[node.mesh];
-			for (uint32_t i = 0; i < mesh.primitives.size(); i++) {
+			for (uint32 i = 0; i < mesh.primitives.size(); i++) {
 				const tinygltf::Primitive& primitive = mesh.primitives[i];
 
 				//vertices
@@ -39,7 +39,7 @@ namespace Engine {
 				const tinygltf::Accessor& posAccessor = model.accessors[kvPos->second];
 				const tinygltf::BufferView& posView = model.bufferViews[posAccessor.bufferView];
 				const float* bufferPos = reinterpret_cast<const float*>(&(model.buffers[posView.buffer].data[posAccessor.byteOffset + posView.byteOffset]));
-				uint32_t vertexCount = static_cast<uint32_t>(posAccessor.count);
+				uint32 vertexCount = static_cast<uint32>(posAccessor.count);
 				int posByteStride = posAccessor.ByteStride(posView) / sizeof(float);
 
 				// normal
@@ -67,7 +67,7 @@ namespace Engine {
 				TVector<Vertex>& vertices = primitives[index].vertices;
 				vertices.resize(vertexCount);
 
-				for (uint32_t v = 0; v < vertexCount; v++) {
+				for (uint32 v = 0; v < vertexCount; v++) {
 					vertices[v].position.x = bufferPos[v * posByteStride];
 					vertices[v].position.y = bufferPos[v * posByteStride + 1];
 					vertices[v].position.z = bufferPos[v * posByteStride + 2];
@@ -80,7 +80,7 @@ namespace Engine {
 
 				//indices
 				if (primitive.indices > -1) {
-					TVector<uint32_t>& indices = primitives[index].indices;
+					TVector<uint32>& indices = primitives[index].indices;
 					const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
 					const tinygltf::BufferView& indexView = model.bufferViews[indexAccessor.bufferView];
 					const tinygltf::Buffer& bufferIndex = model.buffers[indexView.buffer];
@@ -88,20 +88,20 @@ namespace Engine {
 					const void* dataPtr = &(bufferIndex.data[indexAccessor.byteOffset + indexView.byteOffset]);
 
 					if (indexAccessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
-						const uint32_t* buf = static_cast<const uint32_t*>(dataPtr);
-						for (size_t j = 0; j < indexAccessor.count; j++) {
+						const uint32* buf = static_cast<const uint32*>(dataPtr);
+						for (uint32 j = 0; j < indexAccessor.count; j++) {
 							indices[j] = buf[j];
 						}
 					}
 					else if (indexAccessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
 						const uint16_t* buf = static_cast<const uint16_t*>(dataPtr);
-						for (size_t j = 0; j < indexAccessor.count; j++) {
+						for (uint32 j = 0; j < indexAccessor.count; j++) {
 							indices[j] = buf[j];
 						}
 					}
 					else if (indexAccessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
 						const uint8_t* buf = static_cast<const uint8_t*>(dataPtr);
-						for (size_t j = 0; j < indexAccessor.count; j++) {
+						for (uint32 j = 0; j < indexAccessor.count; j++) {
 							indices[j] = buf[j];
 						}
 					}
@@ -114,7 +114,7 @@ namespace Engine {
 				//	const tinygltf::Texture& tex = model.textures[mat.pbrMetallicRoughness.baseColorTexture.index];
 				//	const tinygltf::Image& img = model.images[tex.source];
 				//	textureNames.resize(1);
-				//	size_t typeIdx = img.mimeType.find('/');
+				//	uint32 typeIdx = img.mimeType.find('/');
 				//	const char* imgType = &img.mimeType[typeIdx + 1];
 				//	std::string imageFile = img.name + '.' + imgType;
 				//	textureNames[0] = "textures\\";
@@ -127,7 +127,7 @@ namespace Engine {
 		}
 
 		if (node.children.size() > 0) {
-			for (uint32_t i = 0; i < node.children.size(); i++) {
+			for (uint32 i = 0; i < node.children.size(); i++) {
 				LoadGLTFNode(model, model.nodes[node.children[i]], primitives, index);
 			}
 		}
@@ -146,37 +146,37 @@ namespace Engine {
 		}
 		const tinygltf::Scene& scene = gltfModel.scenes[gltfModel.defaultScene > -1 ? gltfModel.defaultScene : 0];
 
-		uint32_t primitiveCount = 0;
+		uint32 primitiveCount = 0;
 		for(auto& node: scene.nodes) {
 			primitiveCount += GetPrimitiveCount(gltfModel, gltfModel.nodes[node]);
 		}
 		TVector<SPrimitiveData> primitives(primitiveCount);
 		primitiveCount = 0;
-		for (uint32_t i = 0; i < scene.nodes.size(); i++) {
+		for (uint32 i = 0; i < scene.nodes.size(); i++) {
 			LoadGLTFNode(gltfModel, gltfModel.nodes[scene.nodes[i]], primitives, primitiveCount);
 		}
 		mesh->LoadPrimitives(primitives);
 		return true;
 	}
 
-	uint32_t GetPrimitiveCount(const aiScene* aScene, aiNode* aNode) {
-		uint32_t count = aNode->mNumMeshes;
-		for (uint32_t i = 0; i < aNode->mNumChildren; i++) {
+	uint32 GetPrimitiveCount(const aiScene* aScene, aiNode* aNode) {
+		uint32 count = aNode->mNumMeshes;
+		for (uint32 i = 0; i < aNode->mNumChildren; i++) {
 			count += GetPrimitiveCount(aScene, aNode->mChildren[i]);
 		}
 		return count;
 	}
 
 	void LoadFbxNode(const aiScene* aScene, aiNode* aNode, TVector<SPrimitiveData>& meshInfos) {
-		for (uint32_t i = 0; i < aNode->mNumMeshes; i++) {
+		for (uint32 i = 0; i < aNode->mNumMeshes; i++) {
 			aiMesh* aMesh = aScene->mMeshes[aNode->mMeshes[i]];
 			TVector<Vertex>& vertices = meshInfos[i].vertices;
-			TVector<uint32_t>& indices = meshInfos[i].indices;
+			TVector<uint32>& indices = meshInfos[i].indices;
 			//TVector<std::string>& textures = meshInfos[i].textures;
 
 			// vertices
 			vertices.resize(aMesh->mNumVertices);
-			for (uint32_t i = 0; i < aMesh->mNumVertices; i++) {
+			for (uint32 i = 0; i < aMesh->mNumVertices; i++) {
 				vertices[i].position.x = aMesh->mVertices[i].x;
 				vertices[i].position.y = aMesh->mVertices[i].y;
 				vertices[i].position.z = aMesh->mVertices[i].z;
@@ -191,18 +191,18 @@ namespace Engine {
 			}
 
 			// indices
-			uint32_t count = 0;
-			for (uint32_t i = 0; i < aMesh->mNumFaces; i++) {
+			uint32 count = 0;
+			for (uint32 i = 0; i < aMesh->mNumFaces; i++) {
 				aiFace aFace = aMesh->mFaces[i];
-				for (uint32_t j = 0; j < aFace.mNumIndices; j++) {
+				for (uint32 j = 0; j < aFace.mNumIndices; j++) {
 					++count;
 				}
 			}
 			indices.resize(count);
 			count = 0;
-			for (uint32_t i = 0; i < aMesh->mNumFaces; i++) {
+			for (uint32 i = 0; i < aMesh->mNumFaces; i++) {
 				aiFace aFace = aMesh->mFaces[i];
-				for (uint32_t j = 0; j < aFace.mNumIndices; j++) {
+				for (uint32 j = 0; j < aFace.mNumIndices; j++) {
 					indices[count++] = aFace.mIndices[j];
 				}
 			}
@@ -211,16 +211,16 @@ namespace Engine {
 			//if (aMesh->mMaterialIndex >= 0) {
 			//	// 只读取需要的纹理
 			//	aiMaterial* aMat = aScene->mMaterials[aMesh->mMaterialIndex];
-			//	uint32_t idx = 0;
+			//	uint32 idx = 0;
 			//	aiTextureType types[] = { aiTextureType_DIFFUSE, aiTextureType_NORMALS, aiTextureType_SPECULAR };
-			//	for (uint32_t j = 0; j < 3; j++) {
-			//		for (uint32_t i = 0; i < aMat->GetTextureCount(types[j]); i++) { ++idx; }
+			//	for (uint32 j = 0; j < 3; j++) {
+			//		for (uint32 i = 0; i < aMat->GetTextureCount(types[j]); i++) { ++idx; }
 			//	}
 			//	if (idx > 0) {
 			//		textures.resize(idx);
 			//		idx = 0;
-			//		for (uint32_t j = 0; j < 3; j++) {
-			//			for (uint32_t i = 0; i < aMat->GetTextureCount(types[j]); i++) {
+			//		for (uint32 j = 0; j < 3; j++) {
+			//			for (uint32 i = 0; i < aMat->GetTextureCount(types[j]); i++) {
 			//				aiString str;
 			//				aMat->GetTexture(types[j], i, &str);
 			//				textures[idx++] = str.C_Str();
@@ -230,7 +230,7 @@ namespace Engine {
 			//}
 		}
 
-		for (uint32_t i = 0; i < aNode->mNumChildren; i++) {
+		for (uint32 i = 0; i < aNode->mNumChildren; i++) {
 			LoadFbxNode(aScene, aNode->mChildren[i], meshInfos);
 		}
 	}
@@ -244,7 +244,7 @@ namespace Engine {
 			return false;
 		}
 		// 先获取总面数
-		uint32_t primitiveCount = GetPrimitiveCount(aScene, aScene->mRootNode);
+		uint32 primitiveCount = GetPrimitiveCount(aScene, aScene->mRootNode);
 		TVector<SPrimitiveData> primitives(primitiveCount);
 		LoadFbxNode(aScene, aScene->mRootNode, primitives);
 		return true;

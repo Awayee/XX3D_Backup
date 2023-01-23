@@ -17,13 +17,19 @@ namespace Engine {
 
 	class RenderSystem {
 	private:
+
+		enum ERenderImageType {
+			ATTACHMENT_DEPTH,
+			ATTACHMENT_NORMAL,
+			ATTACHMENT_ALBEDO,
+			ATTACHMENT_COUNT
+		};
 		//RenderPasses
 		TVector<RHI::RRenderPass*> m_Passes;
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
 		TVector<RHI::RFramebuffer*> m_SwapchianFramebuffers;
 
-		TUniquePtr<Texture2D> m_DepthImage;
-		RHI::RFramebuffer* m_DepthFramebuffer;
+		TVector<TUniquePtr<Texture2D>> m_Images;
 
 		// Render pipelines
 		RHI::RPipeline* m_GBufferPipeline;
@@ -45,11 +51,11 @@ namespace Engine {
 		void InitUIPass(UIBase* ui);
 
 	private:
-		void CreateDepthImage();
+		void CreateImages();
 		void CreateRenderPasses();
 		void CreateFramebuffers();
 		void CreateCommandBuffers();
-		void OnWindowSizeChanged(uint32_t w, uint32_t h);
+		void OnWindowSizeChanged(uint32 w, uint32 h);
 		void RenderSceneForward(RHI::RCommandBuffer* cmd);
 		void RenderSceneDeferred(RHI::RCommandBuffer* cmd);
 	};

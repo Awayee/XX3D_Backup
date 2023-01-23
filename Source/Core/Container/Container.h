@@ -1,13 +1,13 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
-#include <map>
 #include "TArray.h"
 #include <algorithm>
 #include <string>
 #include <unordered_set>
 #include <set>
 #include <initializer_list>
+#include "../typedefine.h"
 
 
 struct cmp {
@@ -17,12 +17,12 @@ struct cmp {
 };
 
 struct hs {
-	size_t operator()(const char* s) const {
+	uint64 operator()(const char* s) const {
 		unsigned long n = 0;
 		for (; *s; s++) {
 			n = 5 * n + *s;
 		}
-		return (size_t)n;
+		return (uint64)n;
 	}
 };
 template<class T>

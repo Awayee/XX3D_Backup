@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIEnum.h"
 #include "Core/Container/Container.h"
-#include <cstdint>
+#include "Core/typedefine.h"
 
 namespace RHI {
 	struct RSInitInfo {
@@ -11,27 +11,27 @@ namespace RHI {
 		int windowHeight;
 		void* windowHandle;
 		const char* applicationName;
-		uint8_t maxFramesInFlight;
+		uint8 maxFramesInFlight;
 	};
 
 	struct RSOffset2D {
-		int32_t x;
-		int32_t y;
+		int32 x;
+		int32 y;
 	};
 
 	struct RSExtent2D {
-		uint32_t width;
-		uint32_t height;
+		uint32 width;
+		uint32 height;
 	};
 
 	struct RSExtent3D {
-		uint32_t width;
-		uint32_t height;
-		uint32_t depth;
+		uint32 width;
+		uint32 height;
+		uint32 depth;
 	};
 
 	struct RSOffset3D {
-		int32_t x, y, z;
+		int32 x, y, z;
 	};
 
 	struct RSRect2D {
@@ -49,7 +49,7 @@ namespace RHI {
 	};
 
 	struct RSClear {
-		RClearValueType Type;
+		RClearValueType Type{CLEAR_VALUE_NONE};
 		union {
 			struct {
 				float r;
@@ -59,9 +59,18 @@ namespace RHI {
 			}Color;
 			struct {
 				float depth;
-				uint32_t stencil;
+				uint32 stencil;
 			}DepthStencil;
 		};
+		RSClear() = default;
+		RSClear(float r, float g, float b, float a) {
+			Type = CLEAR_VALUE_COLOR;
+			Color.r = r; Color.g = g; Color.b = b; Color.a = a;
+		}
+		RSClear(float depth, uint32 stencil) {
+			Type = CLEAR_VALUE_DEPTH_STENCIL;
+			DepthStencil.depth = depth; DepthStencil.stencil = stencil;
+		}
 	};
 
 	struct RSAttachment {
@@ -74,35 +83,42 @@ namespace RHI {
 		RAttachmentStoreOp storeOp{ ATTACHMENT_STORE_OP_STORE };
 		RAttachmentLoadOp stencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
 		RAttachmentStoreOp stencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
-		RSClear clear{ CLEAR_VALUE_NONE };
+		RSClear clear;
 	};
 
-	struct RSubPass {
+	struct RSubpass {
 		RPipelineType Type;
 		TVector<RSAttachment> InputAttachments;
 		TVector<RSAttachment> ColorAttachments;
 		TVector<RSAttachment> DepthStencilAttachments;
 	};
 
-	struct RSubPassDependency {
-		uint32_t SrcSubPass;
+	struct RSubPassInfo {
+		RPipelineType Type;
+		TVector<uint32> InputAttachments;
+		TVector<uint32> ColorAttachments;
+		int32 DepthStencilAttachment;
+	};
+
+	struct RSubpassDependency {
+		uint32 SrcSubPass;
 		RPipelineStageFlags SrcStage;
 		RAccessFlags SrcAccess;
-		uint32_t DstSubPass;
+		uint32 DstSubPass;
 		RPipelineStageFlags DstStage;
 		RAccessFlags DstAccess;
 	};
 
 	struct RSImageBlit {
 		RImageAspectFlags srcAspect;
-		uint32_t		  srcMipLevel;
-		uint32_t		  srcBaseLayer;
-		uint32_t		  srcLayerCount;
+		uint32		  srcMipLevel;
+		uint32		  srcBaseLayer;
+		uint32		  srcLayerCount;
 		RSOffset3D		  srcOffsets[2];
 		RImageAspectFlags dstAspect;
-		uint32_t		  dstMipLevel;
-		uint32_t		  dstBaseLayer;
-		uint32_t		  dstLayerCount;
+		uint32		  dstMipLevel;
+		uint32		  dstBaseLayer;
+		uint32		  dstLayerCount;
 		RSOffset3D		  dstOffsets[2];
 	};
 
@@ -125,38 +141,38 @@ namespace RHI {
 	};
 
 	struct RSDescriptorSetLayoutBinding {
-		uint32_t              binding;
+		uint32              binding;
 		RDescriptorType      descriptorType;
-		uint32_t              descriptorCount;
+		uint32              descriptorCount;
 		RShaderStageFlags    stageFlags;
 	};
 
 	struct RSPushConstantRange {
 		RShaderStageFlags stageFlags;
-		uint32_t offset;
-		uint32_t size;
+		uint32 offset;
+		uint32 size;
 	};
 
 	// graphics pipeline create info
 	struct RPipelineShaderInfo {
 		RShaderStageFlagBits stage;
-		size_t codeSize;
-		const uint32_t* pCode;
+		uint64 codeSize;
+		const uint32* pCode;
 		const char* funcName = "main";
 	};
 
 	struct RVertexInputBinding {
-		uint32_t binding;
-		uint32_t stride;
+		uint32 binding;
+		uint32 stride;
 		RVertexInputRate inputRate;
 	};
 
 	struct RVertexInputAttribute
 	{
-		uint32_t location;
-		uint32_t binding;
+		uint32 location;
+		uint32 binding;
 		RFormat format;
-		uint32_t offset;
+		uint32 offset;
 	};
 
 	struct RStencilOpState {
@@ -164,9 +180,9 @@ namespace RHI {
 		RStencilOp passOp;
 		RStencilOp depthFailOp;
 		RCompareOp compareOp;
-		uint32_t   compareMask;
-		uint32_t   writeMask;
-		uint32_t   reference;
+		uint32   compareMask;
+		uint32   writeMask;
+		uint32   reference;
 	};
 
 	struct RColorBlendAttachmentState {
@@ -183,13 +199,13 @@ namespace RHI {
 	struct RGraphicsPipelineCreateInfo {
 
 		// shader stages
-		uint32_t shaderCount;
+		uint32 shaderCount;
 		const RPipelineShaderInfo* shaders;
 
 		// vertex input
-		uint32_t bindingCount;
+		uint32 bindingCount;
 		const RVertexInputBinding* bindings;
-		uint32_t attributeCount;
+		uint32 attributeCount;
 		const RVertexInputAttribute* attributes;
 
 		// input assembly
@@ -197,7 +213,7 @@ namespace RHI {
 		bool primitiveRestartEnable{ false };
 
 		// tessellation
-		uint32_t patchControlPoints{0};
+		uint32 patchControlPoints{0};
 
 		// viewport
 		RSViewport viewport;
@@ -237,12 +253,12 @@ namespace RHI {
 		// color blend
 		bool logicOpEnable;
 		RLogicOp logicOp;
-		uint32_t attachmentCount;
+		uint32 attachmentCount;
 		const RColorBlendAttachmentState* pAttachments;
 		float blendConstants[4];
 
 		// dynamic
-		uint32_t dynamicStateCount{0};
+		uint32 dynamicStateCount{0};
 		const RDynamicState* pDynamicStates{nullptr};
 	};
 
@@ -260,8 +276,8 @@ namespace RHI {
 
 		struct {
 			RBuffer* buffer;
-			size_t offset;
-			size_t range;
+			uint64 offset;
+			uint64 range;
 		};
 	};
 

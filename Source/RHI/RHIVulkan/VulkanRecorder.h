@@ -11,9 +11,9 @@ namespace RHI {
 		// VkUpdateDescriptorSets
 		struct SUpdateDescsInfo {
 			VkDescriptorSet handle;
-			uint32_t binding;
-			uint32_t arrayElement;
-			uint32_t elementCount;
+			uint32 binding;
+			uint32 arrayElement;
+			uint32 elementCount;
 			VkDescriptorType type;
 			RDescriptorInfo info;
 		};

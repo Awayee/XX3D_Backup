@@ -12,7 +12,7 @@ namespace RHI {
 		if (!m_AllocateDescs.empty()) {
 			VkDescriptorSetAllocateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO, nullptr };
 			info.descriptorPool = pool;
-			info.descriptorSetCount = static_cast<uint32_t>(m_AllocateDescs.size());
+			info.descriptorSetCount = static_cast<uint32>(m_AllocateDescs.size());
 			info.pSetLayouts = m_AllocateDescLayouts.data();
 			TArray<VkDescriptorSet> handles(m_AllocateDescs.size());
 			if (VK_SUCCESS != vkAllocateDescriptorSets(device, &info, handles.Data())) {
@@ -21,7 +21,7 @@ namespace RHI {
 				}
 			}
 			else {
-				for (uint32_t i = 0; i < m_AllocateDescs.size(); ++i) {
+				for (uint32 i = 0; i < m_AllocateDescs.size(); ++i) {
 					(*m_AllocateDescs[i])->handle = handles[i];
 				}
 			}
@@ -68,16 +68,16 @@ namespace RHI {
 			}
 			if(!primaryCmds.empty()) {
 				VkCommandBufferAllocateInfo allocateInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr,
-					pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, (uint32_t)primaryCmds.size()};
+					pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, (uint32)primaryCmds.size()};
 				vkAllocateCommandBuffers(device, &allocateInfo, primaryCmds.data());
 			}
 			if(!secondaryCmds.empty()) {
 				VkCommandBufferAllocateInfo allocateInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr,
-					pool, VK_COMMAND_BUFFER_LEVEL_SECONDARY, (uint32_t)secondaryCmds.size() };
+					pool, VK_COMMAND_BUFFER_LEVEL_SECONDARY, (uint32)secondaryCmds.size() };
 				vkAllocateCommandBuffers(device, &allocateInfo, secondaryCmds.data());
 			}
-			uint32_t primaryIdx{0}, secondaryIdx{0};
-			for(uint32_t i=0; i<m_AllocateCmdLevels.size(); ++i) {
+			uint32 primaryIdx{0}, secondaryIdx{0};
+			for(uint32 i=0; i<m_AllocateCmdLevels.size(); ++i) {
 				if (m_AllocateCmdLevels[i] == VK_COMMAND_BUFFER_LEVEL_PRIMARY) {
 					(*m_AllocateCmds[i])->handle = primaryCmds[primaryIdx++];
 				}

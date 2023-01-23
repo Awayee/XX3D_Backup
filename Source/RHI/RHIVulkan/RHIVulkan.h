@@ -13,7 +13,7 @@ namespace RHI{
 	class RHIVulkan final: public RHIInstance {
 #pragma region rhi initialize
 	private:
-		uint8_t m_MaxFramesInFlight{ 3 };
+		uint8 m_MaxFramesInFlight{ 3 };
 		bool m_EnableValidationLayers{ false };
 		bool m_EnableDebugUtils{ false };
 		bool m_EnableGeometryShader{ false };
@@ -30,10 +30,10 @@ namespace RHI{
 		VkPhysicalDevice m_PhysicalDevice;
 
 		// physical devices's info
-		uint32_t m_GraphicsIndex;
-		uint32_t m_PresentIndex;
-		uint32_t m_ComputeIndex;
-		uint32_t m_ImageCount;
+		uint32 m_GraphicsIndex;
+		uint32 m_PresentIndex;
+		uint32 m_ComputeIndex;
+		uint32 m_ImageCount;
 		VkSurfaceFormatKHR m_SwapchainFormat;
 		VkPresentModeKHR m_SwapchainPresentMode;
 		VkSurfaceTransformFlagBitsKHR m_SwapchainTransform;
@@ -60,7 +60,7 @@ namespace RHI{
 
 		VkSwapchainKHR m_Swapchain{ nullptr };
 		RSExtent2D m_SwapchainExtent;
-		uint32_t m_CurrentSwapchainImageIndex;
+		uint32 m_CurrentSwapchainImageIndex;
 		TVector<VkImage> m_SwapchainImages;
 		TVector<RImageViewVk> m_SwapchainImageViews;
 		VkRect2D m_Scissor;
@@ -104,97 +104,100 @@ namespace RHI{
 		void CreateSwapchain();
 		void ClearSwapchain();
 #pragma endregion
-		RImageVk* CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32_t mipLevels, uint32_t arrayLayers, 
+		RImageVk* CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32 mipLevels, uint32 arrayLayers, 
 			RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage);
 	public:
 		RHIVulkan() = default;
 		void Initialize(const RSInitInfo* initInfo) override;
 		void Release() override;
 		RSVkImGuiInitInfo GetImGuiInitInfo();
-		uint8_t GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
+		uint8 GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
 		RFormat GetSwapchainImageFormat() override { return (RFormat)m_SwapchainFormat.format; }
 		const RSExtent2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
-		RImageView* GetSwapchainImageView(uint8_t i) override;
-		uint32_t GetSwapchainMaxImageCount() override;
+		RImageView* GetSwapchainImageView(uint8 i) override;
+		uint32 GetSwapchainMaxImageCount() override;
 		RQueue* GetGraphicsQueue() override;
 		RFormat GetDepthFormat() override { return (RFormat)m_DepthFormat; };
 
-		void ResizeSwapchain(uint32_t width, uint32_t height) override;
+		void ResizeSwapchain(uint32 width, uint32 height) override;
 
 		void RecordBegin() override {};
 		void RecordEnd() override {};
 
-		RRenderPass* CreateRenderPass(uint32_t subpassCount, const RSubPass* subpasses, uint32_t dependencyCount, RSubPassDependency* dependencies) override;
+		RRenderPass* CreateRenderPass(uint32 attachmentCount, const RSAttachment* attachments,
+			uint32 subpassCount, const RSubPassInfo* subpasses,
+			uint32 dependencyCount, const RSubpassDependency* dependencies) override;
+		RRenderPass* CreateRenderPass(uint32 subpassCount, const RSubpass* subpasses, uint32 dependencyCount, RSubpassDependency* dependencies) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 
 		// descriptor set
-		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32_t bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
+		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32 bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
 		RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) override;
-		//void AllocateDescriptorSets(uint32_t count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
-		//void FreeDescriptorSets(uint32_t count, RDescriptorSet** descriptorSets) override;
+		//void AllocateDescriptorSets(uint32 count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
+		//void FreeDescriptorSets(uint32 count, RDescriptorSet** descriptorSets) override;
 		void FreeDescriptorSet(RDescriptorSet* descriptorSet) override;
-		void UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32_t binding, uint32_t arrayElement, uint32_t count, RDescriptorType type, const RDescriptorInfo& descriptorInfo) override;
+		void UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32 binding, uint32 arrayElement, uint32 count, RDescriptorType type, const RDescriptorInfo& descriptorInfo) override;
 
 		// pipeline
-		RPipelineLayout* CreatePipelineLayout(uint32_t setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32_t pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)override;
+		RPipelineLayout* CreatePipelineLayout(uint32 setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32 pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)override;
 		void DestroyPipelineLayout(RPipelineLayout* pipelineLayout) override;
-		RPipeline* CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& createInfo, RPipelineLayout* layout, RRenderPass* renderPass, uint32_t subpass,
+		RPipeline* CreateGraphicsPipeline(const RGraphicsPipelineCreateInfo& createInfo, RPipelineLayout* layout, RRenderPass* renderPass, uint32 subpass,
 			RPipeline* basePipeline, int32_t basePipelineIndex) override;
-		RPipeline* CreateComputePipeline(const RPipelineShaderInfo& shader, RPipelineLayout* layout, RPipeline* basePipeline, uint32_t basePipelineIndex) override;
+		RPipeline* CreateComputePipeline(const RPipelineShaderInfo& shader, RPipelineLayout* layout, RPipeline* basePipeline, uint32 basePipelineIndex) override;
 		void DestroyPipeline(RPipeline* pipeline) override;
 
 		// command buffer
 		void QueueSubmit(RQueue* queue,
-			uint32_t cmdCount, RCommandBuffer* cmds,
-			uint32_t waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
-			uint32_t signalSemaphoreCount, RSemaphore* signalSemaphores,
+			uint32 cmdCount, RCommandBuffer* cmds,
+			uint32 waitSemaphoreCount, RSemaphore* waitSemaphores, RPipelineStageFlags* waitStageFlags,
+			uint32 signalSemaphoreCount, RSemaphore* signalSemaphores,
 			RFence* fence) override;
 		void QueueWaitIdle(RQueue* queue)override;
-		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32_t imageViewCount, const RImageView* const* pImageViews, uint32_t width, uint32_t height, uint32_t layers) override;
+		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32 attachmentCount, const RImageView* const* pAttachments, uint32 width, uint32 height, uint32 layers) override;
 		void DestroyFramebuffer(RFramebuffer* framebuffer) override;
 		RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level)override;
 		void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) override;
 		void EndCommandBuffer(RCommandBuffer* cmd) override;
 		void FreeCommandBuffer(RCommandBuffer* cmd) override;
 		void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D area) override;
-		void CmdNextPass(RCommandBuffer* cmd) override;
+		void CmdNextSubpass(RCommandBuffer* cmd) override;
 		void CmdEndRenderPass(RCommandBuffer* cmd) override;
 		void CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout,
-			uint32_t baseLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount, RImageAspectFlags aspect) override;
-		void CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32_t mipLevel, uint32_t baseLayout, uint32_t layerCount) override;
+			uint32 baseLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount, RImageAspectFlags aspect) override;
+		void CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayout, uint32 layerCount) override;
 		void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion) override;
-		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32_t levelCount, RImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount) override;
+		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) override;
 
 		void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) override;
-		void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32_t firstSet) override;
-		void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32_t first, size_t offset) override;
-		void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, size_t offset) override;
-		void CmdDraw(RCommandBuffer* cmd, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t firstInstance) override;
-		void CmdDrawIndexed(RCommandBuffer* cmd, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) override;
-		void CmdDispatch(RCommandBuffer* cmd, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)override;
+		void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 firstSet) override;
+		void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset) override;
+		void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint64 offset) override;
+		void CmdDraw(RCommandBuffer* cmd, uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance) override;
+		void CmdDrawIndexed(RCommandBuffer* cmd, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32_t vertexOffset, uint32 firstInstance) override;
+		void CmdDispatch(RCommandBuffer* cmd, uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ)override;
 		void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) override;
-		void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, size_t srcOffset, size_t dstOffset, size_t size) override;
+		void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size) override;
 		void CmdBeginDebugLabel(RCommandBuffer* cmd, const char* msg, const float* color) override;
 		void CmdEndDebugLabel(RCommandBuffer* cmd) override;
 
 		void ImmediateCommit(const CommandBufferFunc& func) override;
-		int PreparePresent(uint8_t frameIndex) override;
-		int QueueSubmitPresent(RCommandBuffer* cmd, uint8_t frameIndex) override;
+		int PreparePresent(uint8 frameIndex) override;
+		int QueueSubmitPresent(RCommandBuffer* cmd, uint8 frameIndex) override;
 
 		// buffer
-		RBuffer* CreateBuffer(size_t size, RBufferUsageFlags usage) override;
-		RMemory* CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, size_t dataSize, void* pData) override;
-		void CreateBufferWithMemory(size_t size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags,
-			RBuffer*& pBuffer, RMemory*& pMemory, size_t dataSize, void* pData)override;
+		RBuffer* CreateBuffer(uint64 size, RBufferUsageFlags usage) override;
+		RMemory* CreateBufferMemory(RBuffer* buffer, RMemoryPropertyFlags memoryProperty, uint64 dataSize, void* pData) override;
+		void CreateBufferWithMemory(uint64 size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags,
+			RBuffer*& pBuffer, RMemory*& pMemory, uint64 dataSize, void* pData)override;
 		void DestroyBuffer(RBuffer* buffer) override;
 
 		// image
-		RImage* CreateImage2D(RFormat format, uint32_t width, uint32_t height, uint32_t mipLevels,
+		RImage* CreateImage2D(RFormat format, uint32 width, uint32 height, uint32 mipLevels,
 		                      RSampleCountFlagBits samples, RImageTiling tiling, RImageUsageFlags usage) override;
 		RMemory* CreateImageMemory(RImage* image, RMemoryPropertyFlags memoryProperty, void* pData) override;
 		void DestroyImage(RImage* image) override;
 		RImageView* CreateImageView(RImage* image, RImageViewType viewType, RImageAspectFlags aspectMask,
-			uint32_t baseMipLevel, uint32_t levelCount, uint32_t baseLayer, uint32_t layerCount) override;
+			uint32 baseMipLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount) override;
 		void DestroyImageView(RImageView* imageView) override;
 		RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) override;
 

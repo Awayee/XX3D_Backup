@@ -6,7 +6,7 @@
 namespace Engine {
 	struct SPrimitiveData{
 		TVector<Vertex> vertices;
-		TVector<uint32_t> indices;
+		TVector<uint32> indices;
 	};
 
 	// static mesh

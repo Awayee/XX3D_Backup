@@ -5,13 +5,13 @@
 
 namespace Math {
     // vector2
-    MATH_GENERIC T Vector2<T>::operator[](size_t i) const
+    MATH_GENERIC T Vector2<T>::operator[](int i) const
     {
         ASSERT(i < 2);
         return (i == 0 ? x : y);
     }
 
-    MATH_GENERIC T& Vector2<T>::operator[](size_t i)
+    MATH_GENERIC T& Vector2<T>::operator[](int i)
     {
         ASSERT(i < 2);
         return (i == 0 ? x : y);
@@ -45,12 +45,12 @@ namespace Math {
     }
 
     // vector3
-    MATH_GENERIC T Vector3<T>::operator[](size_t i) const
+    MATH_GENERIC T Vector3<T>::operator[](int i) const
     {
         ASSERT(i < 3);
         return *(&x + i);
     }
-    MATH_GENERIC T& Vector3<T>::operator[](size_t i)
+    MATH_GENERIC T& Vector3<T>::operator[](int i)
     {
         ASSERT(i < 3);
         return *(&x + i);
@@ -111,12 +111,12 @@ namespace Math {
     }
 
     // vector4
-    MATH_GENERIC T Vector4<T>::operator[](size_t i) const
+    MATH_GENERIC T Vector4<T>::operator[](int i) const
     {
         ASSERT(i < 4);
         return *(&x + i);
     }
-    MATH_GENERIC T& Vector4<T>::operator[](size_t i)
+    MATH_GENERIC T& Vector4<T>::operator[](int i)
     {
         ASSERT(i < 4);
         return *(&x + i);

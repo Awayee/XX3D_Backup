@@ -27,7 +27,7 @@ inline ERHIType ParseRHIType(const std::string& rhiTypeStr) {
 }
 
 inline ERenderPath ParseRenderPath(const std::string& renderPathStr) {
-	if("Deffered" == renderPathStr) {
+	if("Deferred" == renderPathStr) {
 		return RENDER_DEFERRED;
 	}
 	if("Forward" == renderPathStr) {

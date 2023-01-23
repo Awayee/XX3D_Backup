@@ -9,7 +9,7 @@ namespace RHI {
 #define VK_CHECK(x, s)\
 	if(VK_SUCCESS != x) throw s
 
-	const uint32_t VK_API_VER = VK_API_VERSION_1_2;
+	const uint32 VK_API_VER = VK_API_VERSION_1_2;
 
 #define VK_FREE(ptr) delete ptr; ptr = nullptr
 
@@ -131,7 +131,7 @@ namespace RHI {
 		return desc;
 	}
 
-	inline VkSubpassDependency ResolveSubpassDependency(const RSubPassDependency& dependency) {
+	inline VkSubpassDependency ResolveSubpassDependency(const RSubpassDependency& dependency) {
 		VkSubpassDependency d{};
 		d.srcSubpass = dependency.SrcSubPass;
 		d.srcStageMask = dependency.SrcStage;
@@ -170,7 +170,7 @@ namespace RHI {
 		int graphicsIndex{ -1 };
 		int presentIndex{ -1 };
 		int computeIndex{ -1 };
-		uint32_t imageCount{ 0 };
+		uint32 imageCount{ 0 };
 		VkSurfaceFormatKHR swapchainFormat{ VK_FORMAT_UNDEFINED };
 		VkPresentModeKHR swapchainPresentMode{ VK_PRESENT_MODE_MAX_ENUM_KHR };
 		VkSurfaceTransformFlagBitsKHR swapchainTransform{ VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR };
@@ -183,7 +183,7 @@ namespace RHI {
 	void GetPipelineBarrierStage(VkImageLayout oldLayout, VkImageLayout newLayout,
 		VkAccessFlags& srcAccessMask, VkAccessFlags& dstAccessMask, VkPipelineStageFlags& srcStage, VkPipelineStageFlags& dstStage);
 
-	void GenerateMipMap(VkCommandBuffer cmd, VkImage image, uint32_t levelCount, uint32_t width, uint32_t height,
-		VkImageAspectFlags aspect, uint32_t baseLayer, uint32_t layerCount);
+	void GenerateMipMap(VkCommandBuffer cmd, VkImage image, uint32 levelCount, uint32 width, uint32 height,
+		VkImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount);
 
 }
