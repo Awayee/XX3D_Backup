@@ -53,4 +53,7 @@ inline void TSort(const _RanIt _First, const _RanIt _Last) { // order [_First, _
 	std::sort(_First, _Last, less<>{});
 }
 
-using FString = std::string;
+template <class T>
+inline void Swap(T& left, T& right) {
+	std::swap(left, right);
+}

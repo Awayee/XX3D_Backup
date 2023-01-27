@@ -27,10 +27,10 @@ namespace RHI{
 		RImageLayout m_Layout;
 	public:
 		virtual ~RImage() {}
-		RImageType GetType() { return m_Type; }
-		RFormat GetFormat() { return m_Format; }
-		const RSExtent3D& GetExtent() { return m_Extent; }
-		RImageLayout GetLayout() { return m_Layout; }
+		RImageType GetType() const { return m_Type; }
+		RFormat GetFormat() const { return m_Format; }
+		const RSExtent3D& GetExtent() const { return m_Extent; }
+		RImageLayout GetLayout() const { return m_Layout; }
 	};
 
 	class RImageView {
@@ -53,10 +53,13 @@ namespace RHI{
 
 	class RFramebuffer {
 	protected:
-		TVector<const RImageView*> m_Attachments;
+		uint32 m_Width;
+		uint32 m_Height;
 	public:
-		const RImageView* GetAttachment(uint32 i) { ASSERT(i < m_Attachments.size()); return m_Attachments[i]; }
+		uint32 GetWidth() { return m_Width; }
+		uint32 GetHeight() { return m_Height; }
 	};
+
 	class RSampler {
 		
 	};

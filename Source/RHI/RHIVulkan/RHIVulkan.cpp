@@ -422,12 +422,12 @@ namespace RHI {
 
 #pragma endregion
 
-	RRenderPass* RHIVulkan::CreateRenderPass(uint32 attachmentCount, const RSAttachment* attachments, uint32 subpassCount, const RSubPassInfo* subpasses, uint32 dependencyCount, const RSubpassDependency* dependencies)
+	RRenderPass* RHIVulkan::CreateRenderPass(uint32 attachmentCount, const RSAttachment* pAttachments, uint32 subpassCount, const RSubPassInfo* pSubpasses, uint32 dependencyCount, const RSubpassDependency* pDependencies)
 	{
 		uint32 i;
 		TArray<VkAttachmentDescription> attachmentsVk(attachmentCount);
 		for(i=0; i<attachmentCount; ++i) {
-			attachmentsVk[i] = ResolveAttachmentDesc(attachments[i]);
+			attachmentsVk[i] = ResolveAttachmentDesc(pAttachments[i]);
 		}
 
 		TArray<VkSubpassDescription> subpassesVk(subpassCount);
@@ -437,20 +437,20 @@ namespace RHI {
 
 		for(i=0; i<subpassCount; ++i) {
 			subpassesVk[i].flags = 0;
-			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)subpasses[i].Type;
+			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)pSubpasses[i].Type;
 			uint32 j;
-			for (j = 0; j < subpasses[i].InputAttachments.size(); ++j) {
-				inputAttachments[i].push_back({ subpasses[i].InputAttachments[j], (VkImageLayout)attachments[subpasses[i].InputAttachments[j]].refLayout});
+			for (j = 0; j < pSubpasses[i].InputAttachments.size(); ++j) {
+				inputAttachments[i].push_back({ pSubpasses[i].InputAttachments[j], (VkImageLayout)pAttachments[pSubpasses[i].InputAttachments[j]].refLayout});
 			}
 			subpassesVk[i].inputAttachmentCount = inputAttachments[i].size();
 			subpassesVk[i].pInputAttachments = inputAttachments[i].data();
-			for (j = 0; j < subpasses[i].ColorAttachments.size(); ++j) {
-				colorAttachments[i].push_back({ subpasses[i].ColorAttachments[j], (VkImageLayout)attachments[subpasses[i].ColorAttachments[j]].refLayout});
+			for (j = 0; j < pSubpasses[i].ColorAttachments.size(); ++j) {
+				colorAttachments[i].push_back({ pSubpasses[i].ColorAttachments[j], (VkImageLayout)pAttachments[pSubpasses[i].ColorAttachments[j]].refLayout});
 			}
 			subpassesVk[i].colorAttachmentCount = colorAttachments[i].size();
 			subpassesVk[i].pColorAttachments = colorAttachments[i].data();
-			if(subpasses[i].DepthStencilAttachment >= 0) {
-				depthAttachments[i] = { (uint32)subpasses[i].DepthStencilAttachment, (VkImageLayout)attachments[subpasses[i].DepthStencilAttachment].refLayout};
+			if(pSubpasses[i].DepthStencilAttachment >= 0) {
+				depthAttachments[i] = { (uint32)pSubpasses[i].DepthStencilAttachment, (VkImageLayout)pAttachments[pSubpasses[i].DepthStencilAttachment].refLayout};
 				subpassesVk[i].pDepthStencilAttachment = &depthAttachments[i];
 			}
 			else {
@@ -464,7 +464,7 @@ namespace RHI {
 
 		TArray<VkSubpassDependency> dependenciesVk(dependencyCount);
 		for(i=0; i<dependencyCount;++i) {
-			dependenciesVk[i] = ResolveSubpassDependency(dependencies[i]);
+			dependenciesVk[i] = ResolveSubpassDependency(pDependencies[i]);
 		}
 
 		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, nullptr };
@@ -482,74 +482,63 @@ namespace RHI {
 		pass->handle = handle;
 		pass->m_Clears.resize(attachmentCount);
 		for(i=0; i< attachmentCount; ++i) {
-			pass->m_Clears[i] = ResolveClearValue(attachments[i].clear);
+			pass->m_Clears[i] = ResolveClearValue(pAttachments[i].clear);
 		}
 		return pass;
 	}
 
-	RRenderPass* RHIVulkan::CreateRenderPass(uint32 subpassCount, const RSubpass* subpasses, uint32 dependencyCount, RSubpassDependency* dependencies)
+	RRenderPass* RHIVulkan::CreateRenderPass(uint32 colorAttachmentCount, const RSAttachment* pColorAttachments, const RSAttachment* depthAttachment)
 	{
 		uint32 i;
-		TVector<VkAttachmentDescription> attachments;
-		// sub passes
-		TArray<VkSubpassDescription> subpassesVk(subpassCount);
-		TArray<TVector<VkAttachmentReference>> inputAttachments(subpassCount);
-		TArray<TVector<VkAttachmentReference>> colorAttachments(subpassCount);
-		TArray<VkAttachmentReference> depthAttachments(subpassCount);
-		for (i = 0; i < subpassCount; ++i) {
-			subpassesVk[i].flags = 0;
-			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)subpasses[i].Type;
-			uint32 j;
-			for (j = 0; j < subpasses[i].InputAttachments.size(); ++j) {
-				VkAttachmentDescription desc = ResolveAttachmentDesc(subpasses[i].InputAttachments[j]);
-				inputAttachments[i].push_back({ (uint32)(attachments.size()), (VkImageLayout)subpasses[i].InputAttachments[j].refLayout });
-				attachments.push_back(std::move(desc));
-			}
-			subpassesVk[i].inputAttachmentCount = subpasses[i].InputAttachments.size();
-			subpassesVk[i].pInputAttachments = inputAttachments[i].data();
-
-			for (j = 0; j < subpasses[i].ColorAttachments.size(); ++j) {
-				VkAttachmentDescription desc = ResolveAttachmentDesc(subpasses[i].ColorAttachments[j]);
-				colorAttachments[i].push_back({ (uint32)(attachments.size()), (VkImageLayout)subpasses[i].ColorAttachments[j].refLayout });
-				attachments.push_back(std::move(desc));
-			}
-			subpassesVk[i].colorAttachmentCount = subpasses[i].ColorAttachments.size();
-			subpassesVk[i].pColorAttachments = colorAttachments[i].data();
-
-			if (!subpasses[i].DepthStencilAttachments.empty()) {
-				auto desc = ResolveAttachmentDesc(subpasses[i].DepthStencilAttachments[0]);
-				depthAttachments[i] = { (uint32)(attachments.size()), (VkImageLayout)subpasses[i].DepthStencilAttachments[0].refLayout };
-				subpassesVk[i].pDepthStencilAttachment = &depthAttachments[i];
-				attachments.push_back(std::move(desc));
-			}
-			else {
-				subpassesVk[i].pDepthStencilAttachment = nullptr;
-			}
-			subpassesVk[i].pResolveAttachments = nullptr;
-			subpassesVk[i].preserveAttachmentCount = 0;
-			subpassesVk[i].pPreserveAttachments = nullptr;
+		uint32 attachmentCount = colorAttachmentCount + (nullptr != depthAttachment);
+		TArray<VkAttachmentDescription> attachmentsVk(attachmentCount);
+		TArray<VkAttachmentReference> colorAttachmentRef(colorAttachmentCount);
+		for (i = 0; i < colorAttachmentCount; ++i) {
+			attachmentsVk[i] = ResolveAttachmentDesc(pColorAttachments[i]);
+			colorAttachmentRef[i] = { i, (VkImageLayout)pColorAttachments[i].refLayout };
 		}
-
-		// sub pass dependencies
-		TArray<VkSubpassDependency> dependenciesVk(dependencyCount);
-		for (i = 0; i < dependencyCount; ++i) {
-			dependenciesVk[i] = ResolveSubpassDependency(dependencies[i]);
+		VkAttachmentReference depthAttachmentRef;
+		if(nullptr != depthAttachment) {
+			depthAttachmentRef.attachment = colorAttachmentCount;
+			depthAttachmentRef.layout = (VkImageLayout)depthAttachment->refLayout;
+			attachmentsVk[colorAttachmentCount] = ResolveAttachmentDesc(*depthAttachment);
 		}
+		VkSubpassDescription subpass;
+		subpass.flags = 0;
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.inputAttachmentCount = 0;
+		subpass.pInputAttachments = nullptr;
+		subpass.colorAttachmentCount = colorAttachmentCount;
+		subpass.pColorAttachments = colorAttachmentRef.Data();
+		subpass.pResolveAttachments = nullptr;
+		subpass.preserveAttachmentCount = 0;
+		subpass.pPreserveAttachments = nullptr;
+		subpass.pDepthStencilAttachment = (nullptr != depthAttachment) ? &depthAttachmentRef : nullptr;
+
+		VkSubpassDependency dependency{};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 		VkRenderPassCreateInfo info{ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, nullptr };
-		info.attachmentCount = attachments.size();
-		info.pAttachments = attachments.data();
-		info.subpassCount = subpassCount;
-		info.pSubpasses = subpassesVk.Data();
-		info.dependencyCount = dependencyCount;
-		info.pDependencies = dependenciesVk.Data();
+		info.attachmentCount = attachmentCount;
+		info.pAttachments = attachmentsVk.Data();
+		info.subpassCount = 1;
+		info.pSubpasses = &subpass;
+		info.dependencyCount = 1;
+		info.pDependencies = &dependency;
+
 		VkRenderPass handle;
 		if (VK_SUCCESS != vkCreateRenderPass(m_Device, &info, nullptr, &handle)) {
 			return nullptr;
 		}
-		RRenderPassVk* renderPass = new RRenderPassVk;
-		renderPass->handle = handle;
-		return renderPass;
+		RRenderPassVk* pass = new RRenderPassVk;
+		pass->handle = handle;
+		return reinterpret_cast<RRenderPass*>(pass);
+
 	}
 
 	void RHIVulkan::DestroyRenderPass(RRenderPass* pass)
@@ -566,7 +555,7 @@ namespace RHI {
 		info.bindingCount = bindingCount;
 		TArray<VkDescriptorSetLayoutBinding> bindingsVk(bindingCount);
 		for(uint32 i=0; i< bindingCount; ++i) {
-			bindingsVk[i].binding = bindings[i].binding;
+			bindingsVk[i].binding = i;
 			bindingsVk[i].descriptorType = (VkDescriptorType)bindings[i].descriptorType;
 			bindingsVk[i].descriptorCount = bindings[i].descriptorCount;
 			bindingsVk[i].stageFlags = (VkShaderStageFlags)bindings[i].stageFlags;
@@ -582,6 +571,12 @@ namespace RHI {
 		return descriptorSetLayout;
 
 	}
+
+	void RHIVulkan::DestroyDescriptorSetLayout(RDescriptorSetLayout* descriptorSetLayout)
+	{
+		vkDestroyDescriptorSetLayout(m_Device, ((RDescriptorSetLayoutVk*)descriptorSetLayout)->handle, nullptr);
+	}
+
 	RDescriptorSet* RHIVulkan::AllocateDescriptorSet(const RDescriptorSetLayout* layout)
 	{
 		VkDescriptorSetAllocateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
@@ -693,13 +688,12 @@ namespace RHI {
 		info.flags = 0;
 		info.pNext = nullptr;
 		info.setLayoutCount = setLayoutCount;
-		if(setLayoutCount > 0) {
-			TArray<VkDescriptorSetLayout> setLayoutsVk(setLayoutCount);
-			for (i = 0; i < setLayoutCount; ++i) {
-				setLayoutsVk[i] = ((RDescriptorSetLayoutVk*)pSetLayouts[i])->handle;
-			}
-			info.pSetLayouts = setLayoutsVk.Data();
+		TArray<VkDescriptorSetLayout> setLayoutsVk(setLayoutCount);
+		for (i = 0; i < setLayoutCount; ++i) {
+			setLayoutsVk[i] = ((RDescriptorSetLayoutVk*)pSetLayouts[i])->handle;
 		}
+		info.pSetLayouts = setLayoutsVk.Data();
+		
 		info.pushConstantRangeCount = pushConstantRangeCount;
 		if(pushConstantRangeCount > 0) {
 			TArray<VkPushConstantRange> pushConstantRangesVk(pushConstantRangeCount);
@@ -731,52 +725,53 @@ namespace RHI {
 	{
 		uint32 i; // iter
 		// shader stages
-		TArray<VkShaderModuleCreateInfo> shaderModuleInfos(info.shaderCount);
-		TArray<VkShaderModule> shaderModules(info.shaderCount);
-		TArray<VkPipelineShaderStageCreateInfo> shaderInfos(info.shaderCount);
-		for (i = 0; i < info.shaderCount; ++i) {
+		TArray<VkShaderModuleCreateInfo> shaderModuleInfos(info.Shaders.size());
+		TArray<VkShaderModule> shaderModules(info.Shaders.size());
+		TArray<VkPipelineShaderStageCreateInfo> shaderInfos(info.Shaders.size());
+		for (i = 0; i < info.Shaders.size(); ++i) {
 			shaderModuleInfos[i] = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0 };
-			shaderModuleInfos[i].codeSize = info.shaders[i].codeSize;
-			shaderModuleInfos[i].pCode = info.shaders[i].pCode;
+			shaderModuleInfos[i].codeSize = info.Shaders[i].code.size();
+			shaderModuleInfos[i].pCode = reinterpret_cast<const uint32*>(info.Shaders[i].code.data());
 			vkCreateShaderModule(m_Device, &shaderModuleInfos[i], nullptr, &shaderModules[i]);
 
 			shaderInfos[i] = { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0 };
 			shaderInfos[i].module = shaderModules[i];
-			shaderInfos[i].pName = info.shaders[i].funcName;
-			shaderInfos[i].stage = (VkShaderStageFlagBits)info.shaders[i].stage;
+			shaderInfos[i].pName = info.Shaders[i].funcName;
+			shaderInfos[i].stage = (VkShaderStageFlagBits)info.Shaders[i].stage;
 		}
 
 		// vertex input
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{ VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, nullptr, 0 };
-		TArray<VkVertexInputBindingDescription> vertexInputBindings(info.bindingCount);
-		for(i=0; i< info.bindingCount; ++i) {
-			vertexInputBindings[i].binding = info.bindings[i].binding;
-			vertexInputBindings[i].inputRate = (VkVertexInputRate)info.bindings[i].inputRate;
+		TArray<VkVertexInputBindingDescription> vertexInputBindings(info.Bindings.size());
+		for(i=0; i< info.Bindings.size(); ++i) {
+			vertexInputBindings[i].binding = info.Bindings[i].binding;
+			vertexInputBindings[i].stride = info.Bindings[i].stride;
+			vertexInputBindings[i].inputRate = (VkVertexInputRate)info.Bindings[i].inputRate;
 		}
-		vertexInputInfo.vertexBindingDescriptionCount = info.bindingCount;
+		vertexInputInfo.vertexBindingDescriptionCount = info.Bindings.size();
 		vertexInputInfo.pVertexBindingDescriptions = vertexInputBindings.Data();
-		TArray<VkVertexInputAttributeDescription> vertexInputAttrs(info.attributeCount);
-		for(i=0; i< info.attributeCount; ++i) {
-			vertexInputAttrs[i].location = info.attributes[i].location;
-			vertexInputAttrs[i].binding = info.attributes[i].binding;
-			vertexInputAttrs[i].format = (VkFormat)info.attributes[i].format;
-			vertexInputAttrs[i].offset = info.attributes[i].offset;
+		TArray<VkVertexInputAttributeDescription> vertexInputAttrs(info.Attributes.size());
+		for(i=0; i< info.Attributes.size(); ++i) {
+			vertexInputAttrs[i].location = i;
+			vertexInputAttrs[i].binding = info.Attributes[i].binding;
+			vertexInputAttrs[i].format = (VkFormat)info.Attributes[i].format;
+			vertexInputAttrs[i].offset = info.Attributes[i].offset;
 		}
-		vertexInputInfo.vertexAttributeDescriptionCount = info.attributeCount;
+		vertexInputInfo.vertexAttributeDescriptionCount = info.Attributes.size();
 		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttrs.Data();
 
 		// input assembly
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{ VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, nullptr, 0 };
-		inputAssemblyInfo.primitiveRestartEnable = info.primitiveRestartEnable;
-		inputAssemblyInfo.topology = (VkPrimitiveTopology)info.topology;
+		inputAssemblyInfo.primitiveRestartEnable = info.PrimitiveRestartEnable;
+		inputAssemblyInfo.topology = (VkPrimitiveTopology)info.Topology;
 
 		// tessellation
 		VkPipelineTessellationStateCreateInfo tessellationInfo{ VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO, nullptr, 0 };
-		tessellationInfo.patchControlPoints = info.patchControlPoints;
+		tessellationInfo.patchControlPoints = info.PatchControlPoints;
 
 		// viewport
 		VkPipelineViewportStateCreateInfo viewportInfo{ VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO, nullptr, 0 };
-		auto& viewport = info.viewport;
+		auto& viewport = info.Viewport;
 		VkViewport viewportVk{ viewport.x, viewport.y, viewport.width, viewport.height, viewport.minDepth, viewport.maxDepth };
 		viewportInfo.viewportCount = 1;
 		viewportInfo.pViewports = &viewportVk;
@@ -793,27 +788,28 @@ namespace RHI {
 		VkPipelineDepthStencilStateCreateInfo depthStencilInfo = TranslatePipelineDepthStencil(info);
 
 		// color blend
-		VkPipelineColorBlendStateCreateInfo colorBlendInfo{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, nullptr, 0 };
-		colorBlendInfo.logicOpEnable = info.logicOpEnable;
-		colorBlendInfo.logicOp = (VkLogicOp)info.logicOp;
-		colorBlendInfo.attachmentCount = info.attachmentCount;
-		TArray<VkPipelineColorBlendAttachmentState> attachiments(info.attachmentCount);
-		for(i=0; i<info.attachmentCount; ++i) {
-			TranslateColorBlendAttachmentState(attachiments[i], info.pAttachments[i]);
+		TArray<VkPipelineColorBlendAttachmentState> attachments(info.AttachmentStates.size());
+		for(i=0; i<info.AttachmentStates.size(); ++i) {
+			TranslateColorBlendAttachmentState(attachments[i], info.AttachmentStates[i]);
 		}
-		colorBlendInfo.blendConstants[0] = info.blendConstants[0];
-		colorBlendInfo.blendConstants[1] = info.blendConstants[1];
-		colorBlendInfo.blendConstants[2] = info.blendConstants[2];
-		colorBlendInfo.blendConstants[3] = info.blendConstants[3];
+		VkPipelineColorBlendStateCreateInfo colorBlendInfo{ VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, nullptr, 0 };
+		colorBlendInfo.logicOpEnable = info.LogicOpEnable;
+		colorBlendInfo.logicOp = (VkLogicOp)info.LogicOp;
+		colorBlendInfo.attachmentCount = info.AttachmentStates.size();
+		colorBlendInfo.pAttachments = attachments.Data();
+		colorBlendInfo.blendConstants[0] = info.BlendConstants[0];
+		colorBlendInfo.blendConstants[1] = info.BlendConstants[1];
+		colorBlendInfo.blendConstants[2] = info.BlendConstants[2];
+		colorBlendInfo.blendConstants[3] = info.BlendConstants[3];
 
 		// dynamic
 		VkPipelineDynamicStateCreateInfo dynamicInfo{ VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, nullptr, 0 };
-		dynamicInfo.dynamicStateCount = info.dynamicStateCount;
-		dynamicInfo.pDynamicStates = (VkDynamicState*)info.pDynamicStates;
+		dynamicInfo.dynamicStateCount = info.DynamicStates.size();
+		dynamicInfo.pDynamicStates = (const VkDynamicState*)info.DynamicStates.data();
 
 		// pipeline
 		VkGraphicsPipelineCreateInfo createInfo{ VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, nullptr, 0 };
-		createInfo.stageCount = info.shaderCount;
+		createInfo.stageCount = info.Shaders.size();
 		createInfo.pStages = shaderInfos.Data();
 		createInfo.pVertexInputState = &vertexInputInfo;
 		createInfo.pInputAssemblyState = &inputAssemblyInfo;
@@ -832,7 +828,7 @@ namespace RHI {
 
 		VkPipeline handle;
 		VkResult res = vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &handle);
-		for(i=0; i< info.shaderCount; ++i) {
+		for(i=0; i< info.Shaders.size(); ++i) {
 			vkDestroyShaderModule(m_Device, shaderModules[i], nullptr);
 		}
 		if(VK_SUCCESS != res) {
@@ -852,8 +848,8 @@ namespace RHI {
 		VkShaderModule shaderModule;
 		VkPipelineShaderStageCreateInfo& shaderInfo = createInfo.stage;
 		shaderModuleInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0 };
-		shaderModuleInfo.codeSize = shader.codeSize;
-		shaderModuleInfo.pCode = shader.pCode;
+		shaderModuleInfo.codeSize = shader.code.size();
+		shaderModuleInfo.pCode = reinterpret_cast<const uint32*>(shader.code.data());
 		vkCreateShaderModule(m_Device, &shaderModuleInfo, nullptr, &shaderModule);
 
 		shaderInfo = { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0 };
@@ -977,7 +973,8 @@ namespace RHI {
 
 		RFramebufferVk* framebuffer = new RFramebufferVk;
 		framebuffer->handle = handle;
-		framebuffer->m_Attachments.assign(pAttachments, pAttachments+attachmentCount);
+		framebuffer->m_Width = width;
+		framebuffer->m_Height = height;
 		return framebuffer;
 	}
 
@@ -1109,11 +1106,11 @@ namespace RHI {
 		_vkCmdBindPipeline(((RCommandBufferVk*)cmd)->handle, (VkPipelineBindPoint)pipelineVk->GetType(), pipelineVk->handle);
 	}
 
-	void RHIVulkan::CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 firstSet)
+	void RHIVulkan::CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx)
 	{
 		VkCommandBuffer handle = ((RCommandBufferVk*)cmd)->handle;
 		_vkCmdBindDescriptorSets(handle, (VkPipelineBindPoint)pipelineType, ((RPipelineLayoutVk*)layout)->handle,
-			firstSet, 1, &((RDescriptorSetVk*)descriptorSet)->handle, 0, nullptr);
+			setIdx, 1, &((RDescriptorSetVk*)descriptorSet)->handle, 0, nullptr);
 	}
 
 	void RHIVulkan::CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset)
@@ -1355,6 +1352,16 @@ namespace RHI {
 		RBufferVk* bufferVk = (RBufferVk*)buffer;
 		vkDestroyBuffer(m_Device, bufferVk->handle, nullptr);
 		delete bufferVk;
+	}
+
+	void RHIVulkan::MapMemory(RMemory* memory, void** pData)
+	{
+		vmaMapMemory(m_Vma, ((RMemoryVma*)memory)->handle, pData);
+	}
+
+	void RHIVulkan::UnmapMemory(RMemory* memory)
+	{
+		vmaUnmapMemory(m_Vma, ((RMemoryVma*)memory)->handle);
 	}
 
 	RImageVk* RHIVulkan::CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32 mipLevels, uint32 arrayLayers, RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage)

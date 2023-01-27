@@ -2,6 +2,7 @@
 #include "Core/Container/Container.h"
 #include "Core/Math/Math.h"
 #include "RHI/RHI.h"
+#include "RenderCommon.h"
 namespace Engine {
 
 	typedef uint32 IndexType;
@@ -11,7 +12,7 @@ namespace Engine {
 		Math::FVector3 normal;
 		Math::FVector3 tangent;
 		Math::FVector2 uv;
-		static RHI::RVertexInputBinding GetInputBindings();
+		static TVector<RHI::RVertexInputBinding> GetInputBindings();
 		static TVector<RHI::RVertexInputAttribute> GetInputAttributes();
 	};
 
@@ -31,4 +32,16 @@ namespace Engine {
 		uint32 GetIndexCount()const { return m_IndexCount; }
 		~Primitive();
 	};
+
+	void DrawPrimitive(RHI::RCommandBuffer* cmd, const Primitive* primitive);
+
+	class Quad {
+		BufferCommon m_VertexBuffer;
+	public:
+		Quad();
+		~Quad();
+		RHI::RBuffer* GetVertexBuffer() const { return m_VertexBuffer.Buffer; }
+	};
+
+	void DrawQuad(RHI::RCommandBuffer* cmd, const Quad* quad);
 }

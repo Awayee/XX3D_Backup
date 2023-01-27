@@ -61,4 +61,7 @@ namespace Math {
             w * rhs.y + y * rhs.w + z * rhs.x - x * rhs.z,
             w * rhs.z + z * rhs.w + x * rhs.y - y * rhs.x);
     }
+
+    template Quaternion<float>;
+    template Quaternion<double>;
 }

@@ -58,16 +58,16 @@ namespace RHI {
 
 	inline VkPipelineRasterizationStateCreateInfo TranslateVkPipelineRasterizationState(const RGraphicsPipelineCreateInfo& rhiInfo) {
 		VkPipelineRasterizationStateCreateInfo rasterizatonInfo{ VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, nullptr, 0 };
-		rasterizatonInfo.depthBiasClamp = rhiInfo.depthBiasClamp;
-		rasterizatonInfo.rasterizerDiscardEnable = rhiInfo.rasterizerDiscardEnable;
-		rasterizatonInfo.polygonMode = (VkPolygonMode)rhiInfo.polygonMode;
-		rasterizatonInfo.cullMode = rhiInfo.cullMode;
-		rasterizatonInfo.frontFace = rhiInfo.clockwise ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterizatonInfo.depthBiasEnable = rhiInfo.depthBiasEnable;
-		rasterizatonInfo.depthBiasSlopeFactor = rhiInfo.depthBiasConstantFactor;
-		rasterizatonInfo.depthBiasClamp = rhiInfo.depthBiasClamp;
-		rasterizatonInfo.depthBiasSlopeFactor = rhiInfo.depthBiasSlopeFactor;
-		rasterizatonInfo.lineWidth = rhiInfo.lineWidth;
+		rasterizatonInfo.depthBiasClamp = rhiInfo.DepthBiasClamp;
+		rasterizatonInfo.rasterizerDiscardEnable = rhiInfo.RasterizerDiscardEnable;
+		rasterizatonInfo.polygonMode = (VkPolygonMode)rhiInfo.PolygonMode;
+		rasterizatonInfo.cullMode = rhiInfo.CullMode;
+		rasterizatonInfo.frontFace = rhiInfo.Clockwise ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizatonInfo.depthBiasEnable = rhiInfo.DepthBiasEnable;
+		rasterizatonInfo.depthBiasSlopeFactor = rhiInfo.DepthBiasConstantFactor;
+		rasterizatonInfo.depthBiasClamp = rhiInfo.DepthBiasClamp;
+		rasterizatonInfo.depthBiasSlopeFactor = rhiInfo.DepthBiasSlopeFactor;
+		rasterizatonInfo.lineWidth = rhiInfo.LineWidth;
 		return rasterizatonInfo;
 	}
 
@@ -94,26 +94,26 @@ namespace RHI {
 
 	inline VkPipelineMultisampleStateCreateInfo TranslatePipelineMultisample(const RGraphicsPipelineCreateInfo& info) {
 		VkPipelineMultisampleStateCreateInfo multisampleInfo{ VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, nullptr, 0 };
-		multisampleInfo.rasterizationSamples = (VkSampleCountFlagBits)info.rasterizationSamples;
-		multisampleInfo.sampleShadingEnable = info.sampleShadingEnable;
-		multisampleInfo.minSampleShading = info.minSampleShading;
+		multisampleInfo.rasterizationSamples = (VkSampleCountFlagBits)info.RasterizationSamples;
+		multisampleInfo.sampleShadingEnable = info.SampleShadingEnable;
+		multisampleInfo.minSampleShading = info.MinSampleShading;
 		multisampleInfo.pSampleMask = info.pSampleMask;
-		multisampleInfo.alphaToCoverageEnable = info.alphaToCoverageEnable;
-		multisampleInfo.alphaToOneEnable = info.alphaToOneEnable;
+		multisampleInfo.alphaToCoverageEnable = info.AlphaToCoverageEnable;
+		multisampleInfo.alphaToOneEnable = info.AlphaToOneEnable;
 		return multisampleInfo;
 	}
 
 	inline VkPipelineDepthStencilStateCreateInfo TranslatePipelineDepthStencil(const RGraphicsPipelineCreateInfo& info) {
 		VkPipelineDepthStencilStateCreateInfo depthStencilInfo{ VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO, nullptr, 0 };
-		depthStencilInfo.depthTestEnable = info.depthTestEnable;
-		depthStencilInfo.depthWriteEnable = info.depthWriteEnable;
-		depthStencilInfo.depthCompareOp = (VkCompareOp)info.depthCompareOp;
-		depthStencilInfo.depthBoundsTestEnable = info.depthBoundsTestEnable;
-		depthStencilInfo.stencilTestEnable = info.stencilTestEnable;
-		TranslateVkStencilOp(depthStencilInfo.front, info.front);
-		TranslateVkStencilOp(depthStencilInfo.back, info.back);
-		depthStencilInfo.minDepthBounds = info.minDepthBounds;
-		depthStencilInfo.maxDepthBounds = info.maxDepthBounds;
+		depthStencilInfo.depthTestEnable = info.DepthTestEnable;
+		depthStencilInfo.depthWriteEnable = info.DepthWriteEnable;
+		depthStencilInfo.depthCompareOp = (VkCompareOp)info.DepthCompareOp;
+		depthStencilInfo.depthBoundsTestEnable = info.DepthBoundsTestEnable;
+		depthStencilInfo.stencilTestEnable = info.StencilTestEnable;
+		TranslateVkStencilOp(depthStencilInfo.front, info.FrontStencilOp);
+		TranslateVkStencilOp(depthStencilInfo.back, info.BackStencilOp);
+		depthStencilInfo.minDepthBounds = info.MinDepthBounds;
+		depthStencilInfo.maxDepthBounds = info.MaxDepthBounds;
 		return depthStencilInfo;
 	}
 

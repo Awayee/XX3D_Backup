@@ -2,10 +2,6 @@
 #include "Public/Editor.h"
 #include "Engine/Engine.h"
 
-#include "Resource/ResourcesMacro.h"
-
-#include <unordered_map>
-
 int main() {
 	// Run Editor
 	{
@@ -15,6 +11,6 @@ int main() {
 		editor.EditorRun();
 	}
 
-	system("pause");
+	//system("pause");
 	return 0;
 }

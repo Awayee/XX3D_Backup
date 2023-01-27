@@ -1,4 +1,4 @@
 #pragma once
 #include <string>
 
-typedef std::string FString;
+typedef std::string String;

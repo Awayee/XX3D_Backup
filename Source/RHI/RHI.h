@@ -33,14 +33,16 @@ namespace RHI{
 		virtual void RecordBegin() = 0;
 		virtual void RecordEnd() = 0;
 
-		virtual RRenderPass* CreateRenderPass(uint32 attachmentCount, const RSAttachment* attachments,
+		virtual RRenderPass* CreateRenderPass(uint32 attachmentCount, const RSAttachment* pAttachments,
 			uint32 subpassCount, const RSubPassInfo* subpasses,
 			uint32 dependencyCount, const RSubpassDependency* dependencies) = 0;
-		virtual RRenderPass* CreateRenderPass(uint32 subpassCount, const RSubpass* subpasses, uint32 dependencyCount, RSubpassDependency* dependencies) = 0;
+		// for single subpass
+		virtual RRenderPass* CreateRenderPass(uint32 colorAttachmentCount, const RSAttachment* pColorAttachments, const RSAttachment* depthAttachment)=0;
 		virtual void DestroyRenderPass(RRenderPass* pass) = 0;
 
 		// descriptor set
 		virtual RDescriptorSetLayout* CreateDescriptorSetLayout(uint32 bindingCount, const RSDescriptorSetLayoutBinding* bindings) = 0;
+		virtual void DestroyDescriptorSetLayout(RDescriptorSetLayout* descriptorSetLayout) = 0;
 		virtual RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) = 0;
 		virtual void FreeDescriptorSet(RDescriptorSet* descriptorSet) = 0;
 		//virtual void AllocateDescriptorSets(uint32 count, const RDescriptorSetLayout* const* layouts, RDescriptorSet*const* descriptorSets) = 0;
@@ -79,7 +81,7 @@ namespace RHI{
 		virtual void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) = 0;
 
 		virtual void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) = 0;
-		virtual void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 firstSet) = 0;
+		virtual void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx) = 0;
 		virtual void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset) = 0;
 		virtual void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint64 offset) = 0;
 		virtual void CmdDraw(RCommandBuffer* cmd, uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance) = 0;
@@ -103,6 +105,8 @@ namespace RHI{
 		virtual void CreateBufferWithMemory(uint64 size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags,
 			RBuffer*& pBuffer, RMemory*& pMemory, uint64 dataSize, void* data) = 0;
 		virtual void DestroyBuffer(RBuffer* buffer) = 0;
+		virtual void MapMemory(RMemory* memory, void** pData) = 0;
+		virtual void UnmapMemory(RMemory* memory) = 0;
 
 		// image
 		virtual RImage* CreateImage2D(RFormat format, uint32 width, uint32 height, uint32 mipLevels,

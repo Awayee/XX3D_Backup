@@ -162,4 +162,11 @@ namespace Math {
     {
         return { std::min<float>(v0.x, v1.x), std::min<float>(v0.y, v1.y), std::min<float>(v0.z, v1.z), std::min<float>(v0.w, v1.w)};
     }
+
+    template Vector2<float>;
+    template Vector2<double>;
+    template Vector3<float>;
+    template Vector3<double>;
+    template Vector4<float>;
+    template Vector4<double>;
 }

@@ -3,6 +3,11 @@
 namespace Math {
 #define MATH_GENERIC template<typename T>
 
+#define MATH_GENERIC_INSTANCE (x)\
+    template struct x<float>;\
+    template struct x<double>;\
+    template struct x<int>
+
     // Vectors
     MATH_GENERIC struct Vector2 {
         T x{ 0.f };

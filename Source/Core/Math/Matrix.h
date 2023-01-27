@@ -15,7 +15,8 @@ namespace Math {
 
         Matrix3x3(const Vector3<T>& row0, const Vector3<T>& row1, const Vector3<T>& row2);
         // assignment and comparison
-        T* operator[](int row_index) const { return m_mat[row_index]; }
+        T* operator[](int row_index) { return m_mat[row_index]; }
+        const T* operator[](int row_index) const { return m_mat[row_index]; }
         bool operator==(const Matrix3x3<T>& rhs) const;
         bool operator!=(const Matrix3x3<T>& rhs) const { return !operator==(rhs); }
         // arithmetic operations

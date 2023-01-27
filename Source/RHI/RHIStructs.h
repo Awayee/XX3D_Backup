@@ -141,7 +141,6 @@ namespace RHI {
 	};
 
 	struct RSDescriptorSetLayoutBinding {
-		uint32              binding;
 		RDescriptorType      descriptorType;
 		uint32              descriptorCount;
 		RShaderStageFlags    stageFlags;
@@ -155,9 +154,9 @@ namespace RHI {
 
 	// graphics pipeline create info
 	struct RPipelineShaderInfo {
+
 		RShaderStageFlagBits stage;
-		uint64 codeSize;
-		const uint32* pCode;
+		TVector<int8> code;
 		const char* funcName = "main";
 	};
 
@@ -169,7 +168,6 @@ namespace RHI {
 
 	struct RVertexInputAttribute
 	{
-		uint32 location;
 		uint32 binding;
 		RFormat format;
 		uint32 offset;
@@ -187,79 +185,74 @@ namespace RHI {
 
 	struct RColorBlendAttachmentState {
 		bool					blendEnable;
-		RBlendFactor            srcColorBlendFactor;
-		RBlendFactor            dstColorBlendFactor;
-		RBlendOp                colorBlendOp;
-		RBlendFactor            srcAlphaBlendFactor;
-		RBlendFactor            dstAlphaBlendFactor;
-		RBlendOp                alphaBlendOp;
-		RColorComponentFlags    colorWriteMask;
+		RBlendFactor            srcColorBlendFactor{ BLEND_FACTOR_ZERO };
+		RBlendFactor            dstColorBlendFactor{ BLEND_FACTOR_ZERO };
+		RBlendOp                colorBlendOp{ BLEND_OP_ADD };
+		RBlendFactor            srcAlphaBlendFactor{ BLEND_FACTOR_ZERO };
+		RBlendFactor            dstAlphaBlendFactor{ BLEND_FACTOR_ZERO };
+		RBlendOp                alphaBlendOp{ BLEND_OP_ADD };
+		RColorComponentFlags    colorWriteMask{ COLOR_COMPONENT_ALL };
 	};
 
 	struct RGraphicsPipelineCreateInfo {
 
 		// shader stages
-		uint32 shaderCount;
-		const RPipelineShaderInfo* shaders;
+		TVector<RPipelineShaderInfo> Shaders;
 
 		// vertex input
-		uint32 bindingCount;
-		const RVertexInputBinding* bindings;
-		uint32 attributeCount;
-		const RVertexInputAttribute* attributes;
+		TVector<RVertexInputBinding> Bindings;
+		TVector<RVertexInputAttribute> Attributes;
 
 		// input assembly
-		RPrimitiveTopology topology{ PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
-		bool primitiveRestartEnable{ false };
+		RPrimitiveTopology Topology{ PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
+		bool PrimitiveRestartEnable{ false };
 
 		// tessellation
-		uint32 patchControlPoints{0};
+		uint32 PatchControlPoints{0};
 
 		// viewport
-		RSViewport viewport;
+		RSViewport Viewport;
 		RSRect2D Scissor;
 
 		// rasterization
-		bool depthClampEnable;
-		bool rasterizerDiscardEnable;
-		RPolygonMode polygonMode;
-		RCullModeFlags cullMode;
-		bool clockwise{ false };
-		bool depthBiasEnable{ false };
-		float depthBiasConstantFactor{ 0.0f };
-		float depthBiasClamp{ 0.0f };
-		float depthBiasSlopeFactor{ 0.0f };
-		float lineWidth{ 1.0f };
+		bool DepthClampEnable;
+		bool RasterizerDiscardEnable;
+		RPolygonMode PolygonMode;
+		RCullModeFlags CullMode;
+		bool Clockwise{ false };
+		bool DepthBiasEnable{ false };
+		float DepthBiasConstantFactor{ 0.0f };
+		float DepthBiasClamp{ 0.0f };
+		float DepthBiasSlopeFactor{ 0.0f };
+		float LineWidth{ 1.0f };
 
 		// multi sample
-		RSampleCountFlagBits rasterizationSamples{SAMPLE_COUNT_1_BIT};
-		bool sampleShadingEnable{false};
-		float minSampleShading{0.0f};
+		RSampleCountFlagBits RasterizationSamples{SAMPLE_COUNT_1_BIT};
+		bool SampleShadingEnable{false};
+		float MinSampleShading{0.0f};
 		const RSampleMask* pSampleMask{nullptr};
-		bool alphaToCoverageEnable{false};
-		bool alphaToOneEnable{false};
+		bool AlphaToCoverageEnable{false};
+		bool AlphaToOneEnable{false};
 
 		// depth stencil
-		bool depthTestEnable;
-		bool depthWriteEnable;
-		RCompareOp depthCompareOp;
-		bool depthBoundsTestEnable{false};
-		bool stencilTestEnable {false};
-		RStencilOpState front;
-		RStencilOpState back;
-		float minDepthBounds;
-		float maxDepthBounds;
+		bool DepthTestEnable;
+		bool DepthWriteEnable;
+		RCompareOp DepthCompareOp;
+		bool DepthBoundsTestEnable{false};
+		bool StencilTestEnable {false};
+		RStencilOpState FrontStencilOp;
+		RStencilOpState BackStencilOp;
+		float MinDepthBounds;
+		float MaxDepthBounds;
 
 		// color blend
-		bool logicOpEnable;
-		RLogicOp logicOp;
-		uint32 attachmentCount;
-		const RColorBlendAttachmentState* pAttachments;
-		float blendConstants[4];
+		bool LogicOpEnable;
+		RLogicOp LogicOp;
+		TVector<RColorBlendAttachmentState> AttachmentStates;
+		float BlendConstants[4];
 
 		// dynamic
-		uint32 dynamicStateCount{0};
-		const RDynamicState* pDynamicStates{nullptr};
+		TVector<RDynamicState> DynamicStates;
 	};
 
 
@@ -270,12 +263,12 @@ namespace RHI {
 	// use for update descriptor set
 	union RDescriptorInfo {
 		struct {
-			RSampler* sampler;
-			RImageView* imageView;
+			const RSampler* sampler;
+			const RImageView* imageView;
 		};
 
 		struct {
-			RBuffer* buffer;
+			const RBuffer* buffer;
 			uint64 offset;
 			uint64 range;
 		};

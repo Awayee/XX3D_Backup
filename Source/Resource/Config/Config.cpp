@@ -40,7 +40,7 @@ ConfigManager::ConfigManager(const char* path) {
 	// get asset root path firstly
 	m_AssetPath = ASSETS_PATH;
 	FPath configPath = m_AssetPath / path;
-	TUnorderedMap<FString, FString> configMap;
+	TUnorderedMap<String, String> configMap;
 	LoadIniFile(configPath, configMap);
 	m_DefaultFontPath = m_AssetPath / configMap["DefaultFont"];
 	m_RHIType = ParseRHIType(configMap["RHIType"]);

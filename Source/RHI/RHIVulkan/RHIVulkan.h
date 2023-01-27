@@ -124,14 +124,15 @@ namespace RHI{
 		void RecordBegin() override {};
 		void RecordEnd() override {};
 
-		RRenderPass* CreateRenderPass(uint32 attachmentCount, const RSAttachment* attachments,
-			uint32 subpassCount, const RSubPassInfo* subpasses,
-			uint32 dependencyCount, const RSubpassDependency* dependencies) override;
-		RRenderPass* CreateRenderPass(uint32 subpassCount, const RSubpass* subpasses, uint32 dependencyCount, RSubpassDependency* dependencies) override;
+		RRenderPass* CreateRenderPass(uint32 attachmentCount, const RSAttachment* pAttachments,
+			uint32 subpassCount, const RSubPassInfo* pSubpasses,
+			uint32 dependencyCount, const RSubpassDependency* pDependencies) override;
+		RRenderPass* CreateRenderPass(uint32 colorAttachmentCount, const RSAttachment* pColorAttachments, const RSAttachment* depthAttachment) override;
 		void DestroyRenderPass(RRenderPass* pass) override;
 
 		// descriptor set
 		RDescriptorSetLayout* CreateDescriptorSetLayout(uint32 bindingCount, const RSDescriptorSetLayoutBinding* bindings)override;
+		void DestroyDescriptorSetLayout(RDescriptorSetLayout* descriptorSetLayout) override;
 		RDescriptorSet* AllocateDescriptorSet(const RDescriptorSetLayout* layout) override;
 		//void AllocateDescriptorSets(uint32 count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
 		//void FreeDescriptorSets(uint32 count, RDescriptorSet** descriptorSets) override;
@@ -169,7 +170,7 @@ namespace RHI{
 		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) override;
 
 		void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) override;
-		void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 firstSet) override;
+		void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx) override;
 		void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset) override;
 		void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint64 offset) override;
 		void CmdDraw(RCommandBuffer* cmd, uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance) override;
@@ -190,6 +191,8 @@ namespace RHI{
 		void CreateBufferWithMemory(uint64 size, RBufferUsageFlags usage, RMemoryPropertyFlags memoryFlags,
 			RBuffer*& pBuffer, RMemory*& pMemory, uint64 dataSize, void* pData)override;
 		void DestroyBuffer(RBuffer* buffer) override;
+		void MapMemory(RMemory* memory, void** pData) override;
+		void UnmapMemory(RMemory* memory) override;
 
 		// image
 		RImage* CreateImage2D(RFormat format, uint32 width, uint32 height, uint32 mipLevels,

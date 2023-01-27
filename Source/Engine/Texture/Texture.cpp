@@ -12,6 +12,7 @@ namespace Engine {
 
 	Texture2D::~Texture2D()
 	{
+		if (nullptr == m_Image) return;
 		GET_RHI(rhi);
 		rhi->DestroyImage(m_Image);
 		rhi->FreeMemory(m_ImageMemory);

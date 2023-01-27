@@ -32,7 +32,7 @@ namespace Editor {
 		//style.FrameRounding = 5.0f;
 		//style.FrameBorderSize = 1.5f;
 
-		ImGui::StyleColorsDark();
+		ImGui::StyleColorsLight();
 	}
 
 	EditorUI::~EditorUI() {

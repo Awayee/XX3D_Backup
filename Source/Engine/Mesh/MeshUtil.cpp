@@ -1,9 +1,11 @@
 #include "MeshUtil.h"
 #include "Core/String/String.h"
+#include "Core/File/CoreFile.h"
 #include "Core/macro.h"
 
-#define TINYGLTF_NO_INCLUDE_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_NO_STB_IMAGE_WRITE
+#define TINYGLTF_IMPLEMENTATION
 #include <tiny_gltf.h>
 
 #include <assimp/Importer.hpp>
@@ -134,13 +136,14 @@ namespace Engine {
 	}
 
 	// TODO run in another thread
-	bool LoadMeshFromGLTF(const char* file, Mesh* mesh)
+	bool LoadMeshFromGLTF(const char* file, TVector<SPrimitiveData>& primitives)
 	{
+		String fullPath = JoinFilePath(ASSETS_PATH, file);
 		tinygltf::Model gltfModel;
 		tinygltf::TinyGLTF gltfContext;
-		FString error;
-		FString warning;
-		if(!gltfContext.LoadBinaryFromFile(&gltfModel, &error, &warning, file)) {
+		String error;
+		String warning;
+		if(!gltfContext.LoadBinaryFromFile(&gltfModel, &error, &warning, fullPath)) {
 			LOG("Failed to load GLTF mesh: %s", file);
 			return false;
 		}
@@ -150,12 +153,11 @@ namespace Engine {
 		for(auto& node: scene.nodes) {
 			primitiveCount += GetPrimitiveCount(gltfModel, gltfModel.nodes[node]);
 		}
-		TVector<SPrimitiveData> primitives(primitiveCount);
+		primitives.resize(primitiveCount);
 		primitiveCount = 0;
 		for (uint32 i = 0; i < scene.nodes.size(); i++) {
 			LoadGLTFNode(gltfModel, gltfModel.nodes[scene.nodes[i]], primitives, primitiveCount);
 		}
-		mesh->LoadPrimitives(primitives);
 		return true;
 	}
 
@@ -235,17 +237,17 @@ namespace Engine {
 		}
 	}
 
-	bool LoadMeshFromFBX(const char* file, Mesh* mesh) {
-
+	bool LoadMeshFromFBX(const char* file, TVector<SPrimitiveData>& primitives) {
+		String fullPath = JoinFilePath(ASSETS_PATH, file);
 		Assimp::Importer importer;
-		const aiScene* aScene = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
+		const aiScene* aScene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_FlipUVs);
 		if (!aScene || aScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !aScene->mRootNode) {
 			std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
 			return false;
 		}
 		// 先获取总面数
 		uint32 primitiveCount = GetPrimitiveCount(aScene, aScene->mRootNode);
-		TVector<SPrimitiveData> primitives(primitiveCount);
+		primitives.resize(primitiveCount);
 		LoadFbxNode(aScene, aScene->mRootNode, primitives);
 		return true;
 	}

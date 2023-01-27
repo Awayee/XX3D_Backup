@@ -1,4 +1,5 @@
-#include "Matrix.h"
+#pragma once
+#include "Math.h"
 #include "Core/macro.h"
 #include <cmath>
 
@@ -89,11 +90,9 @@ namespace Math {
     }
     MATH_GENERIC Vector3<T> Matrix3x3<T>::operator*(const Vector3<T>& rhs) const
     {
-        Vector3<float> prod;
-        for (int rowIdx = 0; rowIdx < 3; rowIdx++)
-        {
-            prod[rowIdx] =
-                m_mat[rowIdx][0] * rhs.x + m_mat[rowIdx][1] * rhs.y + m_mat[rowIdx][2] * rhs.z;
+        Vector3<T> prod;
+        for (int rowIdx = 0; rowIdx < 3; rowIdx++) {
+            prod[rowIdx] = m_mat[rowIdx][0] * rhs.x + m_mat[rowIdx][1] * rhs.y + m_mat[rowIdx][2] * rhs.z;
         }
         return prod;
     }
@@ -165,7 +164,7 @@ namespace Math {
 
     MATH_GENERIC Matrix3x3<T> operator*(T scalar, const Matrix3x3<T>& rhs)
     {
-        Matrix3x3 prod;
+        Matrix3x3<T> prod;
         for (int row_index = 0; row_index < 3; row_index++)
         {
             for (int col_index = 0; col_index < 3; col_index++)
@@ -179,8 +178,8 @@ namespace Math {
         // Algorithm in Ken Shoemake's article in 1987 SIGGRAPH course notes
         // article "Quaternion Calculus and Fast Animation".
 
-        float trace = m[0][0] + m[1][1] + m[2][2];
-        float root;
+        T trace = m[0][0] + m[1][1] + m[2][2];
+        T root;
 
         if (trace > 0.0)
         {
@@ -204,8 +203,8 @@ namespace Math {
             int j = s_iNext[i];
             int k = s_iNext[j];
 
-            root = std::sqrt(m[i][i] - m[j][j] - m[k][k] + 1.0f);
-            float* apkQuat[3] = { &q.x, &q.y, &q.z };
+            root = std::sqrt(m[i][i] - m[j][j] - m[k][k] + 1);
+            T* apkQuat[3] = { &q.x, &q.y, &q.z };
             *apkQuat[i] = 0.5f * root;
             root = 0.5f / root;
             q.w = (m[k][j] - m[j][k]) * root;
@@ -215,28 +214,28 @@ namespace Math {
     }
 
     MATH_GENERIC void QuaternionToMatrix(const Quaternion<T>& q, Matrix3x3<T>& m) {
-        float fTx = q.x + q.x;   // 2x
-        float fTy = q.y + q.y;   // 2y
-        float fTz = q.z + q.z;   // 2z
-        float fTwx = fTx * q.w; // 2xw
-        float fTwy = fTy * q.w; // 2yw
-        float fTwz = fTz * q.w; // 2z2
-        float fTxx = fTx * q.x; // 2x^2
-        float fTxy = fTy * q.x; // 2xy
-        float fTxz = fTz * q.x; // 2xz
-        float fTyy = fTy * q.y; // 2y^2
-        float fTyz = fTz * q.y; // 2yz
-        float fTzz = fTz * q.z; // 2z^2
+        T fTx = q.x + q.x;   // 2x
+        T fTy = q.y + q.y;   // 2y
+        T fTz = q.z + q.z;   // 2z
+        T fTwx = fTx * q.w; // 2xw
+        T fTwy = fTy * q.w; // 2yw
+        T fTwz = fTz * q.w; // 2z2
+        T fTxx = fTx * q.x; // 2x^2
+        T fTxy = fTy * q.x; // 2xy
+        T fTxz = fTz * q.x; // 2xz
+        T fTyy = fTy * q.y; // 2y^2
+        T fTyz = fTz * q.y; // 2yz
+        T fTzz = fTz * q.z; // 2z^2
 
-        m[0][0] = 1.0f - (fTyy + fTzz); // 1 - 2y^2 - 2z^2
+        m[0][0] = 1 - (fTyy + fTzz); // 1 - 2y^2 - 2z^2
         m[0][1] = fTxy - fTwz;          // 2xy - 2wz
         m[0][2] = fTxz + fTwy;          // 2xz + 2wy
         m[1][0] = fTxy + fTwz;          // 2xy + 2wz
-        m[1][1] = 1.0f - (fTxx + fTzz); // 1 - 2x^2 - 2z^2
+        m[1][1] = 1 - (fTxx + fTzz); // 1 - 2x^2 - 2z^2
         m[1][2] = fTyz - fTwx;          // 2yz - 2wx
         m[2][0] = fTxz - fTwy;          // 2xz - 2wy
         m[2][1] = fTyz + fTwx;          // 2yz + 2wx
-        m[2][2] = 1.0f - (fTxx + fTyy); // 1 - 2x^2 - 2y^2
+        m[2][2] = 1 - (fTxx + fTyy); // 1 - 2x^2 - 2y^2
     }
 
     MATH_GENERIC const Matrix3x3<T> Matrix3x3<T>::IDENTITY = Matrix3x3<T>(1, 1, 1, 1, 1, 1, 1, 1, 1);
@@ -326,14 +325,14 @@ namespace Math {
     }
     MATH_GENERIC Vector4<T> Matrix4x4<T>::operator*(const Vector4<T>& v) const
     {
-        return Vector4<float>(m_mat[0][0] * v.x + m_mat[0][1] * v.y + m_mat[0][2] * v.z + m_mat[0][3] * v.w,
+        return Vector4<T>(m_mat[0][0] * v.x + m_mat[0][1] * v.y + m_mat[0][2] * v.z + m_mat[0][3] * v.w,
             m_mat[1][0] * v.x + m_mat[1][1] * v.y + m_mat[1][2] * v.z + m_mat[1][3] * v.w,
             m_mat[2][0] * v.x + m_mat[2][1] * v.y + m_mat[2][2] * v.z + m_mat[2][3] * v.w,
             m_mat[3][0] * v.x + m_mat[3][1] * v.y + m_mat[3][2] * v.z + m_mat[3][3] * v.w);
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::operator+(const Matrix4x4<T>& m2) const
     {
-        Matrix4x4 r;
+        Matrix4x4<T> r;
 
         r.m_mat[0][0] = m_mat[0][0] + m2.m_mat[0][0];
         r.m_mat[0][1] = m_mat[0][1] + m2.m_mat[0][1];
@@ -359,7 +358,7 @@ namespace Math {
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::operator-(const Matrix4x4<T>& m2) const
     {
-        Matrix4x4 r;
+        Matrix4x4<T> r;
         r.m_mat[0][0] = m_mat[0][0] - m2.m_mat[0][0];
         r.m_mat[0][1] = m_mat[0][1] - m2.m_mat[0][1];
         r.m_mat[0][2] = m_mat[0][2] - m2.m_mat[0][2];
@@ -429,14 +428,14 @@ namespace Math {
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::BuildViewportMatrix(unsigned int width, unsigned int height)
     {
-        return Matrix4x4(0.5f * (float)width, 0.0f, 0.0f, 0.5f * (float)width,
-            0.0f, -0.5f * (float)height, 0.0f, 0.5f * (float)height,
-            0.0f, 0.0f, -1.0f, 1.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+        return Matrix4x4((T)0.5f * (T)width, (T)0.0f, (T)0.0f, (T)0.5f * (T)width,
+            (T)0.0f, -(T)0.5f * (T)height, (T)0.0f, (T)0.5f * (T)height,
+            (T)0.0f, (T)0.0f, -(T)1.0f, (T)1.0f,
+            (T)0.0f, (T)0.0f, (T)0.0f, (T)1.0f);
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::MirrorMatrix(Vector4<T> mirror_plane)
     {
-        Matrix4x4 result;
+        Matrix4x4<T> result;
         result.m_mat[0][0] = -2 * mirror_plane.x * mirror_plane.x + 1;
         result.m_mat[1][0] = -2 * mirror_plane.x * mirror_plane.y;
         result.m_mat[2][0] = -2 * mirror_plane.x * mirror_plane.z;
@@ -461,19 +460,19 @@ namespace Math {
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::RotationMatrix(Vector3<T> normal)
 	{
-		Vector3<float> up = Vector3<float>(0, 0, 1);
+		Vector3<T> up = Vector3<T>(0, 0, 1);
 		if (fabs(normal.z) > 0.999f)
 		{
-			up = Vector3<float>(0, 1, 0);
+			up = Vector3<T>(0, 1, 0);
 		}
 
-		Vector3<float> left = Vector3<float>::Cross(up, normal);
-		up = Vector3<float>::Cross(normal, left);
+		Vector3<T> left = Vector3<T>::Cross(up, normal);
+		up = Vector3<T>::Cross(normal, left);
 
 		left.Normalize();
 		up.Normalize();
 
-		Matrix4x4 result = Matrix4x4::IDENTITY;
+		Matrix4x4<T> result = Matrix4x4::IDENTITY;
 		result.SetMatrix3x3(Matrix3x3(left, up, normal));
 
 		return result.Transpose();
@@ -500,7 +499,7 @@ namespace Math {
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::BuildScaleMatrix(T s_x, T s_y, T s_z)
     {
-        Matrix4x4 r;
+        Matrix4x4<T> r;
         r.m_mat[0][0] = s_x; r.m_mat[0][1] = 0.0; r.m_mat[0][2] = 0.0; r.m_mat[0][3] = 0.0;
         r.m_mat[1][0] = 0.0; r.m_mat[1][1] = s_y; r.m_mat[1][2] = 0.0; r.m_mat[1][3] = 0.0;
         r.m_mat[2][0] = 0.0; r.m_mat[2][1] = 0.0; r.m_mat[2][2] = s_z; r.m_mat[2][3] = 0.0;
@@ -515,11 +514,11 @@ namespace Math {
     }
     MATH_GENERIC void Matrix4x4<T>::ExtractAxies(Vector3<T>& outX, Vector3<T>& outY, Vector3<T>& outZ)
     {
-        outX = Vector3<float>(m_mat[0][0], m_mat[1][0], m_mat[2][0]);
+        outX = Vector3<T>(m_mat[0][0], m_mat[1][0], m_mat[2][0]);
         outX.Normalize();
-        outY = Vector3<float>(m_mat[0][1], m_mat[1][1], m_mat[2][1]);
+        outY = Vector3<T>(m_mat[0][1], m_mat[1][1], m_mat[2][1]);
         outY.Normalize();
-        outZ = Vector3<float>(m_mat[0][2], m_mat[1][2], m_mat[2][2]);
+        outZ = Vector3<T>(m_mat[0][2], m_mat[1][2], m_mat[2][2]);
         outZ.Normalize();
     }
     MATH_GENERIC void Matrix4x4<T>::MakeTransform(const Vector3<T>& position, const Vector3<T>& scale, const Quaternion<T>& rotation)
@@ -569,8 +568,8 @@ namespace Math {
     }
     MATH_GENERIC void Matrix4x4<T>::MakeInverseTransform(const Vector3<T>& position, const Vector3<T>& scale, const Quaternion<T>& rotation)
     {            // Invert the parameters
-        Vector3<float>    inv_translate = -position;
-        Vector3<float>    inv_scale(1 / scale.x, 1 / scale.y, 1 / scale.z);
+        Vector3<T>    inv_translate = -position;
+        Vector3<T>    inv_scale(1 / scale.x, 1 / scale.y, 1 / scale.z);
         Quaternion inv_rot = rotation.Inverse();
 
         // Because we're inverting, order is translation, rotation, scale
@@ -579,7 +578,7 @@ namespace Math {
         inv_translate *= inv_scale;              // scale
 
         // Next, make a 3x3 rotation matrix
-        Matrix3x3 rot3x3;
+        Matrix3x3<T> rot3x3;
         QuaternionToMatrix(rotation, rot3x3);
 
         // Set up final matrix with scale, rotation and translation
@@ -632,7 +631,7 @@ namespace Math {
         // U stores the entries U[0] = u01, U[1] = u02, U[2] = u12
 
         // build orthogonal matrix Q
-        Matrix3x3 out_Q;
+        Matrix3x3<T> out_Q;
 
         float inv_length = m_mat[0][0] * m_mat[0][0] + m_mat[1][0] * m_mat[1][0] + m_mat[2][0] * m_mat[2][0];
         if (inv_length != 0)
@@ -683,7 +682,7 @@ namespace Math {
         }
 
         // build "right" matrix R
-        Matrix3x3 R;
+        Matrix3x3<T> R;
         R[0][0] = out_Q[0][0] * m_mat[0][0] + out_Q[1][0] * m_mat[1][0] + out_Q[2][0] * m_mat[2][0];
         R[0][1] = out_Q[0][0] * m_mat[0][1] + out_Q[1][0] * m_mat[1][1] + out_Q[2][0] * m_mat[2][1];
         R[1][1] = out_Q[0][1] * m_mat[0][1] + out_Q[1][1] * m_mat[1][1] + out_Q[2][1] * m_mat[2][1];
@@ -696,7 +695,7 @@ namespace Math {
         scale.y = R[1][1];
         scale.z = R[2][2];
 
-        position = Vector3<float>(m_mat[0][3], m_mat[1][3], m_mat[2][3]);
+        position = Vector3<T>(m_mat[0][3], m_mat[1][3], m_mat[2][3]);
 
         MatrixToQuaternion(out_Q, rotate);
         // the shear component
@@ -764,21 +763,21 @@ namespace Math {
     }
     MATH_GENERIC Vector3<T> Matrix4x4<T>::TransformCoord(const Vector3<T>& v)
     {
-        Vector4<float> temp(v, 1.0f);
-        Vector4<float> ret = (*this) * temp;
+        Vector4<T> temp(v, 1.0f);
+        Vector4<T> ret = (*this) * temp;
         if (ret.w == 0.0f)
         {
-            return Vector3<float>{};
+            return Vector3<T>{};
         }
         else
         {
             ret /= ret.w;
-            return Vector3<float>(ret.x, ret.y, ret.z);
+            return Vector3<T>(ret.x, ret.y, ret.z);
         }
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::ViewMatrix(const Vector3<T>& position, const Quaternion<T>& orientation, const Matrix4x4<T>* reflectMat)
     {
-        Matrix4x4 viewMatrix;
+        Matrix4x4<T> viewMatrix;
 
         // View matrix is:
         //
@@ -790,12 +789,12 @@ namespace Math {
         // Where T = -(Transposed(Rot) * Pos)
 
         // This is most efficiently done using 3x3 Matrices
-        Matrix3x3 rot;
+        Matrix3x3<T> rot;
         QuaternionToMatrix(orientation, rot);
 
         // Make the translation relative to new axes
-        Matrix3x3 rotT = rot.Transpose();
-        Vector3<float>   trans = -rotT * position;
+        Matrix3x3<T> rotT = rot.Transpose();
+        Vector3<T>   trans = -rotT * position;
 
         // Make final matrix
         viewMatrix = Matrix4x4::IDENTITY;
@@ -814,13 +813,13 @@ namespace Math {
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::LookAtMatrix(const Vector3<T>& eye, const Vector3<T>& at, const Vector3<T>& up)
     {
-        const Vector3<float>& upNormalized = up.NormalizeCopy();
+        const Vector3<T>& upNormalized = up.NormalizeCopy();
 
-        Vector3<float> f = (at - eye);
+        Vector3<T> f = (at - eye);
         f.Normalize();
-        Vector3<float> s = Vector3<float>::Cross(f, upNormalized);
+        Vector3<T> s = Vector3<T>::Cross(f, upNormalized);
         s.Normalize();
-        Vector3<float> u = Vector3<float>::Cross(s, f);
+        Vector3<T> u = Vector3<T>::Cross(s, f);
 
         Matrix4x4<T> view_mat = Matrix4x4<T>::IDENTITY;
         view_mat[0][0] = s.x;
@@ -880,4 +879,11 @@ namespace Math {
 
         return proj_matrix;
     }
+
+
+    template struct Matrix3x3<float>;
+    template struct Matrix3x3<double>;
+
+    template struct Matrix4x4<float>;
+    template struct Matrix4x4<double>;
 }

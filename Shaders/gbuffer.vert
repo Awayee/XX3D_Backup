@@ -1,0 +1,24 @@
+#version 450
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inUv;
+layout(location = 2) in vec3 inNormal;
+layout(location = 3) in vec3 inTangent;
+
+layout(set = 0, binding = 1) uniform CameraUniform{
+    vec3 Pos;
+    mat4 View;
+    mat4 Proj;
+    mat4 VP;
+}cameraUniform;
+
+layout(set = 1, binding=0)uniform ModelUniform{
+    mat4 Model;
+}modelUniform;
+
+layout(location = 0) out vec3 worldNormal;
+
+void main(){
+    gl_Position = cameraUniform.Proj * cameraUniform.View * modelUniform.Model * vec4(inPosition, 1.0);
+    worldNormal = mat3(transpose(inverse(modelUniform.Model))) * inNormal;
+}
