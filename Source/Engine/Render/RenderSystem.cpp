@@ -2,9 +2,10 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "ImGuiImpl.h"
-#include "Engine/Window/WindowSystem.h"
 #include "RenderMacro.h"
+#include "ImGuiImpl.h"
+#include "../Window/WindowSystem.h"
+#include "../Scene/RenderScene.h"
 #include "Resource/Config/Config.h"
 
 namespace Engine {
@@ -37,15 +38,13 @@ namespace Engine {
 	}
 	RenderSystem::~RenderSystem()
 	{
-		GET_RHI(rhi);
-		rhi->QueueWaitIdle(rhi->GetGraphicsQueue());
-
 		ImGuiRelease();
-
+		RenderScene::Clear();
 		DescsMgr::Release();
 		m_GBufferPipeline.reset();
 		m_PresentPass.reset();
 
+		GET_RHI(rhi);
 		for(auto& cmd: m_CommandBuffers) {
 			rhi->FreeCommandBuffer(cmd);
 		}
@@ -53,7 +52,19 @@ namespace Engine {
 		rhi->Release();
 	}
 
+	void RenderSystem::SetEnable(bool enable)
+	{
+		m_Enable = enable;
+		if(!enable) {
+			RHI_INSTANCE->WaitGraphicsQueue();
+		}
+	}
+
 	void RenderSystem::Tick(){
+		if(!m_Enable) {
+			return;
+		}
+
 		// window is hided, pause rendering
 		if(!m_WindowAvailable) {
 			return;

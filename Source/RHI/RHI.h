@@ -63,6 +63,7 @@ namespace RHI{
 			uint32 signalSemaphoreCount, RSemaphore* signalSemaphores, 
 			RFence* fence) = 0;
 		virtual void QueueWaitIdle(RQueue* queue) = 0;
+		virtual void WaitGraphicsQueue() = 0;
 		virtual RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32 attachmentCount, const RImageView* const* pAttachments, uint32 width, uint32 height, uint32 layers) = 0;
 		virtual void DestroyFramebuffer(RFramebuffer* framebuffer) = 0;
 		// cmd

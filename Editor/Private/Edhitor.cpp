@@ -16,7 +16,7 @@ namespace Editor {
 		engine->GetRenderSystem()->InitUIPass(static_cast<Engine::UIBase*>(m_EditorUI.get()));
 
 		// TODO TEST
-		LoadMesh();
+		//LoadMesh();
 	}
 
 	XXEditor::~XXEditor() {

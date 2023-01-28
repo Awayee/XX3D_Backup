@@ -1,18 +1,22 @@
 #pragma once
-#include "RenderResources.h"
+#include "../Render/RenderResources.h"
 #include "Core/Memory/SmartPointer.h"
-#include "../Camera/Camera.h"
-#include "../Light/DirectionalLight.h"
 
 
 namespace Engine {
+	class Camera;
+	class DirectionalLight;
 	class RenderScene;
+
+	struct ObjectHandle {
+		RenderScene* Scene;
+		uint32 Index;
+	};
 
 	class RenderObject {
 		friend RenderScene;
 	private:
-		RenderScene* Scene;
-		int32 Index;
+		ObjectHandle m_Handle;
 	public:
 		RenderObject(RenderScene* scene);
 		virtual ~RenderObject();
@@ -32,14 +36,17 @@ namespace Engine {
 	private:
 		void UpdateUniform();
 		void CreateResources();
+		void CreateDescriptorSets();
 	public:
 		static TUniquePtr<RenderScene> s_Default;
 		static RenderScene* GetDefaultScene(); // TODO TEST
+		static void Clear() { if (s_Default) s_Default.reset(); }
+
 		RenderScene();
 		~RenderScene();
-		void AddRenderObject(RenderObject* obj);
-		void RemoveRenderObject(RenderObject* obj);
+		ObjectHandle AddRenderObject(RenderObject* obj);
+		void RemoveRenderObject(const ObjectHandle& handle);
 		void RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout);
-		void RenderLight(RHI::RCommandBuffer* cmd);
+		void RenderDeferredLight(RHI::RCommandBuffer* cmd);
 	};
 }

@@ -1,17 +1,19 @@
 #include "RenderScene.h"
 #include "Resource/Config/Config.h"
-#include "RenderSystem.h"
 #include "Core/Concurrency/Concurrency.h"
 
+#include "../Camera/Camera.h"
+#include "../Light/DirectionalLight.h"
+
 namespace Engine {
-    RenderObject::RenderObject(RenderScene* scene) : Scene(scene)
+    RenderObject::RenderObject(RenderScene* scene)
     {
-        if (nullptr == Scene)Scene = RenderScene::GetDefaultScene();
-        Scene->AddRenderObject(this);
+        if (nullptr == scene)scene = RenderScene::GetDefaultScene();
+        m_Handle = scene->AddRenderObject(this);
     }
     RenderObject::~RenderObject()
     {
-        Scene->RemoveRenderObject(this);
+        m_Handle.Scene->RemoveRenderObject(m_Handle);
     }
 
     TUniquePtr<RenderScene> RenderScene::s_Default;
@@ -54,22 +56,8 @@ namespace Engine {
         m_Camera.reset(new Camera(PROJECT_PERSPECTIVE, (float)ext.width / ext.height, 1.0f, 1000.0f, 0.78f));
     }
 
-    RenderScene* RenderScene::GetDefaultScene()
+    void RenderScene::CreateDescriptorSets()
     {
-        if(nullptr == s_Default.get()) {
-            static Mutex m;
-            MutexLock lock(m);
-            if (nullptr == s_Default.get()) {
-                s_Default.reset(new RenderScene);
-            }
-        }
-        return s_Default.get();
-    }
-
-    RenderScene::RenderScene()
-    {
-        CreateResources();
-
         GET_RHI(rhi);
 
         m_SceneDescs = rhi->AllocateDescriptorSet(DescsMgr::GetLayout(DESCS_SCENE));
@@ -90,25 +78,46 @@ namespace Engine {
         rhi->UpdateDescriptorSet(m_SceneDescs, 1, 0, 1, RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, cameraInfo);
     }
 
+    RenderScene* RenderScene::GetDefaultScene()
+    {
+        if(nullptr == s_Default.get()) {
+            static Mutex m;
+            MutexLock lock(m);
+            if (nullptr == s_Default.get()) {
+                s_Default.reset(new RenderScene);
+            }
+        }
+        return s_Default.get();
+    }
+
+    RenderScene::RenderScene()
+    {
+        CreateResources();
+        CreateDescriptorSets();
+    }
+
     RenderScene::~RenderScene() {
         m_SceneUniform.Release();
-        RHI_INSTANCE->FreeDescriptorSet(m_SceneDescs);
+        m_CameraUniform.Release();
+        //RHI_INSTANCE->FreeDescriptorSet(m_SceneDescs);
     }
 
-    void RenderScene::AddRenderObject(RenderObject* obj)
+    ObjectHandle RenderScene::AddRenderObject(RenderObject* obj)
     {
-        obj->Index = static_cast<int32>(m_RenderObjects.size());
         m_RenderObjects.push_back(obj);
+        return { this, (uint32)m_RenderObjects.size() };
     }
 
-    void RenderScene::RemoveRenderObject(RenderObject* obj)
+    void RenderScene::RemoveRenderObject(const ObjectHandle& handle)
     {
-        if(obj->Index < 0 || obj->Index >= m_RenderObjects.size()) {
-            return;
-        }
-        Swap(m_RenderObjects[obj->Index], m_RenderObjects.back());
+        if (handle.Scene != this) return;
+        if (0 == handle.Index || m_RenderObjects.size() < handle.Index)return;
+
+        Swap(m_RenderObjects[handle.Index-1], m_RenderObjects.back());
         m_RenderObjects.pop_back();
-        m_RenderObjects[obj->Index]->Index = obj->Index;
+        if(!m_RenderObjects.empty()) {
+            m_RenderObjects[handle.Index - 1]->m_Handle.Index = handle.Index;
+        }
     }
 
     void RenderScene::RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout)
@@ -119,7 +128,7 @@ namespace Engine {
             obj->DrawCall(cmd, layout);
         }
     }
-    void RenderScene::RenderLight(RHI::RCommandBuffer* cmd)
+    void RenderScene::RenderDeferredLight(RHI::RCommandBuffer* cmd)
     {
     }
 }

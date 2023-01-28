@@ -1,10 +1,8 @@
 #pragma once
 #include "UIBase.h"
 #include "RHI/RHI.h"
-#include "Core/Container/Container.h"
 #include "Core/Memory/SmartPointer.h"
-#include "RenderScene.h"
-#include "RenderCommon.h"
+#include "RenderResources.h"
 
 namespace Engine {
 	class WindowSystemBase;
@@ -15,13 +13,17 @@ namespace Engine {
 		PASS_COUNT,
 	};
 
+	class RenderData {
+		TVector<Primitive> Primitives;
+	};
+
 	class RenderSystem {
 	private:
-		//RenderPasses
+		bool m_Enable{ false };
+		//Render Passes
 		TUniquePtr<PresentPass> m_PresentPass;
-
+		// command buffers
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
-
 		// Render pipelines
 		TUniquePtr<GBufferPipeline> m_GBufferPipeline;
 
@@ -33,6 +35,7 @@ namespace Engine {
 		RenderSystem() = default;
 		RenderSystem(WindowSystemBase* window);
 		~RenderSystem();
+		void SetEnable(bool enable);
 		void Tick();
 		void InitUIPass(UIBase* ui);
 

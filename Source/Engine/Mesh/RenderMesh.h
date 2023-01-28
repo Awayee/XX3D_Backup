@@ -3,7 +3,7 @@
 #include "Core/Memory/SmartPointer.h"
 #include "../Render/RenderResources.h"
 #include "../Render/RenderCommon.h"
-#include "../Render/RenderScene.h"
+#include "../Scene//RenderScene.h"
 
 namespace Engine {
 	struct SPrimitiveData{
@@ -16,8 +16,10 @@ namespace Engine {
 	private:
 		TVector<TUniquePtr<Primitive>> m_Primitives;
 		Math::FMatrix4x4 m_TransformMat{ Math::FMatrix4x4::IDENTITY };
-		BufferCommon m_UniformBuffer;
-		RHI::RDescriptorSet* m_DescriptorSet{nullptr};
+		BufferCommon m_TransformUniform;
+		BufferCommon m_MaterialUniform;
+		RHI::RDescriptorSet* m_TransformDescs{nullptr};
+		RHI::RDescriptorSet* m_MaterialDescs { nullptr };
 		//RHI::RDescriptorSet* m_DescriptorSet;
 	private:
 		void LoadPrimitives(const TVector<SPrimitiveData>& primitives);
@@ -25,7 +27,7 @@ namespace Engine {
 		RenderMesh(const TVector<SPrimitiveData>& primitives, RenderScene* scene);
 		void DrawCall(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout) override;
 		const TVector<TUniquePtr<Primitive>>& GetPrimitives() const { return m_Primitives; }
-		RHI::RDescriptorSet* GetDescriptorSet()const { return m_DescriptorSet; }
+		RHI::RDescriptorSet* GetDescriptorSet()const { return m_TransformDescs; }
 		~RenderMesh();
 	};
 }

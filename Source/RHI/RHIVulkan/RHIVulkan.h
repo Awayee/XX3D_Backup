@@ -154,6 +154,7 @@ namespace RHI{
 			uint32 signalSemaphoreCount, RSemaphore* signalSemaphores,
 			RFence* fence) override;
 		void QueueWaitIdle(RQueue* queue)override;
+		void WaitGraphicsQueue() override;
 		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32 attachmentCount, const RImageView* const* pAttachments, uint32 width, uint32 height, uint32 layers) override;
 		void DestroyFramebuffer(RFramebuffer* framebuffer) override;
 		RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level)override;

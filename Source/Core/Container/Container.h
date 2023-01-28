@@ -57,3 +57,6 @@ template <class T>
 inline void Swap(T& left, T& right) {
 	std::swap(left, right);
 }
+
+template <class T, int L>
+constexpr int ArraySize(const T(&arr)[L]) { return L; }

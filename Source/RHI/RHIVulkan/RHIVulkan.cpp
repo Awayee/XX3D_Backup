@@ -942,6 +942,11 @@ namespace RHI {
 		VK_CHECK(vkQueueWaitIdle(reinterpret_cast<RQueueVk*>(queue)->handle), "vkQueueWaitIdle");
 	}
 
+	void RHIVulkan::WaitGraphicsQueue()
+	{
+		VK_CHECK(vkQueueWaitIdle(m_GraphicsQueue.handle), "vkQueueWaitIdle");
+	}
+
 	RImageView* RHIVulkan::GetSwapchainImageView(uint8 i)
 	{
 		ASSERT(i < m_SwapchainImageViews.size(), "i < m_MaxFramesInFlight");
@@ -1276,7 +1281,6 @@ namespace RHI {
 	void RHIVulkan::FreeMemory(RMemory* memory)
 	{
 		vmaFreeMemory(m_Vma, reinterpret_cast<RMemoryVma*>(memory)->handle);
-		delete memory;
 	}
 
 	RBuffer* RHIVulkan::CreateBuffer(uint64 size, RBufferUsageFlags usage)

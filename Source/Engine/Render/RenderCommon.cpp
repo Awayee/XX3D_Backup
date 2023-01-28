@@ -62,23 +62,22 @@ namespace Engine {
 		}
 	}
 	void BufferCommon::Create(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData) {
+		if (Size) Release();
 		RHI_INSTANCE->CreateBufferWithMemory(size, usage, memoryFlags, Buffer, Memory, size, pData);
 		Size = size;
 		Usage = usage;
 	}
 
 	void BufferCommon::Release() {
-		GET_RHI(rhi);
-		if (Buffer) {
+		if(Size) {
+			GET_RHI(rhi);
 			rhi->DestroyBuffer(Buffer);
 			Buffer = nullptr;
-		}
-		if (Memory) {
 			rhi->FreeMemory(Memory);
 			Memory = nullptr;
+			Size = 0u;
+			Usage = RHI::BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
 		}
-		Size = 0u;
-		Usage = RHI::BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
 	}
 
 

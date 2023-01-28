@@ -36,15 +36,55 @@ namespace Engine {
 	};
 
 	struct BufferCommon {
-		RHI::RBuffer* Buffer;
-		RHI::RMemory* Memory;
-		uint64 Size{ 0 };
+		RHI::RBuffer* Buffer{nullptr};
+		RHI::RMemory* Memory{nullptr};
+		uint64 Size{ 0u };
 		RHI::RBufferUsageFlags Usage{RHI::BUFFER_USAGE_FLAG_BITS_MAX_ENUM};
+	public:
+		BufferCommon() = default;
+		BufferCommon(const BufferCommon&) = default;
+		BufferCommon(BufferCommon&&) = default;
+		BufferCommon(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData) { Create(size, usage, memoryFlags, pData); }
 		void Create(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData);
 		void Release();
 		void Map(void** pData) { RHI_INSTANCE->MapMemory(Memory, pData); };
 		void Unmap() { RHI_INSTANCE->UnmapMemory(Memory); };
 		~BufferCommon() { Release(); }
+
+		// vertex buffer
+		void CreateForVertex(uint64 size){
+			Create(size, RHI::BUFFER_USAGE_VERTEX_BUFFER_BIT | RHI::BUFFER_USAGE_TRANSFER_DST_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		};
+		// index buffer
+		void CreateForIndex(uint64 size){
+			Create(size, RHI::BUFFER_USAGE_INDEX_BUFFER_BIT | RHI::BUFFER_USAGE_TRANSFER_DST_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		};
+		// staging buffer
+		void CreateForStaging(uint64 size, void* pData){
+			Create(size, RHI::BUFFER_USAGE_TRANSFER_SRC_BIT, RHI::MEMORY_PROPERTY_HOST_COHERENT_BIT | RHI::MEMORY_PROPERTY_HOST_VISIBLE_BIT, pData);
+		};
+		// uniform buffer
+		void CreateForUniform(uint64 size){
+			Create(size, RHI::BUFFER_USAGE_UNIFORM_BUFFER_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		};
+		/*
+		// vertex buffer
+		static BufferCommon* CreateForVertex(uint64 size) {
+			return new BufferCommon(size, RHI::BUFFER_USAGE_VERTEX_BUFFER_BIT | RHI::BUFFER_USAGE_TRANSFER_DST_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		}
+		// index buffer
+		static BufferCommon* CreateForIndex(uint64 size){
+			return new BufferCommon(size, RHI::BUFFER_USAGE_INDEX_BUFFER_BIT | RHI::BUFFER_USAGE_TRANSFER_DST_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		}
+		// staging buffer
+		static BufferCommon* CreateForStaging(uint64 size, void* pData){
+			return new BufferCommon(size, RHI::BUFFER_USAGE_TRANSFER_SRC_BIT, RHI::MEMORY_PROPERTY_HOST_COHERENT_BIT | RHI::MEMORY_PROPERTY_HOST_VISIBLE_BIT, pData);
+		}
+		// uniform buffer
+		static BufferCommon* CreateForUniform(uint64 size){
+			return new BufferCommon(size, RHI::BUFFER_USAGE_UNIFORM_BUFFER_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		}
+		*/
 	};
 
 	class RenderPassCommon {

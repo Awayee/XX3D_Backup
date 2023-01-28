@@ -8,10 +8,10 @@
 namespace Editor {
 	class XXEditor {
 	private:
-		Engine::XXEngine* m_Engine;
-		TUniquePtr<EditorUI> m_EditorUI;
 		// TODO TEST
 		TUniquePtr<Engine::RenderMesh> m_Ms;
+		Engine::XXEngine* m_Engine;
+		TUniquePtr<EditorUI> m_EditorUI;
 
 	private:
 		void LoadMesh();

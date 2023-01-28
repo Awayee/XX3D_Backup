@@ -20,14 +20,12 @@ namespace Engine {
 	private:
 		uint32 m_VertexCount;
 		uint32 m_IndexCount;
-		RHI::RBuffer* m_VertexBuffer;
-		RHI::RMemory* m_VertexBufferMemory;
-		RHI::RBuffer* m_IndexBuffer;
-		RHI::RMemory* m_IndexBufferMemory;
+		TUniquePtr<BufferCommon> m_Vertex;
+		TUniquePtr<BufferCommon> m_Index;
 	public:
 		Primitive(const TVector<Vertex>& vertices, const TVector<IndexType>& indices);
-		RHI::RBuffer* GetVertexBuffer() const { return m_VertexBuffer; }
-		RHI::RBuffer* GetIndexBuffer()  const { return m_IndexBuffer; }
+		RHI::RBuffer* GetVertexBuffer() const { return m_Vertex ? m_Vertex->Buffer : nullptr; }
+		RHI::RBuffer* GetIndexBuffer()  const { return m_Index  ? m_Index->Buffer  : nullptr; }
 		uint32 GetVertexCount()const { return m_VertexCount; }
 		uint32 GetIndexCount()const { return m_IndexCount; }
 		~Primitive();

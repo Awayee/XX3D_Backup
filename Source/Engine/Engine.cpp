@@ -16,6 +16,7 @@ namespace Engine {
 
 
 		m_Renderer = new RenderSystem(m_Window);
+		m_Renderer->SetEnable(true);
 	}
 	XXEngine::~XXEngine()
 	{
@@ -53,6 +54,7 @@ namespace Engine {
 	bool XXEngine::Tick()
 	{
 		if(m_Window->ShouldClose()) {
+			m_Renderer->SetEnable(false);
 			return false;
 		}
 
