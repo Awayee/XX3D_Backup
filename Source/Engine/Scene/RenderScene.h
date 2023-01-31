@@ -5,22 +5,25 @@
 
 namespace Engine {
 	class Camera;
+	class Material;
 	class DirectionalLight;
 	class RenderScene;
-
-	struct ObjectHandle {
-		RenderScene* Scene;
-		uint32 Index;
-	};
 
 	class RenderObject {
 		friend RenderScene;
 	private:
-		ObjectHandle m_Handle;
+		RenderScene* m_Scene;
+		uint32 m_Index;
 	public:
 		RenderObject(RenderScene* scene);
 		virtual ~RenderObject();
 		virtual void DrawCall(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout) = 0;
+	};
+
+	struct SceneRenderData {
+		const Material* Material;
+		const BufferCommon* Uniform;
+		TVector<Primitive> primitives;
 	};
 
 	class RenderScene {
@@ -30,7 +33,7 @@ namespace Engine {
 		TUniquePtr<DirectionalLight> m_DirectionalLight;
 		TUniquePtr<Camera> m_Camera;
 		RHI::RDescriptorSet* m_SceneDescs;
-		BufferCommon m_SceneUniform;
+		BufferCommon m_LightUniform;
 		BufferCommon m_CameraUniform;
 
 	private:
@@ -44,8 +47,8 @@ namespace Engine {
 
 		RenderScene();
 		~RenderScene();
-		ObjectHandle AddRenderObject(RenderObject* obj);
-		void RemoveRenderObject(const ObjectHandle& handle);
+		void AddRenderObject(RenderObject* obj);
+		void RemoveRenderObject(RenderObject* obj);
 		void RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout);
 		void RenderDeferredLight(RHI::RCommandBuffer* cmd);
 	};

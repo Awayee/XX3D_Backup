@@ -27,9 +27,8 @@ namespace Engine {
 		}
 
 		DescsMgr::Initialize();
-		m_PresentPass.reset(new PresentPass());
-		m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), PresentPass::SUBPASS_GBUFFER));
-		CreateCommandBuffers();
+		SamplerMgr::Initialize();
+		CreateRenderResources();
 		// register window func
 		window->RegisterOnWindowSizeFunc([this](int w, int h) {
 			this->OnWindowSizeChanged((uint32)w, (uint32)h);
@@ -41,7 +40,9 @@ namespace Engine {
 		ImGuiRelease();
 		RenderScene::Clear();
 		DescsMgr::Release();
+		SamplerMgr::Release();
 		m_GBufferPipeline.reset();
+		m_DeferredLightingPipeline.reset();
 		m_PresentPass.reset();
 
 		GET_RHI(rhi);
@@ -56,6 +57,7 @@ namespace Engine {
 	{
 		m_Enable = enable;
 		if(!enable) {
+			// wait queue before disabled
 			RHI_INSTANCE->WaitGraphicsQueue();
 		}
 	}
@@ -78,7 +80,7 @@ namespace Engine {
 			return;
 		}
 		RHI::RCommandBuffer* cmd = m_CommandBuffers[m_CurrentFrameIndex];
-		rhi->BeginCommandBuffer(cmd, 0);
+		cmd->Begin(0);
 
 		m_PresentPass->SetImageIndex(swapchainImageIndex);
 		m_PresentPass->Begin(cmd);
@@ -87,7 +89,8 @@ namespace Engine {
 		if(RENDER_DEFERRED == GetConfig()->GetRenderPath()) {
 			m_GBufferPipeline->Bind(cmd);
 			mainScene->RenderGBuffer(cmd, m_GBufferPipeline->GetLayout());
-			rhi->CmdNextSubpass(cmd);
+			cmd->NextSubpass();
+			RenderDeferredLighting(cmd);
 		}
 
 		// render ui
@@ -97,8 +100,8 @@ namespace Engine {
 			Engine::ImGuiRenderDrawData(cmd);
 		}
 
-		rhi->CmdEndRenderPass(cmd);
-		rhi->EndCommandBuffer(cmd);
+		cmd->EndRenderPass();
+		cmd->End();
 		int res = rhi->QueueSubmitPresent(cmd, m_CurrentFrameIndex);
 		if(-1 == res) {
 			OnWindowSizeChanged(0, 0);
@@ -106,6 +109,14 @@ namespace Engine {
 		m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 
 	}
+
+	void RenderSystem::RenderDeferredLighting(RHI::RCommandBuffer* cmd)
+	{
+		m_DeferredLightingPipeline->Bind(cmd);
+		cmd->BindDescriptorSet(m_DeferredLightingPipeline->GetLayout(), m_DeferredLightingDescs, 0, RHI::PIPELINE_GRAPHICS);
+		cmd->Draw(6, 1, 0, 0);
+	}
+
 	void RenderSystem::InitUIPass(UIBase* ui)
 	{
 		m_UIContent = ui;
@@ -119,15 +130,25 @@ namespace Engine {
 		ImGuiDestroyFontUploadObjects();
 	}
 
-	void RenderSystem::CreateCommandBuffers()
+
+	void RenderSystem::CreateRenderResources()
 	{
-		GET_RHI(rhi);
+		m_PresentPass.reset(new PresentPass());
+		m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), PresentPass::SUBPASS_BASE));
+		m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), PresentPass::SUBPASS_DEFERRED_LIGHTING));
 		// create command buffers
+		GET_RHI(rhi);
 		m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-		for (uint8_t i = 0; i < m_CommandBuffers.size(); ++i) {
+		for (uint8 i = 0; i < m_CommandBuffers.size(); ++i) {
 			m_CommandBuffers[i] = rhi->AllocateCommandBuffer(RHI::COMMAND_BUFFER_LEVEL_PRIMARY);
 		}
+		// create descriptor set
+		m_DeferredLightingDescs = rhi->AllocateDescriptorSet(DescsMgr::Get(DESCS_DEFERRED_LIGHTING));
+		m_DeferredLightingDescs->UpdateUniformBuffer(0, RenderScene::GetDefaultScene()->m_LightUniform.Buffer);
+		m_DeferredLightingDescs->UpdateInputAttachment(1, m_PresentPass->GetAttachment(PresentPass::ATTACHMENT_NORMAL));
+		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(PresentPass::ATTACHMENT_ALBEDO));
 	}
+
 
 	void RenderSystem::OnWindowSizeChanged(uint32 w, uint32 h)
 	{
@@ -142,8 +163,6 @@ namespace Engine {
 		for (auto cmd : m_CommandBuffers) {
 			if(cmd)rhi->FreeCommandBuffer(cmd);
 		}
-		m_PresentPass.reset(new PresentPass());
-		m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), PresentPass::SUBPASS_GBUFFER));
-		CreateCommandBuffers();
+		CreateRenderResources();
 	}
 }

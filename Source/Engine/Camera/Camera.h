@@ -25,7 +25,6 @@ namespace Engine {
 		Math::FMatrix4x4 m_ProjectMatrix;
 		Math::FMatrix4x4 m_ViewProjectMatrix;
 		void UpdateProjectMatrix();
-		void UpdateViewMatrix();
 
 	public:
 		Camera() = default;
@@ -42,6 +41,7 @@ namespace Engine {
 		void  SetFov(float fov) { if (PROJECT_PERSPECTIVE == m_ProjType) { m_Fov = fov; UpdateProjectMatrix(); } }
 		float GetHeight() const { return PROJECT_ORTHO == m_ProjType ? m_Height: 0.0f; }
 		void  SetHeight(float height) { if (PROJECT_ORTHO == m_ProjType) { m_Height = height; UpdateProjectMatrix(); } }
+		void  SetView(const Math::FVector3& eye, const Math::FVector3& at, const Math::FVector3& up);
 		const Math::FMatrix4x4& GetViewMatrix() { return m_ViewMatrix; }
 		const Math::FMatrix4x4& GetProjectMatrix() { return m_ProjectMatrix; }
 		const Math::FMatrix4x4& GetViewProjectMatrix() { return m_ViewProjectMatrix; }

@@ -16,28 +16,30 @@ namespace Engine {
 		}
 
 		// uniform
-		m_TransformUniform.CreateForUniform(sizeof(Math::FMatrix4x4));
-		m_MaterialUniform.CreateForUniform(sizeof(Math::FVector4));
+		m_TransformUniform.CreateForUniform(sizeof(Math::FMatrix4x4), &m_TransformMat);
+		m_MaterialUniform.CreateForUniform(sizeof(Math::FVector4), &m_MaterialUniform);
 		// descriptor set
-		m_TransformDescs = RHI_INSTANCE->AllocateDescriptorSet(DescsMgr::GetLayout(DESCS_MODEL));
-		RHI::RDescriptorInfo info{};
-		info.buffer = m_TransformUniform.Buffer;
-		info.offset = 0;
-		info.range = m_TransformUniform.Size;
-		RHI_INSTANCE->UpdateDescriptorSet(m_TransformDescs, 0, 0, 1, RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, info);
+		m_TransformDescs = RHI_INSTANCE->AllocateDescriptorSet(DescsMgr::Get(DESCS_MODEL));
+		m_TransformDescs->UpdateUniformBuffer(0, m_TransformUniform.Buffer);
+		//RHI::RDescriptorInfo info{};
+		//info.buffer = m_TransformUniform.Buffer;
+		//info.offset = 0;
+		//info.range = m_TransformUniform.Size;
+		//RHI_INSTANCE->UpdateDescriptorSet(m_TransformDescs, 0, 0, 1, RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, info);
 
-		m_MaterialDescs = RHI_INSTANCE->AllocateDescriptorSet(DescsMgr::GetLayout(DESCS_MATERIAL));
-		info.buffer = m_MaterialUniform.Buffer;
-		info.offset = 0;
-		info.range = m_MaterialUniform.Size;
-		RHI_INSTANCE->UpdateDescriptorSet(m_MaterialDescs, 0, 0, 1, RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, info);
+		// TODO to material obj
+		m_MaterialDescs = RHI_INSTANCE->AllocateDescriptorSet(DescsMgr::Get(DESCS_MATERIAL));
+		m_MaterialDescs->UpdateUniformBuffer(0, m_MaterialUniform.Buffer);
+		//info.buffer = m_MaterialUniform.Buffer;
+		//info.offset = 0;
+		//info.range = m_MaterialUniform.Size;
+		//RHI_INSTANCE->UpdateDescriptorSet(m_MaterialDescs, 0, 0, 1, RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, info);
 	}
 
 	void RenderMesh::DrawCall(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout)
 	{
-		GET_RHI(rhi);
-		rhi->CmdBindDescriptorSet(cmd, RHI::PIPELINE_GRAPHICS, layout, m_TransformDescs, 1);
-		rhi->CmdBindDescriptorSet(cmd, RHI::PIPELINE_GRAPHICS, layout, m_MaterialDescs,  2);
+		cmd->BindDescriptorSet(layout, m_TransformDescs, 1, RHI::PIPELINE_GRAPHICS);
+		cmd->BindDescriptorSet(layout, m_MaterialDescs,  2, RHI::PIPELINE_GRAPHICS);
 		for(auto& primitive: m_Primitives) {
 			DrawPrimitive(cmd, primitive.get());
 		}

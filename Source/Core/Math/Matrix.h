@@ -190,7 +190,7 @@ namespace Math {
 
         static Matrix4x4<T> LookAtMatrix(const Vector3<T>& eye, const Vector3<T>& at, const Vector3<T>& up);
 
-        static Matrix4x4<T> PerspectiveMatrix(T fovy, T aspect, T zNear, T zfar);
+        static Matrix4x4<T> PerspectiveMatrix(T fov, T aspect, T zNear, T zFar);
 
         static Matrix4x4<T> OrthographicMatrix(T left, T right, T bottom, T top, T znear, T zfar);
     };

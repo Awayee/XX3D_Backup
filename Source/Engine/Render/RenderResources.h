@@ -12,8 +12,6 @@ namespace Engine {
 		Math::FVector3 normal;
 		Math::FVector3 tangent;
 		Math::FVector2 uv;
-		static TVector<RHI::RVertexInputBinding> GetInputBindings();
-		static TVector<RHI::RVertexInputAttribute> GetInputAttributes();
 	};
 
 	class Primitive {
@@ -31,8 +29,6 @@ namespace Engine {
 		~Primitive();
 	};
 
-	void DrawPrimitive(RHI::RCommandBuffer* cmd, const Primitive* primitive);
-
 	class Quad {
 		BufferCommon m_VertexBuffer;
 	public:
@@ -40,6 +36,12 @@ namespace Engine {
 		~Quad();
 		RHI::RBuffer* GetVertexBuffer() const { return m_VertexBuffer.Buffer; }
 	};
+
+	void FillVectorInput(TVector<RHI::RVertexInputBinding>& bindings, TVector<RHI::RVertexInputAttribute>& attributes);
+
+	void FillVertexInput(TVector<RHI::RVertexInputBinding>& bindings, TVector<RHI::RVertexInputAttribute>& attributes);
+
+	void DrawPrimitive(RHI::RCommandBuffer* cmd, const Primitive* primitive);
 
 	void DrawQuad(RHI::RCommandBuffer* cmd, const Quad* quad);
 }

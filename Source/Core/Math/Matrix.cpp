@@ -813,7 +813,7 @@ namespace Math {
     }
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::LookAtMatrix(const Vector3<T>& eye, const Vector3<T>& at, const Vector3<T>& up)
     {
-        const Vector3<T>& upNormalized = up.NormalizeCopy();
+        Vector3<T> upNormalized = up.NormalizeCopy();
 
         Vector3<T> f = (at - eye);
         f.Normalize();
@@ -836,22 +836,32 @@ namespace Math {
         view_mat[2][3] = f.Dot(eye);
         return view_mat;
     }
-    MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::PerspectiveMatrix(T fovy, T aspect, T zNear, T zfar)
+
+    MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::PerspectiveMatrix(T fov, T aspect, T zNear, T zFar)
     {
-        return Matrix4x4<T>();
+        T tanHalfFov = std::tan(fov * (T)0.5f);
+        Matrix4x4<T> ret = Matrix4x4<T>::ZERO;
+        ret[0][0] = (T)1 / (aspect * tanHalfFov);
+        ret[1][1] = (T)1 / tanHalfFov;
+        ret[2][2] = -zFar / (zFar - zNear);
+        ret[3][2] = (T)-1;
+        ret[2][3] = -(zFar * zNear) / (zFar - zNear);
+
+        return ret;
     }
+
     MATH_GENERIC Matrix4x4<T> Matrix4x4<T>::OrthographicMatrix(T left, T right, T bottom, T top, T znear, T zfar)
     {
-        float inv_width = 1.0f / (right - left);
-        float inv_height = 1.0f / (top - bottom);
-        float inv_distance = 1.0f / (zfar - znear);
+        float invWidth    = 1.0f / (right - left);
+        float invHeight   = 1.0f / (top - bottom);
+        float invDistance = 1.0f / (zfar - znear);
 
-        float A = 2 * inv_width;
-        float B = 2 * inv_height;
-        float C = -(right + left) * inv_width;
-        float D = -(top + bottom) * inv_height;
-        float q = -2 * inv_distance;
-        float qn = -(zfar + znear) * inv_distance;
+        float A = 2 * invWidth;
+        float B = 2 * invHeight;
+        float C = -(right + left) * invWidth;
+        float D = -(top + bottom) * invHeight;
+        float q = -2 * invDistance;
+        float qn = -(zfar + znear) * invDistance;
 
         // NB: This creates 'uniform' orthographic projection matrix,
         // which depth range [-1,1], right-handed rules

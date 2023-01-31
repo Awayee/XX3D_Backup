@@ -67,29 +67,6 @@ namespace RHI{
 
 		bool m_IsRecording{ false }; // recording mode, some functions will not execute immediately
 
-		// function pointers
-		PFN_vkCmdBeginDebugUtilsLabelEXT _vkCmdBeginDebugUtilsLabelEXT;
-		PFN_vkCmdEndDebugUtilsLabelEXT   _vkCmdEndDebugUtilsLabelEXT;
-		PFN_vkWaitForFences         _vkWaitForFences;
-		PFN_vkResetFences           _vkResetFences;
-		PFN_vkResetCommandPool      _vkResetCommandPool;
-		PFN_vkBeginCommandBuffer    _vkBeginCommandBuffer;
-		PFN_vkEndCommandBuffer      _vkEndCommandBuffer;
-		PFN_vkCmdBeginRenderPass    _vkCmdBeginRenderPass;
-		PFN_vkCmdNextSubpass        _vkCmdNextSubpass;
-		PFN_vkCmdEndRenderPass      _vkCmdEndRenderPass;
-		PFN_vkCmdBindPipeline       _vkCmdBindPipeline;
-		PFN_vkCmdSetViewport        _vkCmdSetViewport;
-		PFN_vkCmdSetScissor         _vkCmdSetScissor;
-		PFN_vkCmdBindVertexBuffers  _vkCmdBindVertexBuffers;
-		PFN_vkCmdBindIndexBuffer    _vkCmdBindIndexBuffer;
-		PFN_vkCmdBindDescriptorSets _vkCmdBindDescriptorSets;
-		PFN_vkCmdDrawIndexed        _vkCmdDrawIndexed;
-		PFN_vkCmdClearAttachments   _vkCmdClearAttachments;
-		PFN_vkCmdDraw				_vkCmdDraw;
-		PFN_vkCmdDispatch			_vkCmdDispatch;
-		PFN_vkCmdCopyBuffer			_vkCmdCopyBuffer;
-
 	private:
 		TVector<const char*> GetRequiredExtensions();
 		void CreateInstance();
@@ -97,6 +74,7 @@ namespace RHI{
 		void CreateWindowSurface();
 		void InitializePhysicalDevice();
 		void CreateLogicalDevice();
+		void LoadDeviceFunctions();
 		void CreateCommandPools();
 		void CreateDescriptorPool();
 		void CreateSyncResources();
@@ -137,7 +115,6 @@ namespace RHI{
 		//void AllocateDescriptorSets(uint32 count, const RDescriptorSetLayout* const* layouts, RDescriptorSet* const* descriptorSets)override;
 		//void FreeDescriptorSets(uint32 count, RDescriptorSet** descriptorSets) override;
 		void FreeDescriptorSet(RDescriptorSet* descriptorSet) override;
-		void UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32 binding, uint32 arrayElement, uint32 count, RDescriptorType type, const RDescriptorInfo& descriptorInfo) override;
 
 		// pipeline
 		RPipelineLayout* CreatePipelineLayout(uint32 setLayoutCount, const RDescriptorSetLayout* const* pSetLayouts, uint32 pushConstantRangeCount, const RSPushConstantRange* pPushConstantRanges)override;
@@ -158,29 +135,7 @@ namespace RHI{
 		RFramebuffer* CreateFrameBuffer(RRenderPass* pass, uint32 attachmentCount, const RImageView* const* pAttachments, uint32 width, uint32 height, uint32 layers) override;
 		void DestroyFramebuffer(RFramebuffer* framebuffer) override;
 		RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level)override;
-		void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) override;
-		void EndCommandBuffer(RCommandBuffer* cmd) override;
 		void FreeCommandBuffer(RCommandBuffer* cmd) override;
-		void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D area) override;
-		void CmdNextSubpass(RCommandBuffer* cmd) override;
-		void CmdEndRenderPass(RCommandBuffer* cmd) override;
-		void CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout,
-			uint32 baseLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount, RImageAspectFlags aspect) override;
-		void CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayout, uint32 layerCount) override;
-		void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRegion) override;
-		void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) override;
-
-		void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) override;
-		void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx) override;
-		void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset) override;
-		void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint64 offset) override;
-		void CmdDraw(RCommandBuffer* cmd, uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance) override;
-		void CmdDrawIndexed(RCommandBuffer* cmd, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32_t vertexOffset, uint32 firstInstance) override;
-		void CmdDispatch(RCommandBuffer* cmd, uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ)override;
-		void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) override;
-		void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size) override;
-		void CmdBeginDebugLabel(RCommandBuffer* cmd, const char* msg, const float* color) override;
-		void CmdEndDebugLabel(RCommandBuffer* cmd) override;
 
 		void ImmediateCommit(const CommandBufferFunc& func) override;
 		int PreparePresent(uint8 frameIndex) override;
@@ -204,6 +159,7 @@ namespace RHI{
 			uint32 baseMipLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount) override;
 		void DestroyImageView(RImageView* imageView) override;
 		RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) override;
+		void DestroySampler(RSampler* sampler) override;
 
 		void FreeMemory(RMemory* memory)override;
 	};

@@ -26,6 +26,8 @@ namespace Engine {
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
 		// Render pipelines
 		TUniquePtr<GBufferPipeline> m_GBufferPipeline;
+		TUniquePtr<DeferredLightingPipeline> m_DeferredLightingPipeline;
+		RHI::RDescriptorSet* m_DeferredLightingDescs;
 
 		uint8_t m_CurrentFrameIndex{0};
 		bool m_WindowAvailable{ true };
@@ -40,7 +42,8 @@ namespace Engine {
 		void InitUIPass(UIBase* ui);
 
 	private:
-		void CreateCommandBuffers();
+		void CreateRenderResources();
+		void RenderDeferredLighting(RHI::RCommandBuffer* cmd);
 		void OnWindowSizeChanged(uint32 w, uint32 h);
 	};
 }

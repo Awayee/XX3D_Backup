@@ -47,8 +47,6 @@ namespace RHI{
 		virtual void FreeDescriptorSet(RDescriptorSet* descriptorSet) = 0;
 		//virtual void AllocateDescriptorSets(uint32 count, const RDescriptorSetLayout* const* layouts, RDescriptorSet*const* descriptorSets) = 0;
 		//virtual void FreeDescriptorSets(uint32 count, RDescriptorSet** descriptorSets) = 0;
-		virtual void UpdateDescriptorSet(RDescriptorSet* descriptorSet, uint32 binding, uint32 arrayElement, uint32 arrayCount, RDescriptorType type, const RDescriptorInfo& descriptorInfo) = 0;
-
 		// pipeline
 		virtual RPipelineLayout* CreatePipelineLayout(uint32 setLayoutCount, const RDescriptorSetLayout*const* pSetLayouts, uint32 pushConstantRange, const RSPushConstantRange* pPushConstantRanges) = 0;
 		virtual void DestroyPipelineLayout(RPipelineLayout* pipelineLayout) = 0;
@@ -68,33 +66,9 @@ namespace RHI{
 		virtual void DestroyFramebuffer(RFramebuffer* framebuffer) = 0;
 		// cmd
 		virtual RCommandBuffer* AllocateCommandBuffer(RCommandBufferLevel level) = 0;
-		virtual void BeginCommandBuffer(RCommandBuffer* cmd, RCommandBufferUsageFlags flags) = 0;
-		virtual void EndCommandBuffer(RCommandBuffer* cmd) = 0;
 		virtual void FreeCommandBuffer(RCommandBuffer* cmd) = 0;
-		virtual void CmdBeginRenderPass(RCommandBuffer* cmd, RRenderPass* pass, RFramebuffer* framebuffer, RSRect2D area) = 0;
-		virtual void CmdNextSubpass(RCommandBuffer* cmd) = 0;
-		virtual void CmdEndRenderPass(RCommandBuffer* cmd) = 0;
-
-		virtual void CmdTransitionImageLayout(RCommandBuffer* cmd, RImage* image, RImageLayout oldLayout, RImageLayout newLayout,
-			uint32 baseMipLevel, uint32 levelCount, uint32 layer, uint32 layerCount, RImageAspectFlags aspect) = 0;
-		virtual void CmdCopyBufferToImage(RCommandBuffer* cmd, RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayout, uint32 layerCount) = 0;
-		virtual void CmdBlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit* pRregion) = 0;
-		virtual void CmdGenerateMipMap(RCommandBuffer* cmd, RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) = 0;
-
-		virtual void CmdBindPipeline(RCommandBuffer* cmd, RPipeline* pipeline) = 0;
-		virtual void CmdBindDescriptorSet(RCommandBuffer* cmd, RPipelineType pipelineType, RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx) = 0;
-		virtual void CmdBindVertexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint32 first, uint64 offset) = 0;
-		virtual void CmdBindIndexBuffer(RCommandBuffer* cmd, RBuffer* buffer, uint64 offset) = 0;
-		virtual void CmdDraw(RCommandBuffer* cmd, uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance) = 0;
-		virtual void CmdDrawIndexed(RCommandBuffer* cmd, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, int32_t vertexOffset, uint32 firstInstance)= 0;
-		virtual void CmdDispatch(RCommandBuffer* cmd, uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ) = 0;
-		virtual void CmdClearAttachment(RCommandBuffer* cmd, RImageAspectFlags aspect, const float* color, const RSRect2D& rect) = 0;
-		virtual void CmdCopyBuffer(RCommandBuffer* cmd, RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size) = 0;
-		// cmd debug
-		virtual void CmdBeginDebugLabel(RCommandBuffer* cmd, const char* msg, const float* color = nullptr) = 0;
-		virtual void CmdEndDebugLabel(RCommandBuffer* cmd) = 0;
-
 		virtual void ImmediateCommit(const CommandBufferFunc& func) = 0;
+
 		virtual int PreparePresent(uint8 frameIndex) = 0; // return image index of the swapchain, return -1 if out of date.
 		virtual int QueueSubmitPresent(RCommandBuffer* cmd, uint8 frameIndex) = 0; // return -1 if out of date
 
@@ -118,6 +92,7 @@ namespace RHI{
 			uint32 baseMiplevel, uint32 levelCount, uint32 baseLayer,uint32 layerCount) = 0;
 		virtual void DestroyImageView(RImageView* imageView) = 0;
 		virtual RSampler* CreateSampler(const RSSamplerInfo& samplerInfo) = 0;
+		virtual void DestroySampler(RSampler* sampler) = 0;
 
 	};
 

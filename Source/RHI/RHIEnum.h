@@ -422,6 +422,16 @@ namespace RHI{
     };
     typedef unsigned int RAccessFlags;
 
+    enum RDependencyFlagBits {
+        DEPENDENCY_BY_REGION_BIT = 0x00000001,
+        DEPENDENCY_DEVICE_GROUP_BIT = 0x00000004,
+        DEPENDENCY_VIEW_LOCAL_BIT = 0x00000002,
+        DEPENDENCY_VIEW_LOCAL_BIT_KHR = DEPENDENCY_VIEW_LOCAL_BIT,
+        DEPENDENCY_DEVICE_GROUP_BIT_KHR = DEPENDENCY_DEVICE_GROUP_BIT,
+        DEPENDENCY_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
+    };
+    typedef unsigned int RDependencyFlags;
+
     enum RBufferUsageFlagBits {
         BUFFER_USAGE_TRANSFER_SRC_BIT = 0x00000001,
         BUFFER_USAGE_TRANSFER_DST_BIT = 0x00000002,

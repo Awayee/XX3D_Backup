@@ -17,6 +17,7 @@ namespace Engine {
 		TVector<TUniquePtr<Primitive>> m_Primitives;
 		Math::FMatrix4x4 m_TransformMat{ Math::FMatrix4x4::IDENTITY };
 		BufferCommon m_TransformUniform;
+		Math::FVector4 m_MaterialParam{ 1.0f, 1.0f, 1.0f, 1.0f };
 		BufferCommon m_MaterialUniform;
 		RHI::RDescriptorSet* m_TransformDescs{nullptr};
 		RHI::RDescriptorSet* m_MaterialDescs { nullptr };

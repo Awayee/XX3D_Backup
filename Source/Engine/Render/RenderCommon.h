@@ -1,12 +1,13 @@
 #pragma once
 #include "RHI/RHI.h"
 #include "Core/Memory/SmartPointer.h"
-#include "Core/Singleton/Singleton.h"
+#include "Core/Singleton/TSingleton.h"
 namespace Engine {
 	enum EDescsType {
 		DESCS_SCENE,
 		DESCS_MODEL,
 		DESCS_MATERIAL,
+		DESCS_DEFERRED_LIGHTING,
 
 		DESCS_COUNT
 	};
@@ -17,21 +18,38 @@ namespace Engine {
 	public:
 		DescsMgrIns();
 		~DescsMgrIns();
-		RHI::RDescriptorSetLayout* GetLayout(EDescsType type) { return m_Layouts[type]; }
+		RHI::RDescriptorSetLayout* Get(EDescsType type) { return m_Layouts[type]; }
 	};
 
-	class DescsMgr: public Singleton<DescsMgrIns> {
+	enum ESamplerType{
+		SAMPLER_DEFAULT,
+		SAMPLER_DEFERRED_LIGHTING,
+		SAMPLER_COUNT
+	};
+	class SamplerMgrIns {
+	private:
+		TVector<RHI::RSampler*> m_Samplers;
 	public:
-		static RHI::RDescriptorSetLayout* GetLayout(EDescsType type) {
-			return Instance()->GetLayout(type);
-		}
+		SamplerMgrIns();
+		~SamplerMgrIns();
+		RHI::RSampler* Get(ESamplerType type) { return m_Samplers[type]; }
+	};
+
+	class DescsMgr: public TSingleton<DescsMgrIns> {
+	public:
+		static RHI::RDescriptorSetLayout* Get(EDescsType type) { return Instance()->Get(type); }
+	};
+
+	class SamplerMgr: public TSingleton<SamplerMgrIns> {
+	public:
+		static RHI::RSampler* Get(ESamplerType type) { return Instance()->Get(type); }
 	};
 
 	struct Attachment {
 		RHI::RImage* Image{nullptr};
 		RHI::RImageView* View{nullptr};
 		RHI::RMemory* Memory{nullptr};
-		void Create(RHI::RFormat format, uint32 width, uint32 height, bool bForDepth, bool bForShader);
+		void Create(RHI::RFormat format, uint32 width, uint32 height, bool bForDepth, bool bForShader, bool bForInput);
 		void Release();
 	};
 
@@ -46,9 +64,8 @@ namespace Engine {
 		BufferCommon(BufferCommon&&) = default;
 		BufferCommon(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData) { Create(size, usage, memoryFlags, pData); }
 		void Create(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData);
+		void UpdateData(void* pData);
 		void Release();
-		void Map(void** pData) { RHI_INSTANCE->MapMemory(Memory, pData); };
-		void Unmap() { RHI_INSTANCE->UnmapMemory(Memory); };
 		~BufferCommon() { Release(); }
 
 		// vertex buffer
@@ -64,8 +81,8 @@ namespace Engine {
 			Create(size, RHI::BUFFER_USAGE_TRANSFER_SRC_BIT, RHI::MEMORY_PROPERTY_HOST_COHERENT_BIT | RHI::MEMORY_PROPERTY_HOST_VISIBLE_BIT, pData);
 		};
 		// uniform buffer
-		void CreateForUniform(uint64 size){
-			Create(size, RHI::BUFFER_USAGE_UNIFORM_BUFFER_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
+		void CreateForUniform(uint64 size, void* pData){
+			Create(size, RHI::BUFFER_USAGE_UNIFORM_BUFFER_BIT, RHI::MEMORY_PROPERTY_HOST_COHERENT_BIT | RHI::MEMORY_PROPERTY_HOST_VISIBLE_BIT, pData);
 		};
 		/*
 		// vertex buffer
@@ -118,8 +135,8 @@ namespace Engine {
 		};
 
 		enum {
-			SUBPASS_GBUFFER,
-			SUBPASS_LIGHTING,
+			SUBPASS_BASE,
+			SUBPASS_DEFERRED_LIGHTING,
 			SUBPASS_COUNT
 		};
 		PresentPass();
@@ -142,8 +159,8 @@ namespace Engine {
 		GBufferPipeline(const RenderPassCommon* pass, uint32 subpass);
 	};
 
-	class LightingPipeline: public GraphicsPipelineCommon {
+	class DeferredLightingPipeline: public GraphicsPipelineCommon {
 	public:
-		LightingPipeline(const RenderPassCommon* pass, uint32 subpass);
+		DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass);
 	};
 }

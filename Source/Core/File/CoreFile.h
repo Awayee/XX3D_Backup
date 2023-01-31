@@ -6,13 +6,15 @@
 
 typedef std::filesystem::path FPath;
 
+inline String JoinAssetPath(const char* path) {
+	String p(ASSETS_PATH);
+	p.append(path);
+	return p;
+}
+
 void LoadFileCode(const char* filePath, TVector<char>& code);
 
 // lod .ini file
 void LoadIniFile(const FPath& filePath, TUnorderedMap<String, String>& configMap);
 
-inline String JoinFilePath(const char* parentPath, const char* path) {
-	String p(parentPath);
-	p.append(path);
-	return p;
-}
+void LoadShaderFile(const char* path, TVector<char>& code);

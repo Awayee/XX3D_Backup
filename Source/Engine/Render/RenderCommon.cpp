@@ -1,7 +1,7 @@
 #include "RenderCommon.h"
 #include  "Core/File/CoreFile.h"
 #include "Core/String/String.h"
-#include "Core/Singleton/Singleton.h"
+#include "Core/Singleton/TSingleton.h"
 #include "RenderResources.h"
 
 namespace Engine {
@@ -22,6 +22,12 @@ namespace Engine {
 		TVector<RHI::RSDescriptorSetLayoutBinding> materialDescBindings;
 		materialDescBindings.push_back({ RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });
 		m_Layouts[DESCS_MATERIAL] = rhi->CreateDescriptorSetLayout(materialDescBindings.size(), materialDescBindings.data());
+		// deferred lighting
+		TVector<RHI::RSDescriptorSetLayoutBinding> deferredLightingBindings;
+		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, RHI::SHADER_STAGE_FRAGMENT_BIT }); //light
+		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });//normal
+		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });//albedo
+		m_Layouts[DESCS_DEFERRED_LIGHTING] = rhi->CreateDescriptorSetLayout(deferredLightingBindings.size(), deferredLightingBindings.data());
 	}
 
 	DescsMgrIns::~DescsMgrIns()
@@ -33,12 +39,43 @@ namespace Engine {
 		m_Layouts.clear();
 	}
 
-	void Attachment::Create(RHI::RFormat format, uint32 width, uint32 height, bool bForDepth, bool bForShader)
+	SamplerMgrIns::SamplerMgrIns()
+	{
+		GET_RHI(rhi);
+		m_Samplers.resize(SAMPLER_COUNT);
+		RHI::RSSamplerInfo defaulIInfo{};
+		defaulIInfo.minFilter = RHI::FILTER_LINEAR;
+		defaulIInfo.magFilter = RHI::FILTER_LINEAR;
+		defaulIInfo.addressModeU = RHI::SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		defaulIInfo.addressModeV = RHI::SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		defaulIInfo.addressModeW = RHI::SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		m_Samplers[SAMPLER_DEFAULT] = rhi->CreateSampler(defaulIInfo);
+
+		RHI::RSSamplerInfo deferredLightingInfo{};
+		deferredLightingInfo.minFilter = RHI::FILTER_LINEAR;
+		deferredLightingInfo.magFilter = RHI::FILTER_LINEAR;
+		deferredLightingInfo.addressModeU = RHI::SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		deferredLightingInfo.addressModeV = RHI::SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		deferredLightingInfo.addressModeW = RHI::SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		m_Samplers[SAMPLER_DEFERRED_LIGHTING] = rhi->CreateSampler(deferredLightingInfo);
+	}
+
+	SamplerMgrIns::~SamplerMgrIns()
+	{
+		GET_RHI(rhi);
+		for(auto sampler: m_Samplers) {
+			rhi->DestroySampler(sampler);
+		}
+		m_Samplers.clear();
+	}
+
+	void Attachment::Create(RHI::RFormat format, uint32 width, uint32 height, bool bForDepth, bool bForShader, bool bForInput)
 	{
 		Release();
 		GET_RHI(rhi);
 		RHI::RImageUsageFlags usage = bForDepth? RHI::IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : RHI::IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		if (bForShader) usage |= RHI::IMAGE_USAGE_SAMPLED_BIT;
+		if (bForInput) usage |= RHI::IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 		Image = rhi->CreateImage2D(format, width, height, 1, RHI::SAMPLE_COUNT_1_BIT, RHI::IMAGE_TILING_OPTIMAL, usage);
 		Memory = rhi->CreateImageMemory(Image, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
 		View = rhi->CreateImageView(Image, RHI::IMAGE_VIEW_TYPE_2D, bForDepth? RHI::IMAGE_ASPECT_DEPTH_BIT: RHI::IMAGE_ASPECT_COLOR_BIT,
@@ -68,6 +105,15 @@ namespace Engine {
 		Usage = usage;
 	}
 
+	void BufferCommon::UpdateData(void* pData)
+	{
+		GET_RHI(rhi);
+		void* p;
+		rhi->MapMemory(Memory, &p);
+		memcpy(p, pData, Size);
+		rhi->UnmapMemory(Memory);
+	}
+
 	void BufferCommon::Release() {
 		if(Size) {
 			GET_RHI(rhi);
@@ -93,7 +139,7 @@ namespace Engine {
 	}
 	void RenderPassCommon::Begin(RHI::RCommandBuffer* cmd)
 	{
-		RHI_INSTANCE->CmdBeginRenderPass(cmd, m_RHIPass, m_Framebuffer, { {0, 0}, {m_Framebuffer->GetWidth(), m_Framebuffer->GetHeight()} });
+		cmd->BeginRenderPass(m_RHIPass, m_Framebuffer, { {0, 0}, {m_Framebuffer->GetWidth(), m_Framebuffer->GetHeight()} });
 	}
 
 	RHI::RImageView* RenderPassCommon::GetAttachment(uint32 attachmentIdx) const
@@ -109,9 +155,9 @@ namespace Engine {
 		uint32 height = rhi->GetSwapchainExtent().height;
 		// create attachments
 		m_Attachments.resize(ATTACHMENT_COUNT);
-		m_Attachments[ATTACHMENT_DEPTH].Create(rhi->GetDepthFormat(), width, height, true, false);
-		m_Attachments[ATTACHMENT_NORMAL].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, false, true);
-		m_Attachments[ATTACHMENT_ALBEDO].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, false, true);
+		m_Attachments[ATTACHMENT_DEPTH].Create(rhi->GetDepthFormat(), width, height, true, false, false);
+		m_Attachments[ATTACHMENT_NORMAL].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, false, false, true);
+		m_Attachments[ATTACHMENT_ALBEDO].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, false, false, true);
 		
 		TVector<RHI::RSAttachment> attachments(ATTACHMENT_COUNT + 1);
 		// depth
@@ -125,6 +171,7 @@ namespace Engine {
 		attachments[ATTACHMENT_NORMAL].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
 		attachments[ATTACHMENT_NORMAL].finalLayout = RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		attachments[ATTACHMENT_NORMAL].refLayout = RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[ATTACHMENT_NORMAL].InputRefLayout = RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		attachments[ATTACHMENT_NORMAL].clear = { 0.0f, 0.0f, 0.0f, 0.0f };
 		// g buffer albedo
 		attachments[ATTACHMENT_ALBEDO] = attachments[ATTACHMENT_NORMAL];
@@ -138,30 +185,32 @@ namespace Engine {
 
 		// subpass
 		m_ColorAttachments.resize(SUBPASS_COUNT);
-		m_ColorAttachments[SUBPASS_GBUFFER] = { &m_Attachments[ATTACHMENT_NORMAL], &m_Attachments[ATTACHMENT_ALBEDO] };
+		m_ColorAttachments[SUBPASS_BASE] = { &m_Attachments[ATTACHMENT_NORMAL], &m_Attachments[ATTACHMENT_ALBEDO] };
 		m_DepthAttachments.resize(1);
-		m_DepthAttachments[SUBPASS_GBUFFER] = &m_Attachments[ATTACHMENT_DEPTH];
+		m_DepthAttachments[SUBPASS_BASE] = &m_Attachments[ATTACHMENT_DEPTH];
 		TVector<RHI::RSubPassInfo> subpasses(SUBPASS_COUNT);
-		subpasses[SUBPASS_GBUFFER].ColorAttachments = { ATTACHMENT_NORMAL, ATTACHMENT_ALBEDO };
-		subpasses[SUBPASS_GBUFFER].DepthStencilAttachment = ATTACHMENT_DEPTH;
-		subpasses[SUBPASS_LIGHTING].ColorAttachments = { (uint32)attachments.size() - 1 };
-		subpasses[SUBPASS_LIGHTING].DepthStencilAttachment = -1;
+		subpasses[SUBPASS_BASE].ColorAttachments = { ATTACHMENT_NORMAL, ATTACHMENT_ALBEDO };
+		subpasses[SUBPASS_BASE].DepthStencilAttachment = ATTACHMENT_DEPTH;
+		subpasses[SUBPASS_DEFERRED_LIGHTING].ColorAttachments = { (uint32)attachments.size() - 1 };
+		subpasses[SUBPASS_DEFERRED_LIGHTING].InputAttachments = { ATTACHMENT_NORMAL, ATTACHMENT_ALBEDO };
+		subpasses[SUBPASS_DEFERRED_LIGHTING].DepthStencilAttachment = -1;
 
 		// dependencies
 		TVector<RHI::RSubpassDependency> dependencies(2);
 		dependencies[0].SrcSubPass = SUBPASS_INTERNAL;
-		dependencies[0].DstSubPass = 0;
+		dependencies[0].DstSubPass = SUBPASS_BASE;
 		dependencies[0].SrcStage = RHI::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | RHI::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependencies[0].DstStage = RHI::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | RHI::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependencies[0].SrcAccess = 0;
 		dependencies[0].DstAccess = RHI::ACCESS_COLOR_ATTACHMENT_WRITE_BIT | RHI::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		// lighting pass depends on g buffer pass
-		dependencies[1].SrcSubPass = 0;
-		dependencies[1].DstSubPass = 1;
+		// lighting pass depends on base pass
+		dependencies[1].SrcSubPass = SUBPASS_BASE;
+		dependencies[1].DstSubPass = SUBPASS_DEFERRED_LIGHTING;
 		dependencies[1].SrcStage = RHI::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | RHI::PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		dependencies[1].DstStage = RHI::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | RHI::PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		dependencies[1].SrcAccess = RHI::ACCESS_SHADER_WRITE_BIT | RHI::ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		dependencies[1].DstAccess = RHI::ACCESS_SHADER_READ_BIT | RHI::ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		dependencies[1].DependencyFlags = RHI::DEPENDENCY_BY_REGION_BIT;
 
 		m_RHIPass = rhi->CreateRenderPass(attachments.size(), attachments.data(),
 			subpasses.size(), subpasses.data(),
@@ -204,7 +253,7 @@ namespace Engine {
 	}
 
 	void GraphicsPipelineCommon::Bind(RHI::RCommandBuffer* cmd) {
-		RHI_INSTANCE->CmdBindPipeline(cmd, m_Pipeline);
+		cmd->BindPipeline(m_Pipeline);
 	}
 
 
@@ -213,25 +262,22 @@ namespace Engine {
 		GET_RHI(rhi);
 		// layout
 		TVector<RHI::RDescriptorSetLayout*> setLayouts;
-		setLayouts.push_back(DescsMgr::GetLayout(DESCS_SCENE));
-		setLayouts.push_back(DescsMgr::GetLayout(DESCS_MODEL));
-		setLayouts.push_back(DescsMgr::GetLayout(DESCS_MATERIAL));
+		setLayouts.push_back(DescsMgr::Get(DESCS_SCENE));
+		setLayouts.push_back(DescsMgr::Get(DESCS_MODEL));
+		setLayouts.push_back(DescsMgr::Get(DESCS_MATERIAL));
 		
 		m_Layout = rhi->CreatePipelineLayout(setLayouts.size(), setLayouts.data(), 0, nullptr);
 		// pipeline
 		// shader
-		String vertShaderFile = JoinFilePath(SHADER_PATH, "gbuffer.vert.spv");
 		TVector<int8> vertShaderCode;
-		LoadFileCode(vertShaderFile.c_str(), vertShaderCode);
-		String fragShaderFile = JoinFilePath(SHADER_PATH, "gbuffer.frag.spv");
+		LoadShaderFile("GBuffer.vert.spv", vertShaderCode);
 		TVector<int8> fragShaderCode;
-		LoadFileCode(fragShaderFile.c_str(), fragShaderCode);
+		LoadShaderFile("GBuffer.frag.spv", fragShaderCode);
 		RHI::RGraphicsPipelineCreateInfo info{};
 		info.Shaders.push_back({ RHI::SHADER_STAGE_VERTEX_BIT, vertShaderCode, "main" });
 		info.Shaders.push_back({ RHI::SHADER_STAGE_FRAGMENT_BIT, fragShaderCode, "main" });
 		// input
-		info.Bindings = Vertex::GetInputBindings();
-		info.Attributes = Vertex::GetInputAttributes();
+		FillVertexInput(info.Bindings, info.Attributes);
 		// viewport
 		uint32 w = pass->GetFramebuffer()->GetWidth();
 		uint32 h = pass->GetFramebuffer()->GetHeight();
@@ -248,14 +294,42 @@ namespace Engine {
 		info.DepthCompareOp = RHI::COMPARE_OP_LESS;
 		// blend
 		info.LogicOpEnable = false;
-		info.LogicOp = RHI::LOGIC_OP_COPY;
 		info.AttachmentStates.resize(pass->GetColorAttachmentCount(subpass), {false});
 
 		m_Pipeline = rhi->CreateGraphicsPipeline(info, m_Layout, pass->GetRHIPass(), subpass, nullptr, 0);
 	}
 
-	LightingPipeline::LightingPipeline(const RenderPassCommon* pass, uint32 subpass)
+	DeferredLightingPipeline::DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass)
 	{
-
+		GET_RHI(rhi);
+		TVector<RHI::RDescriptorSetLayout*> setLayouts{ DescsMgr::Get(DESCS_DEFERRED_LIGHTING) };
+		m_Layout = rhi->CreatePipelineLayout(setLayouts.size(), setLayouts.data(), 0, nullptr);
+		// shader
+		TVector<int8> vertShaderCode;
+		LoadShaderFile("DeferredLighting.vert.spv", vertShaderCode);
+		TVector<int8> fragShaderCode;
+		LoadShaderFile("DeferredLighting.frag.spv", fragShaderCode);
+		RHI::RGraphicsPipelineCreateInfo info{};
+		info.Shaders.push_back({ RHI::SHADER_STAGE_VERTEX_BIT, vertShaderCode, "main" });
+		info.Shaders.push_back({ RHI::SHADER_STAGE_FRAGMENT_BIT, fragShaderCode, "main" });
+		// vertex input
+		//FillVectorInput(info.Bindings, info.Attributes);
+		// viewport
+		uint32 w = pass->GetFramebuffer()->GetWidth();
+		uint32 h = pass->GetFramebuffer()->GetHeight();
+		info.Viewport = { 0.0f, 0.0f, (float)w, (float)h, 0.0f, 1.0f };
+		info.Scissor = { {0, 0}, {w, h} };
+		// rasterization
+		info.DepthClampEnable = false;
+		info.RasterizerDiscardEnable = false;
+		info.PolygonMode = RHI::POLYGON_MODE_FILL;
+		info.CullMode = RHI::CULL_MODE_BACK_BIT;
+		// depth
+		info.DepthTestEnable = false;
+		info.DepthWriteEnable = false;
+		// blend
+		info.LogicOpEnable = false;
+		info.AttachmentStates.resize(1, { false });//swapchain
+		m_Pipeline = rhi->CreateGraphicsPipeline(info, m_Layout, pass->GetRHIPass(), subpass, nullptr, 0);
 	}
 }

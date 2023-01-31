@@ -26,3 +26,11 @@ void LoadIniFile(const FPath& filePath, TUnorderedMap<String, String>& configMap
 		}
 	}
 }
+
+void LoadShaderFile(const char* path, TVector<char>& code)
+{
+	char shaderPath[128];
+	strcpy(shaderPath, SHADER_PATH);
+	strcat(shaderPath, path);
+	LoadFileCode(shaderPath, code);
+}

@@ -1,14 +1,14 @@
 #pragma once
 #include "Engine/Window/WindowSystem.h"
 #include "Engine/Render/RenderSystem.h"
-#include <chrono>
+#include "Core/Time/Time.h"
 
 namespace Engine {
 	class XXEngine {
 	private:
 		WindowSystemBase* m_Window {nullptr};
 		RenderSystem* m_Renderer {nullptr};
-		std::chrono::steady_clock::time_point m_LastTickTime{ std::chrono::steady_clock::now() };
+		TimePoint m_LastTickTime{ std::chrono::steady_clock::now() };
 
 		uint32 m_FPSFrameCounter{0U};
 		float m_FPSDurationMs{0.0f};

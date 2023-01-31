@@ -138,7 +138,7 @@ namespace Engine {
 	// TODO run in another thread
 	bool LoadMeshFromGLTF(const char* file, TVector<SPrimitiveData>& primitives)
 	{
-		String fullPath = JoinFilePath(ASSETS_PATH, file);
+		String fullPath = JoinAssetPath(file);
 		tinygltf::Model gltfModel;
 		tinygltf::TinyGLTF gltfContext;
 		String error;
@@ -238,7 +238,7 @@ namespace Engine {
 	}
 
 	bool LoadMeshFromFBX(const char* file, TVector<SPrimitiveData>& primitives) {
-		String fullPath = JoinFilePath(ASSETS_PATH, file);
+		String fullPath = JoinAssetPath(file);
 		Assimp::Importer importer;
 		const aiScene* aScene = importer.ReadFile(fullPath, aiProcess_Triangulate | aiProcess_FlipUVs);
 		if (!aScene || aScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !aScene->mRootNode) {

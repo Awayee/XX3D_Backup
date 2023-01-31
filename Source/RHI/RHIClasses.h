@@ -41,11 +41,6 @@ namespace RHI{
 		RImageLayout GetLayout() const { return m_Layout; }
 	};
 
-	class RCommandBuffer {
-	public:
-		virtual ~RCommandBuffer() {}
-	};
-
 	class RMemory {
 	public:
 		virtual ~RMemory() {};
@@ -72,7 +67,12 @@ namespace RHI{
 		
 	};
 
-	class RBuffer {};
+	class RBuffer {
+	protected:
+		uint64 m_Size;
+	public:
+		uint64 GetSize() { return m_Size; }
+	};
 
 	struct BufferRange {
 		RBuffer* buffer{nullptr};
@@ -83,7 +83,40 @@ namespace RHI{
 	class RTexture {};
 	class RShader {};
 
-	class RDescriptorSet {};
+	class RDescriptorSet {
+	public:
+		virtual void Update(uint32 binding, RDescriptorType type, const RDescriptorInfo& info, uint32 arrayElement, uint32 count) = 0;
+		virtual void UpdateUniformBuffer(uint32 binding, RBuffer* buffer) = 0;
+		virtual void UpdateImageSampler(uint32 binding, RSampler* sampler, RImageView* image) = 0;
+		virtual void UpdateInputAttachment(uint32 binding, RImageView* image) = 0;
+	};
+
+	class RCommandBuffer {
+	public:
+		virtual ~RCommandBuffer() {}
+		virtual void Begin(RCommandBufferUsageFlags flags) = 0;
+		virtual void End() = 0;
+		virtual void BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const RSRect2D& area) = 0;
+		virtual void NextSubpass() = 0;
+		virtual void EndRenderPass() = 0;
+		virtual void CopyBufferToImage(RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayout, uint32 layoutCount) = 0;
+		virtual void BlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit& region) = 0;
+		virtual void BindPipeline(RPipeline* pipeline) = 0;
+		virtual void BindDescriptorSet(RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx, RPipelineType pipelineType) = 0;
+		virtual void BindVertexBuffer(RBuffer* buffer, uint32 first, uint64 offset) = 0;
+		virtual void BindIndexBuffer(RBuffer* buffer, uint64 offset) = 0;
+		virtual void Draw(uint32 vertexCount, uint32 instanceCount, uint32 firstIndex, uint32 firstInstance) = 0;
+		virtual void DrawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) = 0;
+		virtual void DrawVertices(RBuffer* buffer, uint32 vertexCount, uint32 instanceCount) = 0;
+		virtual void DrawVerticesIndexed(RBuffer* vertexBuffer, RBuffer* indexBuffer, uint32 indexCount, uint32 instanceCount) = 0;
+		virtual void Dispatch(uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ) = 0;
+		virtual void ClearAttachment(RImageAspectFlags aspect, const float* color, const RSRect2D& rect) = 0;
+		virtual void CopyBuffer(RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size) = 0;
+		virtual void TransitionImageLayout(RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32 baseMipLevel, uint32 levelCount, uint32 layer, uint32 layerCount, RImageAspectFlags aspect) = 0;
+		virtual void GenerateMipmap(RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) = 0;
+		virtual void BeginDebugLabel(const char* msg, const float* color) = 0;
+		virtual void EndDebugLabel() = 0;
+	};
 
 	class RDevice {};
 	class RFence {};

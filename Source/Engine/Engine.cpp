@@ -1,7 +1,6 @@
 #include "Engine.h"
 #include "Engine/Window/WindowSystemGLFW.h"
 #include "Core/macro.h"
-#include <string>
 
 namespace Engine {
 	XXEngine::XXEngine()
@@ -34,10 +33,10 @@ namespace Engine {
 
 	float XXEngine::ComputeDeltaTime()
 	{
-		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-		std::chrono::duration<float, std::milli> timeDuration = std::chrono::duration_cast<std::chrono::duration<float>>(now - m_LastTickTime);
-		m_LastTickTime = now;
-		return timeDuration.count();
+		TimePoint nowTime = NowTimePoint();
+		float deltaTime = GetDurationMill<float>(m_LastTickTime, nowTime);
+		m_LastTickTime = nowTime;
+		return deltaTime;
 	}
 
 	void XXEngine::ComputeFPS(float deltaTime)

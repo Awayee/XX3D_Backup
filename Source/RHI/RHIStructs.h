@@ -78,19 +78,13 @@ namespace RHI {
 		RImageLayout initialLayout{ IMAGE_LAYOUT_UNDEFINED };
 		RImageLayout finalLayout;
 		RImageLayout refLayout;
+		RImageLayout InputRefLayout;
 		RSampleCountFlagBits sampleCount{ SAMPLE_COUNT_1_BIT };
 		RAttachmentLoadOp loadOp{ ATTACHMENT_LOAD_OP_CLEAR };
 		RAttachmentStoreOp storeOp{ ATTACHMENT_STORE_OP_STORE };
 		RAttachmentLoadOp stencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
 		RAttachmentStoreOp stencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
 		RSClear clear;
-	};
-
-	struct RSubpass {
-		RPipelineType Type;
-		TVector<RSAttachment> InputAttachments;
-		TVector<RSAttachment> ColorAttachments;
-		TVector<RSAttachment> DepthStencilAttachments;
 	};
 
 	struct RSubPassInfo {
@@ -107,6 +101,7 @@ namespace RHI {
 		uint32 DstSubPass;
 		RPipelineStageFlags DstStage;
 		RAccessFlags DstAccess;
+		RDependencyFlags DependencyFlags;
 	};
 
 	struct RSImageBlit {
@@ -131,7 +126,7 @@ namespace RHI {
 		RSamplerAddressMode addressModeW;
 		float minLodBias{ 0.0f };
 		bool anisotropyEnable{ false };
-		float maxAnisotropy;
+		float maxAnisotropy{0.0f};
 		bool compareEnable{ false };
 		RCompareOp compreOp;
 		float minLod{ 0.0f };
@@ -237,7 +232,7 @@ namespace RHI {
 		// depth stencil
 		bool DepthTestEnable;
 		bool DepthWriteEnable;
-		RCompareOp DepthCompareOp;
+		RCompareOp DepthCompareOp{ COMPARE_OP_LESS };
 		bool DepthBoundsTestEnable{false};
 		bool StencilTestEnable {false};
 		RStencilOpState FrontStencilOp;
@@ -247,7 +242,7 @@ namespace RHI {
 
 		// color blend
 		bool LogicOpEnable;
-		RLogicOp LogicOp;
+		RLogicOp LogicOp{ LOGIC_OP_COPY };
 		TVector<RColorBlendAttachmentState> AttachmentStates;
 		float BlendConstants[4];
 
