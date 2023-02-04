@@ -27,6 +27,7 @@ namespace Engine {
 		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, RHI::SHADER_STAGE_FRAGMENT_BIT }); //light
 		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });//normal
 		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });//albedo
+		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });// depth
 		m_Layouts[DESCS_DEFERRED_LIGHTING] = rhi->CreateDescriptorSetLayout(deferredLightingBindings.size(), deferredLightingBindings.data());
 	}
 
@@ -69,16 +70,14 @@ namespace Engine {
 		m_Samplers.clear();
 	}
 
-	void Attachment::Create(RHI::RFormat format, uint32 width, uint32 height, bool bForDepth, bool bForShader, bool bForInput)
+	void Attachment::Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage)
 	{
 		Release();
 		GET_RHI(rhi);
-		RHI::RImageUsageFlags usage = bForDepth? RHI::IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : RHI::IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		if (bForShader) usage |= RHI::IMAGE_USAGE_SAMPLED_BIT;
-		if (bForInput) usage |= RHI::IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 		Image = rhi->CreateImage2D(format, width, height, 1, RHI::SAMPLE_COUNT_1_BIT, RHI::IMAGE_TILING_OPTIMAL, usage);
 		Memory = rhi->CreateImageMemory(Image, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
-		View = rhi->CreateImageView(Image, RHI::IMAGE_VIEW_TYPE_2D, bForDepth? RHI::IMAGE_ASPECT_DEPTH_BIT: RHI::IMAGE_ASPECT_COLOR_BIT,
+		const bool bForDepth = usage & RHI::IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		View = rhi->CreateImageView(Image, RHI::IMAGE_VIEW_TYPE_2D, bForDepth ? RHI::IMAGE_ASPECT_DEPTH_BIT: RHI::IMAGE_ASPECT_COLOR_BIT,
 			0, 1, 0, 1);
 	}
 
@@ -148,40 +147,35 @@ namespace Engine {
 		return m_Attachments[attachmentIdx].View;
 	}
 
-	PresentPass::PresentPass()
+	DeferredLightingPass::DeferredLightingPass()
 	{
 		GET_RHI(rhi);
 		uint32 width = rhi->GetSwapchainExtent().width;
 		uint32 height = rhi->GetSwapchainExtent().height;
 		// create attachments
-		m_Attachments.resize(ATTACHMENT_COUNT);
-		m_Attachments[ATTACHMENT_DEPTH].Create(rhi->GetDepthFormat(), width, height, true, false, false);
-		m_Attachments[ATTACHMENT_NORMAL].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, false, false, true);
-		m_Attachments[ATTACHMENT_ALBEDO].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, false, false, true);
+		m_Attachments.resize(ATTACHMENT_COLOR_KHR);
+		m_Attachments[ATTACHMENT_DEPTH].Create(rhi->GetDepthFormat(), width, height, RHI::IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|RHI::IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+		m_Attachments[ATTACHMENT_NORMAL].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, RHI::IMAGE_USAGE_COLOR_ATTACHMENT_BIT|RHI::IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+		m_Attachments[ATTACHMENT_ALBEDO].Create(RHI::FORMAT_R8G8B8A8_UNORM, width, height, RHI::IMAGE_USAGE_COLOR_ATTACHMENT_BIT|RHI::IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 		
-		TVector<RHI::RSAttachment> attachments(ATTACHMENT_COUNT + 1);
+		TVector<RHI::RSAttachment> attachments(ATTACHMENT_COUNT);
 		// depth
-		attachments[ATTACHMENT_DEPTH].format = rhi->GetDepthFormat();
-		attachments[ATTACHMENT_DEPTH].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		attachments[ATTACHMENT_DEPTH].finalLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		attachments[ATTACHMENT_DEPTH].refLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		attachments[ATTACHMENT_DEPTH].clear = { 1.0, 0 };
+		attachments[ATTACHMENT_DEPTH].Format = rhi->GetDepthFormat();
+		attachments[ATTACHMENT_DEPTH].InitialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		attachments[ATTACHMENT_DEPTH].FinalLayout = RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[ATTACHMENT_DEPTH].Clear = { 1.0, 0 };
 		// g buffer normal
-		attachments[ATTACHMENT_NORMAL].format = RHI::FORMAT_R8G8B8A8_UNORM;
-		attachments[ATTACHMENT_NORMAL].initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		attachments[ATTACHMENT_NORMAL].finalLayout = RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		attachments[ATTACHMENT_NORMAL].refLayout = RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		attachments[ATTACHMENT_NORMAL].InputRefLayout = RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		attachments[ATTACHMENT_NORMAL].clear = { 0.0f, 0.0f, 0.0f, 0.0f };
+		attachments[ATTACHMENT_NORMAL].Format = RHI::FORMAT_R8G8B8A8_UNORM;
+		attachments[ATTACHMENT_NORMAL].InitialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		attachments[ATTACHMENT_NORMAL].FinalLayout = RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		attachments[ATTACHMENT_NORMAL].Clear = { 0.0f, 0.0f, 0.0f, 0.0f };
 		// g buffer albedo
 		attachments[ATTACHMENT_ALBEDO] = attachments[ATTACHMENT_NORMAL];
 		// swapchain
-		RHI::RSAttachment& atmPresent = attachments.back();
-		atmPresent.format = rhi->GetSwapchainImageFormat();
-		atmPresent.initialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
-		atmPresent.finalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		atmPresent.refLayout = RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		atmPresent.clear = { 0.0f, 0.0f, 0.0f, 0.0f };
+		attachments[ATTACHMENT_COLOR_KHR].Format = rhi->GetSwapchainImageFormat();
+		attachments[ATTACHMENT_COLOR_KHR].InitialLayout = RHI::IMAGE_LAYOUT_UNDEFINED;
+		attachments[ATTACHMENT_COLOR_KHR].FinalLayout = RHI::IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments[ATTACHMENT_COLOR_KHR].Clear = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		// subpass
 		m_ColorAttachments.resize(SUBPASS_COUNT);
@@ -189,11 +183,23 @@ namespace Engine {
 		m_DepthAttachments.resize(1);
 		m_DepthAttachments[SUBPASS_BASE] = &m_Attachments[ATTACHMENT_DEPTH];
 		TVector<RHI::RSubPassInfo> subpasses(SUBPASS_COUNT);
-		subpasses[SUBPASS_BASE].ColorAttachments = { ATTACHMENT_NORMAL, ATTACHMENT_ALBEDO };
-		subpasses[SUBPASS_BASE].DepthStencilAttachment = ATTACHMENT_DEPTH;
-		subpasses[SUBPASS_DEFERRED_LIGHTING].ColorAttachments = { (uint32)attachments.size() - 1 };
-		subpasses[SUBPASS_DEFERRED_LIGHTING].InputAttachments = { ATTACHMENT_NORMAL, ATTACHMENT_ALBEDO };
-		subpasses[SUBPASS_DEFERRED_LIGHTING].DepthStencilAttachment = -1;
+		// base pass
+		subpasses[SUBPASS_BASE].ColorAttachments = {
+			{ATTACHMENT_NORMAL, RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+			{ATTACHMENT_ALBEDO, RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}
+		};
+		subpasses[SUBPASS_BASE].DepthStencilAttachment = { ATTACHMENT_DEPTH, RHI::IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+		// lighting pass
+		subpasses[SUBPASS_DEFERRED_LIGHTING].ColorAttachments = {
+			{(uint32)attachments.size() - 1, RHI::IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}
+		};
+		subpasses[SUBPASS_DEFERRED_LIGHTING].InputAttachments = {
+			{ATTACHMENT_NORMAL, RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+			{ATTACHMENT_ALBEDO, RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+			{ATTACHMENT_DEPTH,  RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}
+		};
+		subpasses[SUBPASS_DEFERRED_LIGHTING].DepthStencilAttachment = { 0, RHI::IMAGE_LAYOUT_UNDEFINED };
 
 		// dependencies
 		TVector<RHI::RSubpassDependency> dependencies(2);
@@ -230,7 +236,7 @@ namespace Engine {
 		m_Framebuffer = m_SwapchainFramebuffers[0];
 	}
 
-	PresentPass::~PresentPass()
+	DeferredLightingPass::~DeferredLightingPass()
 	{
 		m_Framebuffer = nullptr;
 		GET_RHI(rhi);
@@ -240,7 +246,7 @@ namespace Engine {
 		m_SwapchainFramebuffers.clear();
 	}
 
-	void PresentPass::SetImageIndex(uint32 i)
+	void DeferredLightingPass::SetImageIndex(uint32 i)
 	{
 		m_Framebuffer = m_SwapchainFramebuffers[i];
 	}
@@ -288,6 +294,7 @@ namespace Engine {
 		info.RasterizerDiscardEnable = false;
 		info.PolygonMode = RHI::POLYGON_MODE_FILL;
 		info.CullMode = RHI::CULL_MODE_BACK_BIT;
+		info.Clockwise = true;
 		// depth
 		info.DepthTestEnable = true;
 		info.DepthWriteEnable = true;

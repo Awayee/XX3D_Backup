@@ -1,5 +1,4 @@
-#include <algorithm>
-#include <cmath>
+#include "MathBase.h"
 #include "Vector.h"
 #include "Core/macro.h"
 
@@ -17,18 +16,18 @@ namespace Math {
         return (i == 0 ? x : y);
     }
 
-    MATH_GENERIC float Vector2<T>::Length() const
+    MATH_GENERIC T Vector2<T>::Length() const
     {
-        return std::hypot(x, y);
+        return Hypot<T>(x, y);
     }
 
-    MATH_GENERIC float Vector2<T>::Normalize()
+    MATH_GENERIC T Vector2<T>::Normalize()
     {
-        float lengh = std::hypot(x, y);
+        T lengh = Hypot<T>(x, y);
 
-        if (lengh > 0.0f)
+        if (lengh > 0)
         {
-            float inv_length = 1.0f / lengh;
+            T inv_length = (T)1 / lengh;
             x *= inv_length;
             y *= inv_length;
         }
@@ -37,11 +36,11 @@ namespace Math {
     }
     MATH_GENERIC Vector2<T> Vector2<T>::Max(const Vector2<T>& v0, const Vector2<T>& v1)
     {
-        return { std::max<float>(v0.x, v1.x), std::max<float>(v0.y, v1.y) };
+        return { Math::Max<T>(v0.x, v1.x), Math::Max<T>(v0.y, v1.y) };
     }
     MATH_GENERIC Vector2<T> Vector2<T>::Min(const Vector2<T>& v0, const Vector2<T>& v1)
     {
-        return { std::min<float>(v0.x, v1.x), std::min<float>(v0.y, v1.y) };
+        return { Math::Min<T>(v0.x, v1.x), Math::Min<T>(v0.y, v1.y) };
     }
 
     // vector3
@@ -86,28 +85,28 @@ namespace Math {
         ASSERT(rhs.x != 0 && rhs.y != 0 && rhs.z != 0);
         return Vector3(scalar / rhs.x, scalar / rhs.y, scalar / rhs.z);
     }
-    MATH_GENERIC float Vector3<T>::Length() const
+    MATH_GENERIC T Vector3<T>::Length() const
     {
-        return std::hypot(x, y, z);
+        return Hypot<T>(x, y, z);
     }
     MATH_GENERIC void Vector3<T>::Normalize()
     {
-        float length = std::hypot(x, y, z);
-        if (length == 0.f)
+        T length = Hypot<T>(x, y, z);
+        if (length == 0)
             return;
 
-        float inv_lengh = 1.0f / length;
-        x *= inv_lengh;
-        y *= inv_lengh;
-        z *= inv_lengh;
+        T lengthInv = (T)1/ length;
+        x *= lengthInv;
+        y *= lengthInv;
+        z *= lengthInv;
     }
     MATH_GENERIC Vector3<T> Vector3<T>::Max(const Vector3<T>& v0, const Vector3<T>& v1)
     {
-        return { std::max<float>(v0.x, v1.x), std::max<float>(v0.y, v1.y), std::max<float>(v0.z, v1.z) };
+        return { Math::Max<T>(v0.x, v1.x), Math::Max<T>(v0.y, v1.y), Math::Max<T>(v0.z, v1.z) };
     }
     MATH_GENERIC Vector3<T> Vector3<T>::Min(const Vector3<T>& v0, const Vector3<T>& v1)
     {
-        return { std::min<float>(v0.x, v1.x), std::min<float>(v0.y, v1.y), std::min<float>(v0.z, v1.z) };
+        return { Math::Min<T>(v0.x, v1.x), Math::Min<T>(v0.y, v1.y), Math::Min<T>(v0.z, v1.z) };
     }
 
     // vector4
@@ -156,11 +155,11 @@ namespace Math {
     }
     MATH_GENERIC Vector4<T> Vector4<T>::Max(const Vector4<T>& v0, const Vector4<T>& v1)
     {
-        return { std::max<float>(v0.x, v1.x), std::max<float>(v0.y, v1.y), std::max<float>(v0.z, v1.z), std::max<float>(v0.w, v1.w)};
+        return { Math::Max<T>(v0.x, v1.x), Math::Max<T>(v0.y, v1.y), Math::Max<T>(v0.z, v1.z), Math::Max<T>(v0.w, v1.w)};
     }
     MATH_GENERIC Vector4<T> Vector4<T>::Min(const Vector4<T>& v0, const Vector4<T>& v1)
     {
-        return { std::min<float>(v0.x, v1.x), std::min<float>(v0.y, v1.y), std::min<float>(v0.z, v1.z), std::min<float>(v0.w, v1.w)};
+        return { Math::Min<T>(v0.x, v1.x), Math::Min<T>(v0.y, v1.y), Math::Min<T>(v0.z, v1.z), Math::Min<T>(v0.w, v1.w)};
     }
 
     template Vector2<float>;

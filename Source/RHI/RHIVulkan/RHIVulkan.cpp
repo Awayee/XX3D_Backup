@@ -449,17 +449,17 @@ namespace RHI {
 			subpassesVk[i].pipelineBindPoint = (VkPipelineBindPoint)pSubpasses[i].Type;
 			uint32 j;
 			for (j = 0; j < pSubpasses[i].InputAttachments.size(); ++j) {
-				inputAttachments[i].push_back({ pSubpasses[i].InputAttachments[j], (VkImageLayout)pAttachments[pSubpasses[i].InputAttachments[j]].InputRefLayout});
+				inputAttachments[i].push_back({ pSubpasses[i].InputAttachments[j].Index, (VkImageLayout)pSubpasses[i].InputAttachments[j].Layout});
 			}
 			subpassesVk[i].inputAttachmentCount = inputAttachments[i].size();
 			subpassesVk[i].pInputAttachments = inputAttachments[i].data();
 			for (j = 0; j < pSubpasses[i].ColorAttachments.size(); ++j) {
-				colorAttachments[i].push_back({ pSubpasses[i].ColorAttachments[j], (VkImageLayout)pAttachments[pSubpasses[i].ColorAttachments[j]].refLayout});
+				colorAttachments[i].push_back({ pSubpasses[i].ColorAttachments[j].Index, (VkImageLayout)pSubpasses[i].ColorAttachments[j].Layout});
 			}
 			subpassesVk[i].colorAttachmentCount = colorAttachments[i].size();
 			subpassesVk[i].pColorAttachments = colorAttachments[i].data();
-			if(pSubpasses[i].DepthStencilAttachment >= 0) {
-				depthAttachments[i] = { (uint32)pSubpasses[i].DepthStencilAttachment, (VkImageLayout)pAttachments[pSubpasses[i].DepthStencilAttachment].refLayout};
+			if(IMAGE_LAYOUT_UNDEFINED != pSubpasses[i].DepthStencilAttachment.Layout) {
+				depthAttachments[i] = { pSubpasses[i].DepthStencilAttachment.Index, (VkImageLayout)pSubpasses[i].DepthStencilAttachment.Layout};
 				subpassesVk[i].pDepthStencilAttachment = &depthAttachments[i];
 			}
 			else {
@@ -491,7 +491,7 @@ namespace RHI {
 		pass->handle = handle;
 		pass->m_Clears.resize(attachmentCount);
 		for(i=0; i< attachmentCount; ++i) {
-			pass->m_Clears[i] = ResolveClearValue(pAttachments[i].clear);
+			pass->m_Clears[i] = ResolveClearValue(pAttachments[i].Clear);
 		}
 		return pass;
 	}
@@ -504,12 +504,12 @@ namespace RHI {
 		TArray<VkAttachmentReference> colorAttachmentRef(colorAttachmentCount);
 		for (i = 0; i < colorAttachmentCount; ++i) {
 			attachmentsVk[i] = ResolveAttachmentDesc(pColorAttachments[i]);
-			colorAttachmentRef[i] = { i, (VkImageLayout)pColorAttachments[i].refLayout };
+			colorAttachmentRef[i] = { i, (VkImageLayout)pColorAttachments[i].FinalLayout };
 		}
 		VkAttachmentReference depthAttachmentRef;
 		if(nullptr != depthAttachment) {
 			depthAttachmentRef.attachment = colorAttachmentCount;
-			depthAttachmentRef.layout = (VkImageLayout)depthAttachment->refLayout;
+			depthAttachmentRef.layout = (VkImageLayout)depthAttachment->FinalLayout;
 			attachmentsVk[colorAttachmentCount] = ResolveAttachmentDesc(*depthAttachment);
 		}
 		VkSubpassDescription subpass;

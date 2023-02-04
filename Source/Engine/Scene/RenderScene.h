@@ -44,12 +44,13 @@ namespace Engine {
 		static TUniquePtr<RenderScene> s_Default;
 		static RenderScene* GetDefaultScene(); // TODO TEST
 		static void Clear() { if (s_Default) s_Default.reset(); }
+		Camera* GetMainCamera() { return m_Camera.get(); }
 
 		RenderScene();
 		~RenderScene();
 		void AddRenderObject(RenderObject* obj);
 		void RemoveRenderObject(RenderObject* obj);
+		void Update();
 		void RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout);
-		void RenderDeferredLight(RHI::RCommandBuffer* cmd);
 	};
 }

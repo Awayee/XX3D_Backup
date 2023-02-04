@@ -30,9 +30,14 @@ layout(set=0, binding=0) uniform SceneUniform{
 };
 layout(input_attachment_index=0, set=0, binding=1) uniform subpassInput uNormal;
 layout(input_attachment_index=1, set=0, binding=2) uniform subpassInput uAlbedo;
+layout(input_attachment_index=2, set=0, binding=3) uniform subpassInput uDepth;
 
 void main(){
     vec4 gNormal = subpassLoad(uNormal).rgba;
     vec4 gAlbedo = subpassLoad(uAlbedo).rgba;
+    vec3 lightDir = SceneLightDir.xyz;
+    vec3 lightColor = SceneLightColor.xyz;
+    vec3 ambientColor = vec3(0.1, 0.1, 0.1);
+    vec3 worldNormal = gNormal.xyz;
     outColor = vec4(gNormal.xyz, 1.0);
 }

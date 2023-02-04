@@ -25,13 +25,13 @@ namespace Math {
         Vector2<T> operator-(const Vector2<T>& rhs) const { return Vector2<T>(x - rhs.x, y - rhs.y); }
         Vector2<T> operator*(T scalar) const { return Vector2<T>(x * scalar, y * scalar); }
         Vector2<T> operator*(const Vector2<T>& rhs) const { return Vector2<T>(x * rhs.x, y * rhs.y); }
-        Vector2<T> operator/(T scale) const{ float inv = 1.0f / scale; return Vector2<T>(x * inv, y * inv); }
+        Vector2<T> operator/(T scalar) const{ float inv = 1.0f / scalar; return Vector2<T>(x * inv, y * inv); }
         Vector2<T> operator/(const Vector2<T>& rhs) const { return Vector2<T>(x / rhs.x, y / rhs.y); }
         const Vector2<T>& operator+() const { return *this; }
         Vector2<T> operator-() const { return Vector2<T>(-x, -y); }
         // overloaded operators to help Vector2<T>
         friend Vector2<T> operator*(T scalar, const Vector2<T>& rhs) { return Vector2<T>(scalar * rhs.x, scalar * rhs.y); }
-        friend Vector2<T> operator/(T fScalar, const Vector2<T>& rhs) { return Vector2<T>(fScalar / rhs.x, fScalar / rhs.y); }
+        friend Vector2<T> operator/(T scalar, const Vector2<T>& rhs) { return Vector2<T>(scalar / rhs.x, scalar / rhs.y); }
         friend Vector2<T> operator+(const Vector2<T>& lhs, T rhs) { return Vector2<T>(lhs.x + rhs, lhs.y + rhs); }
         friend Vector2<T> operator+(T lhs, const Vector2<T>& rhs) { return Vector2<T>(lhs + rhs.x, lhs + rhs.y); }
         friend Vector2<T> operator-(const Vector2<T>& lhs, T rhs) { return Vector2<T>(lhs.x - rhs, lhs.y - rhs); }
@@ -104,12 +104,12 @@ namespace Math {
 
             return *this;
         }
-        float Length() const;
-        float SquaredLength() const { return x * x + y * y; }
-        float Cross(const Vector2<T>& rhs) const { return x * rhs.y - y * rhs.x; }
-        float Dot(const Vector2<T>& vec) const { return x * vec.x + y * vec.y; }
-        float Distance(const Vector2<T>& rhs) const { return (*this - rhs).Length(); }
-        float Normalize();
+        T Length() const;
+        T SquaredLength() const { return x * x + y * y; }
+        T Cross(const Vector2<T>& rhs) const { return x * rhs.y - y * rhs.x; }
+        T Dot(const Vector2<T>& vec) const { return x * vec.x + y * vec.y; }
+        T Distance(const Vector2<T>& rhs) const { return (*this - rhs).Length(); }
+        T Normalize();
         Vector2<T> NormalizeCopy() { Vector2<T> r = { x, y }; r.Normalize(); return r; }
 
         static Vector2<T> Max(const Vector2<T>& v0, const Vector2<T>& v1);
@@ -197,9 +197,9 @@ namespace Math {
 
         Vector3<T>& operator/=(float scalar);
         Vector3<T>& operator/=(const Vector3<T>& rhs);
-        float Length() const;
+        T Length() const;
         T SquaredLength() const { return x * x + y * y + z * z; }
-        float Distance(const Vector3<T>& rhs) const { return (*this - rhs).Length(); }
+        T Distance(const Vector3<T>& rhs) const { return (*this - rhs).Length(); }
         T SquaredDistance(const Vector3<T>& rhs) const { return (*this - rhs).SquaredLength(); }
         T Dot(const Vector3<T>& vec) const { return x * vec.x + y * vec.y + z * vec.z; }
         void Normalize();

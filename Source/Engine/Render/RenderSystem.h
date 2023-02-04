@@ -21,7 +21,7 @@ namespace Engine {
 	private:
 		bool m_Enable{ false };
 		//Render Passes
-		TUniquePtr<PresentPass> m_PresentPass;
+		TUniquePtr<DeferredLightingPass> m_PresentPass;
 		// command buffers
 		TVector<RHI::RCommandBuffer*> m_CommandBuffers;
 		// Render pipelines

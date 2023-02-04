@@ -2,8 +2,9 @@
 namespace Engine {
 	void Camera::UpdateProjectMatrix()
 	{
-		if(PROJECT_PERSPECTIVE == m_ProjType) {
+		if(CAMERA_PERSPECTIVE == m_ProjType) {
 			m_ProjectMatrix = Math::FMatrix4x4::PerspectiveMatrix(m_Fov, m_Aspect, m_Near, m_Far);
+			m_ProjectMatrix[1][1] *= -1.0f;
 		}
 		else {
 			float offsetY = m_Height;
@@ -19,6 +20,9 @@ namespace Engine {
 	}
 	void Camera::SetView(const Math::FVector3& eye, const Math::FVector3& at, const Math::FVector3& up)
 	{
+		m_View.Eye = eye;
+		m_View.At = at;
+		m_View.Up = up;
 		m_ViewMatrix = Math::FMatrix4x4::LookAtMatrix(eye, at, up);
 		m_ViewProjectMatrix = m_ProjectMatrix * m_ViewMatrix;
 	}

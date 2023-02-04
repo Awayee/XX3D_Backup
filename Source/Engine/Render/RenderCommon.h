@@ -49,7 +49,7 @@ namespace Engine {
 		RHI::RImage* Image{nullptr};
 		RHI::RImageView* View{nullptr};
 		RHI::RMemory* Memory{nullptr};
-		void Create(RHI::RFormat format, uint32 width, uint32 height, bool bForDepth, bool bForShader, bool bForInput);
+		void Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage);
 		void Release();
 	};
 
@@ -123,7 +123,7 @@ namespace Engine {
 		virtual void Begin(RHI::RCommandBuffer* cmd);
 	};
 
-	class PresentPass final: public RenderPassCommon {
+	class DeferredLightingPass final: public RenderPassCommon {
 	private:
 		TVector<RHI::RFramebuffer*> m_SwapchainFramebuffers;
 	public:
@@ -131,7 +131,8 @@ namespace Engine {
 			ATTACHMENT_DEPTH,
 			ATTACHMENT_NORMAL,
 			ATTACHMENT_ALBEDO,
-			ATTACHMENT_COUNT
+			ATTACHMENT_COLOR_KHR,
+			ATTACHMENT_COUNT,
 		};
 
 		enum {
@@ -139,8 +140,8 @@ namespace Engine {
 			SUBPASS_DEFERRED_LIGHTING,
 			SUBPASS_COUNT
 		};
-		PresentPass();
-		~PresentPass();
+		DeferredLightingPass();
+		~DeferredLightingPass();
 		void SetImageIndex(uint32 i);
 	};
 

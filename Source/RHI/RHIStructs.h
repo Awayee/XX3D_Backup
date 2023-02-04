@@ -74,24 +74,26 @@ namespace RHI {
 	};
 
 	struct RSAttachment {
-		RFormat format;
-		RImageLayout initialLayout{ IMAGE_LAYOUT_UNDEFINED };
-		RImageLayout finalLayout;
-		RImageLayout refLayout;
-		RImageLayout InputRefLayout;
-		RSampleCountFlagBits sampleCount{ SAMPLE_COUNT_1_BIT };
-		RAttachmentLoadOp loadOp{ ATTACHMENT_LOAD_OP_CLEAR };
-		RAttachmentStoreOp storeOp{ ATTACHMENT_STORE_OP_STORE };
-		RAttachmentLoadOp stencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
-		RAttachmentStoreOp stencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
-		RSClear clear;
+		RFormat Format;
+		RImageLayout InitialLayout{ IMAGE_LAYOUT_UNDEFINED };
+		RImageLayout FinalLayout{ IMAGE_LAYOUT_UNDEFINED };
+		RSampleCountFlagBits SampleCount{ SAMPLE_COUNT_1_BIT };
+		RAttachmentLoadOp LoadOp{ ATTACHMENT_LOAD_OP_CLEAR };
+		RAttachmentStoreOp StoreOp{ ATTACHMENT_STORE_OP_STORE };
+		RAttachmentLoadOp StencilLoadOp{ ATTACHMENT_LOAD_OP_DONT_CARE };
+		RAttachmentStoreOp StencilStoreOp{ ATTACHMENT_STORE_OP_DONT_CARE };
+		RSClear Clear;
 	};
 
 	struct RSubPassInfo {
+		struct RAttachmentRef {
+			uint32 Index;
+			RImageLayout Layout;
+		};
 		RPipelineType Type;
-		TVector<uint32> InputAttachments;
-		TVector<uint32> ColorAttachments;
-		int32 DepthStencilAttachment;
+		TVector<RAttachmentRef> InputAttachments;
+		TVector<RAttachmentRef> ColorAttachments;
+		RAttachmentRef DepthStencilAttachment;
 	};
 
 	struct RSubpassDependency {

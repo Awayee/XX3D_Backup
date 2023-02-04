@@ -100,7 +100,7 @@ namespace Math {
          */
         Matrix4x4<T> operator-(const Matrix4x4<T>& m2) const;
 
-        Matrix4x4<T> operator*(float scalar) const;
+        Matrix4x4<T> operator*(T scalar) const;
 
         /** Tests 2 matrices for equality.
          */

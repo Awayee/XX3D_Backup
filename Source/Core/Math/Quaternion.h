@@ -8,12 +8,16 @@ namespace Math {
 		T z{ 0.0f };
 		T w{ 1.0f };
 		Quaternion() = default;
-		Quaternion(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {};
-        void FromAngleAxis(T a, const Vector3<T>& axis);
+		Quaternion(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
         static Quaternion<T> AngleAxis(T a, const Vector3<T>& axis);
-        Vector3<T> RotateFVector3(const Vector3<T>& v) const;
+        Vector3<T> RotateVector3(const Vector3<T>& v) const;
         Quaternion<T> Inverse() const; // apply to non-zero quaternion
-        Vector3<T> operator*(const Vector3<T>& v) const;
-		Quaternion<T> operator*(const Quaternion<T>& rhs) const;
+		Quaternion<T> operator*(const Quaternion<T>& q) const;
+		Quaternion<T> operator*=(const Quaternion<T>& q);
+		static const Quaternion<T> ZERO;
+		static const Quaternion<T> IDENTITY;
 	};
+
+	typedef Quaternion<float>  FQuaternion;
+	typedef Quaternion<double> DQuaternion;
 }

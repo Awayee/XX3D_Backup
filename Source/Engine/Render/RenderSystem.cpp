@@ -72,6 +72,9 @@ namespace Engine {
 			return;
 		}
 
+		auto mainScene = RenderScene::GetDefaultScene();
+		mainScene->Update();
+
 		GET_RHI(rhi);
 		// begin render pass;
 		int swapchainImageIndex = rhi->PreparePresent(m_CurrentFrameIndex);
@@ -85,7 +88,6 @@ namespace Engine {
 		m_PresentPass->SetImageIndex(swapchainImageIndex);
 		m_PresentPass->Begin(cmd);
 
-		auto mainScene = RenderScene::GetDefaultScene();
 		if(RENDER_DEFERRED == GetConfig()->GetRenderPath()) {
 			m_GBufferPipeline->Bind(cmd);
 			mainScene->RenderGBuffer(cmd, m_GBufferPipeline->GetLayout());
@@ -133,9 +135,9 @@ namespace Engine {
 
 	void RenderSystem::CreateRenderResources()
 	{
-		m_PresentPass.reset(new PresentPass());
-		m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), PresentPass::SUBPASS_BASE));
-		m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), PresentPass::SUBPASS_DEFERRED_LIGHTING));
+		m_PresentPass.reset(new DeferredLightingPass());
+		m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_BASE));
+		m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_DEFERRED_LIGHTING));
 		// create command buffers
 		GET_RHI(rhi);
 		m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -145,8 +147,9 @@ namespace Engine {
 		// create descriptor set
 		m_DeferredLightingDescs = rhi->AllocateDescriptorSet(DescsMgr::Get(DESCS_DEFERRED_LIGHTING));
 		m_DeferredLightingDescs->UpdateUniformBuffer(0, RenderScene::GetDefaultScene()->m_LightUniform.Buffer);
-		m_DeferredLightingDescs->UpdateInputAttachment(1, m_PresentPass->GetAttachment(PresentPass::ATTACHMENT_NORMAL));
-		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(PresentPass::ATTACHMENT_ALBEDO));
+		m_DeferredLightingDescs->UpdateInputAttachment(1, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_NORMAL));
+		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_ALBEDO));
+		m_DeferredLightingDescs->UpdateInputAttachment(3, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_DEPTH));
 	}
 
 
