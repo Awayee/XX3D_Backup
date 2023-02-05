@@ -8,20 +8,24 @@ set(PROJECT_NAME "XX3D")
 project (${PROJECT_NAME})
 
 
+# c++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF)
 
-set(THIRD_PARTY ${${PROJECT_NAME}_SOURCE_DIR}/ThirdParty/)
-set(SOURCE_DIR  ${${PROJECT_NAME}_SOURCE_DIR}/Source/)
-set(ASSETS_DIR  ${${PROJECT_NAME}_SOURCE_DIR}/Assets/)
-set(SHADER_DIR  ${${PROJECT_NAME}_SOURCE_DIR}/Shaders/)
+# directory setup
+set(THIRD_PARTY ${${PROJECT_NAME}_SOURCE_DIR}/ThirdParty)
+set(SOURCE_PATH ${${PROJECT_NAME}_SOURCE_DIR}/Source)
+set(ASSETS_PATH ${${PROJECT_NAME}_SOURCE_DIR}/Assets)
+set(SHADER_PATH ${${PROJECT_NAME}_SOURCE_DIR}/Source/Shaders)
+set(CONFIG_PATH ${${PROJECT_NAME}_SOURCE_DIR}/Config)
 
 add_definitions(
-    -DASSETS_PATH="${ASSETS_DIR}/" 
-    -DUSE_VMA
     -DPROJECT_NAME="${PROJECT_NAME}"
-    -DSHADER_PATH="${SHADER_DIR}"
+    -DUSE_VMA
+    -DCONFIG_PATH="${CONFIG_PATH}/"
+    -DASSETS_PATH="${ASSETS_PATH}/" 
+    -DSHADER_PATH="${SHADER_PATH}/"
 )
 
 macro (DEPENDENCY TARGET_NAME DEPENDENCY_NAME)
@@ -32,8 +36,8 @@ endmacro(DEPENDENCY)
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory("ThirdParty")
-add_subdirectory("Source")
-add_subdirectory("Editor")
-add_subdirectory("Runtime")
+add_subdirectory("Source/Engine")
+add_subdirectory("Source/Editor")
+add_subdirectory("Source/Runtime")
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "Editor")

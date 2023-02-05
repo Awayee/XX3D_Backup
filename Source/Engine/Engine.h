@@ -1,6 +1,6 @@
 #pragma once
-#include "Engine/Window/WindowSystem.h"
-#include "Engine/Render/RenderSystem.h"
+#include "Render/Window/WindowSystem.h"
+#include "Render/Common/RenderSystem.h"
 #include "Core/Time/Time.h"
 
 namespace Engine {

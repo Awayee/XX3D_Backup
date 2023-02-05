@@ -38,11 +38,11 @@ inline ERenderPath ParseRenderPath(const std::string& renderPathStr) {
 
 ConfigManager::ConfigManager(const char* path) {
 	// get asset root path firstly
-	m_AssetPath = ASSETS_PATH;
-	FPath configPath = m_AssetPath / path;
+	m_ConfigPath = CONFIG_PATH;
+	FPath configPath = m_ConfigPath / path;
 	TUnorderedMap<String, String> configMap;
 	LoadIniFile(configPath, configMap);
-	m_DefaultFontPath = m_AssetPath / configMap["DefaultFont"];
+	m_DefaultFontPath = m_ConfigPath / configMap["DefaultFont"];
 	m_RHIType = ParseRHIType(configMap["RHIType"]);
 	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);
 }

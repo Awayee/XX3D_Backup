@@ -1,6 +1,6 @@
 #include "Core/macro.h"
 #include "Public/Editor.h"
-#include "Engine/Engine.h"
+#include "Engine.h"
 
 int main() {
 	// Run Editor

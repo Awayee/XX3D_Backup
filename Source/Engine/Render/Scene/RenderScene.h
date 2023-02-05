@@ -1,5 +1,5 @@
 #pragma once
-#include "../Render/RenderResources.h"
+#include "../Common/RenderResources.h"
 #include "Core/Memory/SmartPointer.h"
 
 

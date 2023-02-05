@@ -3,7 +3,7 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
-set(TARGET_NAME "Editor")
+set(TARGET_NAME "Runtime")
 
 file(GLOB_RECURSE H_FILES "*.h")
 file(GLOB_RECURSE CPP_FILES "*.cpp")
@@ -11,11 +11,5 @@ file(GLOB_RECURSE CPP_FILES "*.cpp")
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${H_FILES} ${CPP_FILES})
 
 add_executable(${TARGET_NAME} ${H_FILES} ${CPP_FILES})
-target_link_libraries(${TARGET_NAME} "Source")
-target_include_directories(${TARGET_NAME} PRIVATE ${SOURCE_DIR})
+target_link_libraries(${TARGET_NAME} "Engine")
 
-#stb image
-target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/stb_image)
-
-#imgui
-target_link_libraries(${TARGET_NAME} "imgui")

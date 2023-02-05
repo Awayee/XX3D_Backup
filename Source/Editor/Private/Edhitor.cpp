@@ -1,7 +1,7 @@
 #include "../Public/Editor.h"
 #include "Resource/Config/Config.h"
-#include "Engine/Mesh/MeshUtil.h"
-#include "Engine/Camera/Camera.h"
+#include "MeshUtil//MeshUtil.h"
+#include "Render/Camera/Camera.h"
 
 namespace Editor {
 

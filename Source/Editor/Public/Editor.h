@@ -1,9 +1,8 @@
 #pragma once
-#include "Engine/Engine.h"
 #include "EditorUI.h"
+#include "Engine.h"
 #include "Core/Memory/SmartPointer.h"
-
-#include "Engine/Mesh/RenderMesh.h"
+#include "Render/Mesh/RenderMesh.h"
 
 namespace Editor {
 	class XXEditor {

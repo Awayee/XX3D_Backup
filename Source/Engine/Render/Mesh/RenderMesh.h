@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Math/Math.h"
 #include "Core/Memory/SmartPointer.h"
-#include "../Render/RenderResources.h"
-#include "../Render/RenderCommon.h"
-#include "../Scene//RenderScene.h"
+#include "Render/Common/RenderResources.h"
+#include "Render/Common/RenderCommon.h"
+#include "Render/Scene//RenderScene.h"
 
 namespace Engine {
 	struct SPrimitiveData{

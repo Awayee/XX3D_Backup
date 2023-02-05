@@ -3,9 +3,6 @@
 #include "Resource/Config/Config.h"
 #include "RHI/RHI.h"
 
-#include "Engine/Scene/RenderScene.h"
-#include "Engine/Camera/Camera.h"
-
 namespace Editor {
 	EditorUI::EditorUI(Engine::WindowSystemBase* window)
 	{

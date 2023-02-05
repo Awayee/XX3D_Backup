@@ -1,7 +1,7 @@
 #pragma once
-#include "Engine/Engine.h"
-#include "Engine/Render/UIBase.h"
-#include <imgui.h>
+#include "imgui.h"
+#include "Render/Common/UIBase.h"
+#include "Render/Window/WindowSystem.h"
 
 namespace Editor {
 	class EditorUI: public Engine::UIBase {

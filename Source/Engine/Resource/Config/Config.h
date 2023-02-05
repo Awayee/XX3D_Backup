@@ -17,14 +17,14 @@ enum ERenderPath {
 
 class ConfigManager {
 private:
-	FPath m_AssetPath;
+	FPath m_ConfigPath;
 	FPath m_DefaultFontPath;
 	ERHIType m_RHIType;
 	ERenderPath m_RenderPath;
 public:
 	ConfigManager(const char* configPath);
 	~ConfigManager();
-	const FPath& GetAssetPath() { return m_AssetPath; };
+	const FPath& GetAssetPath() { return m_ConfigPath; };
 	const FPath& GetDefaultFontPath() { return m_DefaultFontPath; }
 	ERHIType GetRHIType() { return m_RHIType; }
 	ERenderPath GetRenderPath() { return m_RenderPath; }
