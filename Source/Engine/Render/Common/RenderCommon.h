@@ -45,7 +45,7 @@ namespace Engine {
 		static RHI::RSampler* Get(ESamplerType type) { return Instance()->Get(type); }
 	};
 
-	struct Attachment {
+	struct Image2DCommon {
 		RHI::RImage* Image{nullptr};
 		RHI::RImageView* View{nullptr};
 		RHI::RMemory* Memory{nullptr};
@@ -108,9 +108,9 @@ namespace Engine {
 	protected:
 		RHI::RRenderPass* m_RHIPass{nullptr};
 		RHI::RFramebuffer* m_Framebuffer{nullptr};
-		TVector<Attachment> m_Attachments;
-		TVector<TVector<Attachment*>> m_ColorAttachments;
-		TVector<Attachment*> m_DepthAttachments;
+		TVector<Image2DCommon> m_Attachments;
+		TVector<TVector<Image2DCommon*>> m_ColorAttachments;
+		TVector<Image2DCommon*> m_DepthAttachments;
 	public:
 		virtual ~RenderPassCommon();
 		RHI::RRenderPass* GetRHIPass() const { return m_RHIPass; }

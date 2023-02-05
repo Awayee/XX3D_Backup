@@ -35,9 +35,7 @@ namespace Engine {
         Math::FMatrix4x4 View;
         Math::FMatrix4x4 Proj;
         Math::FMatrix4x4 VP;
-        //glm::mat4 View;
-        //glm::mat4 Proj;
-        //glm::mat4 VP;
+        Math::FVector3 Pos; float _padding;
     };
     void RenderScene::UpdateUniform()
     {
@@ -49,9 +47,7 @@ namespace Engine {
         cameraUbo.View = m_Camera->GetViewMatrix();
         cameraUbo.Proj = m_Camera->GetProjectMatrix();
         cameraUbo.VP = m_Camera->GetViewProjectMatrix();
-        //cameraUbo.View = glm::lookAt(glm::vec3{ 0, 2, -2 }, { 0, 2, 0 }, { 0, 1, 0 });
-        //cameraUbo.Proj = glm::perspective(1.5f, 1.333f, 0.1f, 1000.0f);
-        //cameraUbo.VP = cameraUbo.Proj * cameraUbo.View;
+        cameraUbo.Pos = m_Camera->GetView().Eye;
         m_CameraUniform.UpdateData(&cameraUbo);
     }
 
@@ -61,7 +57,6 @@ namespace Engine {
         m_DirectionalLight->SetDir({-1, -1, -1});
         auto& ext = RHI_INSTANCE->GetSwapchainExtent();
         m_Camera.reset(new Camera(CAMERA_PERSPECTIVE, (float)ext.width / ext.height, 0.1f, 1000.0f, Math::PI * 0.49f));
-        //m_Camera.reset(new Camera(CAMERA_ORTHO, (float)ext.width / ext.height, 0.1f, 1000.0f, 0.5f * ext.height));
         m_Camera->SetView({ 0, 4, -4 }, { 0, 2, 0}, { 0, 1, 0 });
     }
 

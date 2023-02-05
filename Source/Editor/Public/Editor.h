@@ -9,10 +9,11 @@ namespace Editor {
 	private:
 		// TODO TEST
 		TUniquePtr<Engine::RenderMesh> m_Ms;
-		Engine::XXEngine* m_Engine;
-		TUniquePtr<EditorUI> m_EditorUI;
 		Engine::RenderScene* m_MainScene;
 		Engine::Camera* m_MainCamera;
+
+		Engine::XXEngine* m_Engine;
+		TUniquePtr<EditorUI> m_EditorUI;
 
 		bool m_MousePressed = false;
 		float m_LastX = 0.0f;

@@ -24,6 +24,7 @@ namespace Engine {
 		m_Layouts[DESCS_MATERIAL] = rhi->CreateDescriptorSetLayout(materialDescBindings.size(), materialDescBindings.data());
 		// deferred lighting
 		TVector<RHI::RSDescriptorSetLayoutBinding> deferredLightingBindings;
+		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, RHI::SHADER_STAGE_VERTEX_BIT });// camera
 		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, RHI::SHADER_STAGE_FRAGMENT_BIT }); //light
 		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });//normal
 		deferredLightingBindings.push_back({ RHI::DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });//albedo
@@ -70,7 +71,7 @@ namespace Engine {
 		m_Samplers.clear();
 	}
 
-	void Attachment::Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage)
+	void Image2DCommon::Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage)
 	{
 		Release();
 		GET_RHI(rhi);
@@ -81,22 +82,19 @@ namespace Engine {
 			0, 1, 0, 1);
 	}
 
-	void Attachment::Release()
+	void Image2DCommon::Release()
 	{
 		GET_RHI(rhi);
-		if (nullptr != View) {
+		if(nullptr != Image) {
 			rhi->DestroyImageView(View);
 			View = nullptr;
-		}
-		if (nullptr != Memory) {
 			rhi->FreeMemory(Memory);
 			Memory = nullptr;
-		}
-		if (nullptr != Image) {
 			rhi->DestroyImage(Image);
 			Image = nullptr;
 		}
 	}
+
 	void BufferCommon::Create(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData) {
 		if (Size) Release();
 		RHI_INSTANCE->CreateBufferWithMemory(size, usage, memoryFlags, Buffer, Memory, size, pData);
@@ -319,8 +317,7 @@ namespace Engine {
 		RHI::RGraphicsPipelineCreateInfo info{};
 		info.Shaders.push_back({ RHI::SHADER_STAGE_VERTEX_BIT, vertShaderCode, "main" });
 		info.Shaders.push_back({ RHI::SHADER_STAGE_FRAGMENT_BIT, fragShaderCode, "main" });
-		// vertex input
-		//FillVectorInput(info.Bindings, info.Attributes);
+		// no vertex input
 		// viewport
 		uint32 w = pass->GetFramebuffer()->GetWidth();
 		uint32 h = pass->GetFramebuffer()->GetHeight();

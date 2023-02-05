@@ -4,5 +4,7 @@
 
 namespace Engine {
 	class Material {
+	public:
+		Material() = default;
 	};
 }

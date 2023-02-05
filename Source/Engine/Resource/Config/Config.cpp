@@ -36,20 +36,26 @@ inline ERenderPath ParseRenderPath(const std::string& renderPathStr) {
 	return RENDER_NONE;
 }
 
-ConfigManager::ConfigManager(const char* path) {
-	// get asset root path firstly
-	m_ConfigPath = CONFIG_PATH;
-	FPath configPath = m_ConfigPath / path;
-	TUnorderedMap<String, String> configMap;
-	LoadIniFile(configPath, configMap);
-	m_DefaultFontPath = m_ConfigPath / configMap["DefaultFont"];
-	m_RHIType = ParseRHIType(configMap["RHIType"]);
-	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);
+inline EGPUType ParseGPUType(const std::string& gpuType) {
+	if("Integrated" == gpuType) {
+		return GPU_INTEGRATED;
+	}
+	if("Discrete" == gpuType) {
+		return GPU_DISCRETE;
+	}
+	return GPU_NONE;
 }
 
-ConfigManager::~ConfigManager()
-{
+ConfigManager::ConfigManager(const char* file) {
+	TUnorderedMap<String, String> configMap;
+	LoadIniFile(file, configMap);
+	m_DefaultFontPath = JoinAssetPath(configMap["DefaultFont"].c_str());
+	m_RHIType = ParseRHIType(configMap["RHIType"]);
+	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);
+	m_GpuType = ParseGPUType(configMap["PreferredGPU"]);
 }
+
+ConfigManager::~ConfigManager(){}
 
 
 ConfigManager* GetConfig() {
@@ -58,7 +64,9 @@ ConfigManager* GetConfig() {
 	if(nullptr == s_ConfigManager) {
 		std::lock_guard<std::mutex> lock(s_ConfigManagerMutex);
 		if(nullptr == s_ConfigManager) {
-			s_ConfigManager.reset(new ConfigManager(ENGINE_CONFIG_PATH));
+			String cfgFile = CONFIG_PATH;
+			cfgFile.append(ENGINE_CONFIG_PATH);
+			s_ConfigManager.reset(new ConfigManager(cfgFile.c_str()));
 		}
 	}
 	return s_ConfigManager.get();

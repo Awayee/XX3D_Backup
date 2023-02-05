@@ -1,5 +1,5 @@
-#pragma once
 #include "VulkanUtil.h"
+#include "Resource/Config/Config.h"
 
 namespace RHI {
 	void FindQueueFamilyIndex(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, int* pGraphicsIndex, int* pPresentIndex, int* pComputeIndex)
@@ -167,12 +167,11 @@ namespace RHI {
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 
 		// discrete gpu is first
-
-		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+		auto gpuType = GetConfig()->GetGPUType();
+		ASSERT(gpuType != GPU_NONE, "Invalid GPU!");
+		VkPhysicalDeviceType preferredType = gpuType == GPU_DISCRETE ? VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU : VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+		if(properties.deviceType == preferredType) {
 			info.score += 100;
-		}
-		else if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-			info.score += 10;
 		}
 		VkPhysicalDeviceFeatures features;
 		vkGetPhysicalDeviceFeatures(physicalDevice, &features);

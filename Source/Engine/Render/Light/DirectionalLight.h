@@ -4,8 +4,8 @@
 namespace Engine {
 	class DirectionalLight {
 	private:
-		Math::FVector3 m_LightDir;
-		Math::FVector3 m_LightColor;
+		Math::FVector3 m_LightDir{-1,-1,-1};
+		Math::FVector3 m_LightColor{0.7f,0.8f,0.8f};
 	public:
 		DirectionalLight() = default;
 		void SetDir(const Math::FVector3& dir) { m_LightDir = dir; };

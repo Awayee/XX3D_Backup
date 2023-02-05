@@ -9,6 +9,7 @@ layout(set = 0, binding = 1) uniform CameraUniform{
     mat4 View;
     mat4 Proj;
     mat4 VP;
+    vec3 pos;
 }cameraUniform;
 
 layout(set = 1, binding=0)uniform ModelUniform{
@@ -18,6 +19,6 @@ layout(set = 1, binding=0)uniform ModelUniform{
 layout(location = 0) out vec3 worldNormal;
 
 void main(){
-    gl_Position = cameraUniform.Proj * cameraUniform.View * modelUniform.Model * vec4(inPosition, 1.0);
+    gl_Position = cameraUniform.VP * modelUniform.Model * vec4(inPosition, 1.0);
     worldNormal = mat3(transpose(inverse(modelUniform.Model))) * inNormal;
 }

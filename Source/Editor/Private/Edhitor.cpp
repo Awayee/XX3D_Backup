@@ -38,9 +38,6 @@ namespace Editor {
 				Math::FQuaternion::AngleAxis(y * 0.01f, up) *
 				Math::FQuaternion::AngleAxis(x * 0.01f, right);
 			forward = rotateQuat.RotateVector3(forward);
-			//forward = Math::FQuaternion::AngleAxis(x * 0.01f, right).RotateVector3(forward);
-			//forward = Math::FQuaternion::AngleAxis(y * 0.01f, up).RotateVector3(forward);
-			//forward = Math::FQuaternion::AngleAxis(z * 0.01f, forward).RotateVector3(forward);
 			at = eye + forward;
 		}
 		else {

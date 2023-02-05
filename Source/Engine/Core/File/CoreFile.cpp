@@ -13,11 +13,14 @@ void LoadFileCode(const char* filePath,TVector<char>& code) {
 
 // lod .ini file
 
-void LoadIniFile(const FPath& filePath, TUnorderedMap<String, String>& configMap) {
+void LoadIniFile(const char* filePath, TUnorderedMap<String, String>& configMap) {
 	std::ifstream configFile(filePath);
 	String fileLine;
 	configMap.clear();
 	while (std::getline(configFile, fileLine)) {
+		if(fileLine.empty() || fileLine[0] == '#') {
+			continue;
+		}
 		uint32 separate = fileLine.find_first_of('=');
 		if (separate > 0 && separate < fileLine.length() - 1) {
 			String name = fileLine.substr(0, separate);

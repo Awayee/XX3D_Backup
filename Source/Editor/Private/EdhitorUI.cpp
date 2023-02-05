@@ -20,7 +20,7 @@ namespace Editor {
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_None;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
-		io.Fonts->AddFontFromFileTTF(GetConfig()->GetDefaultFontPath().generic_string().c_str(), contentScale * 16, nullptr, nullptr);
+		io.Fonts->AddFontFromFileTTF(GetConfig()->GetDefaultFontPath().c_str(), contentScale * 16, nullptr, nullptr);
 		ASSERT(io.Fonts->Build(), "Failed to build fonts");
 		io.IniFilename = nullptr; // Do not save settings
 

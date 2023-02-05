@@ -17,7 +17,7 @@ namespace Engine {
 
 		// uniform
 		m_TransformUniform.CreateForUniform(sizeof(Math::FMatrix4x4), &m_TransformMat);
-		m_MaterialUniform.CreateForUniform(sizeof(Math::FVector4), &m_MaterialUniform);
+		m_MaterialUniform.CreateForUniform(sizeof(Math::FVector4), &m_MaterialParam);
 		// descriptor set
 		m_TransformDescs = RHI_INSTANCE->AllocateDescriptorSet(DescsMgr::Get(DESCS_MODEL));
 		m_TransformDescs->UpdateUniformBuffer(0, m_TransformUniform.Buffer);

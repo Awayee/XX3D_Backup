@@ -146,10 +146,11 @@ namespace Engine {
 		}
 		// create descriptor set
 		m_DeferredLightingDescs = rhi->AllocateDescriptorSet(DescsMgr::Get(DESCS_DEFERRED_LIGHTING));
-		m_DeferredLightingDescs->UpdateUniformBuffer(0, RenderScene::GetDefaultScene()->m_LightUniform.Buffer);
-		m_DeferredLightingDescs->UpdateInputAttachment(1, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_NORMAL));
-		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_ALBEDO));
-		m_DeferredLightingDescs->UpdateInputAttachment(3, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_DEPTH));
+		m_DeferredLightingDescs->UpdateUniformBuffer(0, RenderScene::GetDefaultScene()->m_CameraUniform.Buffer);
+		m_DeferredLightingDescs->UpdateUniformBuffer(1, RenderScene::GetDefaultScene()->m_LightUniform.Buffer);
+		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_NORMAL));
+		m_DeferredLightingDescs->UpdateInputAttachment(3, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_ALBEDO));
+		m_DeferredLightingDescs->UpdateInputAttachment(4, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_DEPTH));
 	}
 
 
