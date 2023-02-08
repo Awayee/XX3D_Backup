@@ -71,7 +71,33 @@ namespace Engine {
 		m_Samplers.clear();
 	}
 
-	void Image2DCommon::Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage)
+	TextureData::TextureData(const char* file, uint8 channels)
+	{
+		int w, h, n;
+		Pixels = LoadAssetImage(file, &w, &h, &n, channels);
+		Width = w;
+		Height = h;
+		Depth = n;
+		switch (channels)
+		{
+		case 2:
+			Format = RHI::FORMAT_R32G32_SFLOAT;
+			break;
+		case 4:
+			Format = RHI::FORMAT_R32G32B32A32_SFLOAT;
+		default:
+			Format = RHI::FORMAT_UNDEFINED;
+		}
+	}
+
+	TextureData::~TextureData()
+	{
+		if (Pixels) {
+			FreeImage(Pixels);
+		}
+	}
+
+	void TextureCommon::Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage)
 	{
 		Release();
 		GET_RHI(rhi);
@@ -82,7 +108,7 @@ namespace Engine {
 			0, 1, 0, 1);
 	}
 
-	void Image2DCommon::Release()
+	void TextureCommon::Release()
 	{
 		GET_RHI(rhi);
 		if(nullptr != Image) {

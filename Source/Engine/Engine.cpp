@@ -1,14 +1,15 @@
 #include "Engine.h"
 #include "Render/Window/WindowSystemGLFW.h"
 #include "Core/macro.h"
+#include "Resource/Config/Config.h"
 
 namespace Engine {
 	XXEngine::XXEngine()
 	{
 		m_Window = new WindowSystemGLFW();
 		WindowInitInfo initInfo;
-		initInfo.width = 1024;
-		initInfo.height = 768;
+		initInfo.width = GetConfig()->GetWindowSize().Width;
+		initInfo.height = GetConfig()->GetWindowSize().Height;
 		initInfo.title = PROJECT_NAME;
 		initInfo.resizeable = true;
 		m_Window->Initialize(initInfo);

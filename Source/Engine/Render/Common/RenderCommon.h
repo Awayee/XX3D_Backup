@@ -45,7 +45,22 @@ namespace Engine {
 		static RHI::RSampler* Get(ESamplerType type) { return Instance()->Get(type); }
 	};
 
-	struct Image2DCommon {
+	struct TextureData {
+	public:
+		uint32 Width{0};
+		uint32 Height{0};
+		uint32 Depth{0};
+		uint32 Miplevels{0};
+		uint32 ArrayLayers{0};
+		void* Pixels{0};
+		RHI::RFormat Format{RHI::FORMAT_UNDEFINED};
+		TextureData() = default;
+		TextureData(uint32 width, uint32 height, uint32 depth=1) : Width(width), Height(height), Depth(depth) {};
+		TextureData(const char* file, uint8 channels=4);
+		~TextureData();
+	};
+
+	struct TextureCommon {
 		RHI::RImage* Image{nullptr};
 		RHI::RImageView* View{nullptr};
 		RHI::RMemory* Memory{nullptr};
@@ -108,9 +123,9 @@ namespace Engine {
 	protected:
 		RHI::RRenderPass* m_RHIPass{nullptr};
 		RHI::RFramebuffer* m_Framebuffer{nullptr};
-		TVector<Image2DCommon> m_Attachments;
-		TVector<TVector<Image2DCommon*>> m_ColorAttachments;
-		TVector<Image2DCommon*> m_DepthAttachments;
+		TVector<TextureCommon> m_Attachments;
+		TVector<TVector<TextureCommon*>> m_ColorAttachments;
+		TVector<TextureCommon*> m_DepthAttachments;
 	public:
 		virtual ~RenderPassCommon();
 		RHI::RRenderPass* GetRHIPass() const { return m_RHIPass; }

@@ -27,6 +27,10 @@ private:
 	ERHIType m_RHIType;
 	ERenderPath m_RenderPath;
 	EGPUType m_GpuType;
+	struct {
+		uint32 Width;
+		uint32 Height;
+	}m_WindowSize;
 public:
 	ConfigManager(const char* configPath);
 	~ConfigManager();
@@ -34,6 +38,7 @@ public:
 	ERHIType GetRHIType() { return m_RHIType; }
 	ERenderPath GetRenderPath() { return m_RenderPath; }
 	EGPUType GetGPUType() { return m_GpuType; }
+	const auto& GetWindowSize() { return m_WindowSize; }
 };
 
 ConfigManager* GetConfig();

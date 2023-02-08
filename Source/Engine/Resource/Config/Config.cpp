@@ -4,7 +4,7 @@
 #include <mutex>
 
 #include "Core/macro.h"
-#include "Core/Json/CoreJson.h"
+#include "Core/File/CoreJson.h"
 #include "Core/Container/Container.h"
 #include "../ResourcesMacro.h"
 
@@ -53,6 +53,8 @@ ConfigManager::ConfigManager(const char* file) {
 	m_RHIType = ParseRHIType(configMap["RHIType"]);
 	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);
 	m_GpuType = ParseGPUType(configMap["PreferredGPU"]);
+	m_WindowSize.Width = std::atoi(configMap["WindowWidth"].c_str());
+	m_WindowSize.Height = std::atoi(configMap["WindowHeight"].c_str());
 }
 
 ConfigManager::~ConfigManager(){}
