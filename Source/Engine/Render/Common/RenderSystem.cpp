@@ -6,6 +6,7 @@
 #include "ImGuiImpl.h"
 #include "../Window/WindowSystem.h"
 #include "../Scene/RenderScene.h"
+#include "Render/Material/Material.h"
 #include "Resource/Config/Config.h"
 
 namespace Engine {
@@ -41,6 +42,8 @@ namespace Engine {
 		RenderScene::Clear();
 		DescsMgr::Release();
 		SamplerMgr::Release();
+		MaterialMgr::Release();
+		TextureMgr::Release();
 		m_GBufferPipeline.reset();
 		m_DeferredLightingPipeline.reset();
 		m_PresentPass.reset();

@@ -99,7 +99,7 @@ namespace RHI{
 		virtual void BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const RSRect2D& area) = 0;
 		virtual void NextSubpass() = 0;
 		virtual void EndRenderPass() = 0;
-		virtual void CopyBufferToImage(RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayout, uint32 layoutCount) = 0;
+		virtual void CopyBufferToImage(RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayer, uint32 layerCount) = 0;
 		virtual void BlitImage(RCommandBuffer* cmd, RImage* srcImage, RImage* dstImage, const RSImageBlit& region) = 0;
 		virtual void BindPipeline(RPipeline* pipeline) = 0;
 		virtual void BindDescriptorSet(RPipelineLayout* layout, RDescriptorSet* descriptorSet, uint32 setIdx, RPipelineType pipelineType) = 0;

@@ -60,3 +60,6 @@ inline void Swap(T& left, T& right) {
 
 template <class T, int L>
 constexpr int ArraySize(const T(&arr)[L]) { return L; }
+
+template<class T1, class T2>
+using TPair = std::pair<T1, T2>;

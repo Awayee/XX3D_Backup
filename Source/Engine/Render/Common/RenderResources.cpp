@@ -1,5 +1,6 @@
 #include "RenderResources.h"
 #include "RHI/RHI.h"
+#include "Core/File/CoreFile.h"
 
 namespace Engine {
 
@@ -15,14 +16,14 @@ namespace Engine {
 		m_Vertex.reset(new BufferCommon); m_Vertex->CreateForVertex(bufferSize);
 
 		BufferCommon vertexStaging;
-		vertexStaging.CreateForStaging(bufferSize, (void*)vertices.data());
+		vertexStaging.CreateForTransfer(bufferSize, (void*)vertices.data());
 
 		if(m_IndexCount > 0) {
 			bufferSize = m_IndexCount * sizeof(IndexType);
 			m_Index.reset(new BufferCommon); m_Index->CreateForIndex(bufferSize);
 			
 			BufferCommon indexStaging;
-			indexStaging.CreateForStaging(bufferSize, (void*)indices.data());
+			indexStaging.CreateForTransfer(bufferSize, (void*)indices.data());
 			rhi->ImmediateCommit([this, &vertexStaging, &indexStaging](RHI::RCommandBuffer* cmd) {
 				cmd->CopyBuffer(vertexStaging.Buffer, m_Vertex->Buffer, 0, 0, vertexStaging.Size);
 				cmd->CopyBuffer(indexStaging.Buffer, m_Index->Buffer, 0, 0, indexStaging.Size);
@@ -88,7 +89,7 @@ namespace Engine {
 		uint32 bufferSize = vertices.size() * sizeof(Math::FVector3);
 		m_VertexBuffer.CreateForVertex(bufferSize);
 		BufferCommon staging;
-		staging.CreateForStaging(bufferSize, (void*)vertices.data());
+		staging.CreateForTransfer(bufferSize, (void*)vertices.data());
 		RHI_INSTANCE->ImmediateCommit([&staging, this, bufferSize](RHI::RCommandBuffer* cmd) {
 			cmd->CopyBuffer(staging.Buffer, m_VertexBuffer.Buffer, 0, 0, bufferSize);
 		});

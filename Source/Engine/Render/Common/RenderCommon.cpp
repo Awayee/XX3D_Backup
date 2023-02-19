@@ -6,7 +6,7 @@
 
 namespace Engine {
 
-	DescsMgrIns::DescsMgrIns() {
+	DescsMgr::DescsMgr() {
 		GET_RHI(rhi);
 		m_Layouts.resize(DESCS_COUNT);
 		// lighting, camera
@@ -20,7 +20,7 @@ namespace Engine {
 		m_Layouts[DESCS_MODEL] = rhi->CreateDescriptorSetLayout(modelDescBindings.size(), modelDescBindings.data());
 		// material
 		TVector<RHI::RSDescriptorSetLayoutBinding> materialDescBindings;
-		materialDescBindings.push_back({ RHI::DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });
+		materialDescBindings.push_back({ RHI::DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, RHI::SHADER_STAGE_FRAGMENT_BIT });
 		m_Layouts[DESCS_MATERIAL] = rhi->CreateDescriptorSetLayout(materialDescBindings.size(), materialDescBindings.data());
 		// deferred lighting
 		TVector<RHI::RSDescriptorSetLayoutBinding> deferredLightingBindings;
@@ -32,7 +32,7 @@ namespace Engine {
 		m_Layouts[DESCS_DEFERRED_LIGHTING] = rhi->CreateDescriptorSetLayout(deferredLightingBindings.size(), deferredLightingBindings.data());
 	}
 
-	DescsMgrIns::~DescsMgrIns()
+	DescsMgr::~DescsMgr()
 	{
 		GET_RHI(rhi);
 		for(auto layout: m_Layouts) {
@@ -41,7 +41,7 @@ namespace Engine {
 		m_Layouts.clear();
 	}
 
-	SamplerMgrIns::SamplerMgrIns()
+	SamplerMgr::SamplerMgr()
 	{
 		GET_RHI(rhi);
 		m_Samplers.resize(SAMPLER_COUNT);
@@ -62,7 +62,7 @@ namespace Engine {
 		m_Samplers[SAMPLER_DEFERRED_LIGHTING] = rhi->CreateSampler(deferredLightingInfo);
 	}
 
-	SamplerMgrIns::~SamplerMgrIns()
+	SamplerMgr::~SamplerMgr()
 	{
 		GET_RHI(rhi);
 		for(auto sampler: m_Samplers) {
@@ -108,6 +108,16 @@ namespace Engine {
 			0, 1, 0, 1);
 	}
 
+	void TextureCommon::UpdatePixels(void* pixels, int channels) {
+		BufferCommon b;
+		b.CreateForTransfer(Image->GetExtent().width * Image->GetExtent().height * channels, pixels);
+		RHI_INSTANCE->ImmediateCommit([&b, this](RHI::RCommandBuffer* cmd) {
+			cmd->TransitionImageLayout(Image, RHI::IMAGE_LAYOUT_UNDEFINED, RHI::IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, 1, 0, 1, RHI::IMAGE_ASPECT_COLOR_BIT);
+			cmd->CopyBufferToImage(b.Buffer, Image, RHI::IMAGE_ASPECT_COLOR_BIT, 0, 0, 1);
+			cmd->TransitionImageLayout(Image, RHI::IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, RHI::IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 1, 0, 1, RHI::IMAGE_ASPECT_COLOR_BIT);
+		});
+	}
+
 	void TextureCommon::Release()
 	{
 		GET_RHI(rhi);
@@ -119,6 +129,36 @@ namespace Engine {
 			rhi->DestroyImage(Image);
 			Image = nullptr;
 		}
+	}
+
+	TextureMgr::TextureMgr(){
+		m_DefaultTextures.resize(MAX_NUM);
+		m_DefaultTextures[WHITE].Create(FORMAT, DEFAULT_SIZE, DEFAULT_SIZE, USAGE);
+		TVector<Math::UCVector4> whiteColors(DEFAULT_SIZE * DEFAULT_SIZE, { 255,255,255,255 });
+		m_DefaultTextures[WHITE].UpdatePixels(whiteColors.data(), CHANNELS);
+
+		m_DefaultTextures[BLACK].Create(FORMAT, DEFAULT_SIZE, DEFAULT_SIZE, USAGE);
+		TVector<Math::UCVector4> blackColors(DEFAULT_SIZE * DEFAULT_SIZE, { 0,0,0,255 });
+		m_DefaultTextures[BLACK].UpdatePixels(blackColors.data(), CHANNELS);
+
+		m_DefaultTextures[GRAY].Create(FORMAT, DEFAULT_SIZE, DEFAULT_SIZE, USAGE);
+		TVector<Math::UCVector4> grayColors(DEFAULT_SIZE * DEFAULT_SIZE, { 128,128,128,255 });
+		m_DefaultTextures[GRAY].UpdatePixels(grayColors.data(), CHANNELS);
+	}
+
+	TextureCommon* TextureMgr::InstGetTexture(const char* file)
+	{
+		auto finded = m_TextureMap.find(file);
+		if (finded != m_TextureMap.end()) {
+			return &finded->second;
+		}
+		TextureCommon& tex = m_TextureMap.insert({ file, {} }).first->second;
+		int w, h, n;
+		float* pixels = LoadAssetImage(file, &w, &h, &n, CHANNELS);
+		tex.Create(FORMAT, w, h, USAGE);
+		tex.UpdatePixels(pixels, CHANNELS);
+		return &tex;
+
 	}
 
 	void BufferCommon::Create(uint64 size, RHI::RBufferUsageFlags usage, RHI::RMemoryPropertyFlags memoryFlags, void* pData) {
@@ -152,9 +192,6 @@ namespace Engine {
 
 	RenderPassCommon::~RenderPassCommon()
 	{
-		for(auto attachment: m_Attachments) {
-			attachment.Release();
-		}
 		m_Attachments.clear();
 		GET_RHI(rhi);
 		if(nullptr != m_Framebuffer) rhi->DestroyFramebuffer(m_Framebuffer);

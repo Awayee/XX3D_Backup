@@ -110,18 +110,20 @@ namespace Engine {
 				}
 
 				// TODO textures
-				//if (primitive.material > -1) {
-				//	TVector<std::string>& textureNames = primitives[index].textures;
-				//	const tinygltf::Material& mat = model.materials[primitive.material];
-				//	const tinygltf::Texture& tex = model.textures[mat.pbrMetallicRoughness.baseColorTexture.index];
-				//	const tinygltf::Image& img = model.images[tex.source];
-				//	textureNames.resize(1);
-				//	uint32 typeIdx = img.mimeType.find('/');
-				//	const char* imgType = &img.mimeType[typeIdx + 1];
-				//	std::string imageFile = img.name + '.' + imgType;
-				//	textureNames[0] = "textures\\";
-				//	textureNames[0].append(imageFile);
-				//}
+				if (primitive.material > -1) {
+					TVector<std::string>& textureNames = primitives[index].textures;
+					const tinygltf::Material& mat = model.materials[primitive.material];
+					if(mat.pbrMetallicRoughness.baseColorTexture.index < model.textures.size()) {
+						const tinygltf::Texture& tex = model.textures[mat.pbrMetallicRoughness.baseColorTexture.index];
+						const tinygltf::Image& img = model.images[tex.source];
+						textureNames.resize(1);
+						uint32 typeIdx = img.mimeType.find('/');
+						const char* imgType = &img.mimeType[typeIdx + 1];
+						std::string imageFile = img.name + '.' + imgType;
+						textureNames[0] = "textures\\";
+						textureNames[0].append(imageFile);
+					}
+				}
 				++index;
 				auto& info = primitives[index - 1];
 				auto& verts = info.vertices;

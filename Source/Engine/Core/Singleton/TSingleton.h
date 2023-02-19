@@ -2,13 +2,13 @@
 #include "../Concurrency/Concurrency.h"
 template<typename T>
 class TSingleton {
-private:
+protected:
 	static T* s_Instance;
 	static Mutex s_Mutex;
 	TSingleton(const TSingleton<T>&) = delete;
 	TSingleton(TSingleton<T>&&) = delete;
 	TSingleton() = default;
-	~TSingleton() { Release(); }
+	virtual ~TSingleton() = default;
 public:
 
 	template <typename...Args>
@@ -25,6 +25,9 @@ public:
 		}
 	}
 	static T* Instance() {
+		if(nullptr == s_Instance) {
+			Initialize();
+		}
 		return s_Instance;
 	}
 };

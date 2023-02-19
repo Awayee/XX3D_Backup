@@ -12,37 +12,29 @@ namespace Engine {
 		DESCS_COUNT
 	};
 
-	class DescsMgrIns {
-	private:
-		TVector<RHI::RDescriptorSetLayout*> m_Layouts;
-	public:
-		DescsMgrIns();
-		~DescsMgrIns();
-		RHI::RDescriptorSetLayout* Get(EDescsType type) { return m_Layouts[type]; }
-	};
-
 	enum ESamplerType{
 		SAMPLER_DEFAULT,
 		SAMPLER_DEFERRED_LIGHTING,
 		SAMPLER_COUNT
 	};
-	class SamplerMgrIns {
+
+	class DescsMgr: public TSingleton<DescsMgr> {
+
+	private:
+		TVector<RHI::RDescriptorSetLayout*> m_Layouts;
+	public:
+		DescsMgr();
+		~DescsMgr();
+		static RHI::RDescriptorSetLayout* Get(EDescsType type) { return Instance()->m_Layouts[type]; }
+	};
+
+	class SamplerMgr: public TSingleton<SamplerMgr> {
 	private:
 		TVector<RHI::RSampler*> m_Samplers;
 	public:
-		SamplerMgrIns();
-		~SamplerMgrIns();
-		RHI::RSampler* Get(ESamplerType type) { return m_Samplers[type]; }
-	};
-
-	class DescsMgr: public TSingleton<DescsMgrIns> {
-	public:
-		static RHI::RDescriptorSetLayout* Get(EDescsType type) { return Instance()->Get(type); }
-	};
-
-	class SamplerMgr: public TSingleton<SamplerMgrIns> {
-	public:
-		static RHI::RSampler* Get(ESamplerType type) { return Instance()->Get(type); }
+		SamplerMgr();
+		~SamplerMgr();
+		static RHI::RSampler* Get(ESamplerType type) { return Instance()->m_Samplers[type]; }
 	};
 
 	struct TextureData {
@@ -65,7 +57,33 @@ namespace Engine {
 		RHI::RImageView* View{nullptr};
 		RHI::RMemory* Memory{nullptr};
 		void Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage);
+		void UpdatePixels(void* pixels, int channels);
 		void Release();
+		~TextureCommon() { Release(); }
+	};
+
+	class TextureMgr : public TSingleton<TextureMgr> {
+	private:
+		const static RHI::RFormat FORMAT = RHI::FORMAT_R8G8B8A8_SRGB;
+		const static RHI::RImageUsageFlags USAGE = RHI::IMAGE_USAGE_SAMPLED_BIT | RHI::IMAGE_USAGE_TRANSFER_DST_BIT;
+		const static int CHANNELS = 4;
+		const static uint32 DEFAULT_SIZE = 2;
+
+		friend TSingleton<TextureMgr>;
+		TStrMap<TextureCommon> m_TextureMap;
+		TVector<TextureCommon> m_DefaultTextures;
+		TextureMgr();
+		~TextureMgr() {}
+		TextureCommon* InstGetTexture(const char* file);
+	public:
+		enum DefaultType {
+			WHITE,
+			BLACK,
+			GRAY,
+			MAX_NUM
+		};
+		static TextureCommon* Get(const char* file) { return Instance()->InstGetTexture(file); }
+		static TextureCommon* Get(DefaultType type) { return &Instance()->m_DefaultTextures[type]; }
 	};
 
 	struct BufferCommon {
@@ -92,7 +110,7 @@ namespace Engine {
 			Create(size, RHI::BUFFER_USAGE_INDEX_BUFFER_BIT | RHI::BUFFER_USAGE_TRANSFER_DST_BIT, RHI::MEMORY_PROPERTY_DEVICE_LOCAL_BIT, nullptr);
 		};
 		// staging buffer
-		void CreateForStaging(uint64 size, void* pData){
+		void CreateForTransfer(uint64 size, void* pData){
 			Create(size, RHI::BUFFER_USAGE_TRANSFER_SRC_BIT, RHI::MEMORY_PROPERTY_HOST_COHERENT_BIT | RHI::MEMORY_PROPERTY_HOST_VISIBLE_BIT, pData);
 		};
 		// uniform buffer

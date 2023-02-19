@@ -313,12 +313,18 @@ namespace Math {
     typedef Vector2<float>  FVector2;
     typedef Vector2<double> DVector2;
     typedef Vector2<int>    IVector2;
+    typedef Vector2<unsigned int> UVector2;
+    typedef Vector2<unsigned char> UCVector2;
 
     typedef Vector3<float>  FVector3;
     typedef Vector3<double> DVector3;
     typedef Vector3<int>	IVector3;
+    typedef Vector3<unsigned int> UVector3;
+    typedef Vector3<unsigned char> UCVector3;
 
     typedef Vector4<float>  FVector4;
     typedef Vector4<double> DVector4;
     typedef Vector4<int>	IVector4;
+    typedef Vector4<unsigned int> UVector4;
+    typedef Vector4<unsigned char> UCVector4;
 }
