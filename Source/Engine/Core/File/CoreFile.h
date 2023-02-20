@@ -21,5 +21,5 @@ void LoadIniFile(const char* file, TUnorderedMap<String, String>& configMap);
 void LoadShaderFile(const char* file, TVector<char>& code);
 
 // image
-float* LoadAssetImage(const char* file, int* w, int* h, int* n, int channels);
+unsigned char* LoadAssetImage(const char* file, int* w, int* h, int* n, int channels);
 void FreeImage(void* data);

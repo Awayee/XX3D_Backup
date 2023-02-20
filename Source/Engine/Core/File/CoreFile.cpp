@@ -43,9 +43,9 @@ void LoadShaderFile(const char* file, TVector<char>& code){
 	LoadFileCode(shaderPath, code);
 }
 
-float* LoadAssetImage(const char* file, int* w, int* h, int* n, int channels){
+unsigned char* LoadAssetImage(const char* file, int* w, int* h, int* n, int channels){
 	PARSE_ASSETS_FILE(file);
-	return stbi_loadf(file, w, h, n, channels);
+	return stbi_load(file, w, h, n, channels);
 }
 
 void FreeImage(void* data){

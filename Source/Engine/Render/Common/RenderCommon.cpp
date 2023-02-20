@@ -154,7 +154,7 @@ namespace Engine {
 		}
 		TextureCommon& tex = m_TextureMap.insert({ file, {} }).first->second;
 		int w, h, n;
-		float* pixels = LoadAssetImage(file, &w, &h, &n, CHANNELS);
+		uint8* pixels = LoadAssetImage(file, &w, &h, &n, CHANNELS);
 		tex.Create(FORMAT, w, h, USAGE);
 		tex.UpdatePixels(pixels, CHANNELS);
 		return &tex;
