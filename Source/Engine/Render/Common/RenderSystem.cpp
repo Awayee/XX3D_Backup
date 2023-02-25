@@ -6,12 +6,12 @@
 #include "ImGuiImpl.h"
 #include "../Window/WindowSystem.h"
 #include "../Scene/RenderScene.h"
+#include "Render/Camera/Camera.h"
 #include "Render/Material/Material.h"
 #include "Resource/Config/Config.h"
 
 namespace Engine {
-	RenderSystem::RenderSystem(WindowSystemBase* window)
-	{
+	RenderSystem::RenderSystem(WindowSystemBase* window){
 		int windowWidth, windowHeight;
 		window->GetWindowSize(&windowWidth, &windowHeight);
 		// init rhi
@@ -135,12 +135,17 @@ namespace Engine {
 		ImGuiDestroyFontUploadObjects();
 	}
 
+	void RenderSystem::SetRenderArea(URect2D&& area){
+		ASSERT(area.w > 0 && area.h > 0, "Render area invalid!");
+		m_RenderArea = std::move(area);
+		RenderScene::GetDefaultScene()->GetMainCamera()->SetAspect((float)m_RenderArea.w / m_RenderArea.h);
+		CreatePipelines();
+	}
+
 
 	void RenderSystem::CreateRenderResources()
 	{
 		m_PresentPass.reset(new DeferredLightingPass());
-		m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_BASE));
-		m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_DEFERRED_LIGHTING));
 		// create command buffers
 		GET_RHI(rhi);
 		m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -154,6 +159,13 @@ namespace Engine {
 		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_NORMAL));
 		m_DeferredLightingDescs->UpdateInputAttachment(3, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_ALBEDO));
 		m_DeferredLightingDescs->UpdateInputAttachment(4, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_DEPTH));
+	}
+
+	void RenderSystem::CreatePipelines(){
+		if(m_RenderArea.w > 0 && m_RenderArea.h > 0) {
+			m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_BASE, m_RenderArea));
+			m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_DEFERRED_LIGHTING, m_RenderArea));			
+		}
 	}
 
 
@@ -171,5 +183,6 @@ namespace Engine {
 			if(cmd)rhi->FreeCommandBuffer(cmd);
 		}
 		CreateRenderResources();
+		CreatePipelines();
 	}
 }

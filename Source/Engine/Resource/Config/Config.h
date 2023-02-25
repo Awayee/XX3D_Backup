@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/File/CoreFile.h"
+#include "Core/BaseType/Structs.h"
 
 enum ERHIType {
 	RHI_Vulkan,
@@ -27,10 +28,7 @@ private:
 	ERHIType m_RHIType;
 	ERenderPath m_RenderPath;
 	EGPUType m_GpuType;
-	struct {
-		uint32 Width;
-		uint32 Height;
-	}m_WindowSize;
+	USize2D m_WindowSize;
 public:
 	ConfigManager(const char* configPath);
 	~ConfigManager();
@@ -38,7 +36,7 @@ public:
 	ERHIType GetRHIType() { return m_RHIType; }
 	ERenderPath GetRenderPath() { return m_RenderPath; }
 	EGPUType GetGPUType() { return m_GpuType; }
-	const auto& GetWindowSize() { return m_WindowSize; }
+	const USize2D& GetWindowSize() { return m_WindowSize; }
 };
 
 ConfigManager* GetConfig();

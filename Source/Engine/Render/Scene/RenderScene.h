@@ -40,6 +40,8 @@ namespace Engine {
 		void UpdateUniform();
 		void CreateResources();
 		void CreateDescriptorSets();
+		void Update();
+		void RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout);
 	public:
 		static TUniquePtr<RenderScene> s_Default;
 		static RenderScene* GetDefaultScene(); // TODO TEST
@@ -50,7 +52,5 @@ namespace Engine {
 		~RenderScene();
 		void AddRenderObject(RenderObject* obj);
 		void RemoveRenderObject(RenderObject* obj);
-		void Update();
-		void RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout);
 	};
 }

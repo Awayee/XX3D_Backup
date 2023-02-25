@@ -1,10 +1,8 @@
 #include "CoreFile.h"
 #include "../macro.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 
 #define PARSE_ASSETS_FILE(f)\
-	char __s[128]; strcpy(__s, ASSETS_PATH); strcat(__s, f); f=__s
+	char __s[128]; strcpy(__s, PROJECT_ASSETS); strcat(__s, f); f=__s
 
 void LoadFileCode(const char* file,TVector<char>& code) {
 	std::ifstream f(file, std::ios::ate | std::ios::binary);
@@ -19,8 +17,11 @@ void LoadFileCode(const char* file,TVector<char>& code) {
 
 // lod .ini file
 
-void LoadIniFile(const char* file, TUnorderedMap<String, String>& configMap) {
+bool LoadIniFile(const char* file, TUnorderedMap<String, String>& configMap) {
 	std::ifstream configFile(file);
+	if(!configFile.is_open()) {
+		return false;
+	}
 	String fileLine;
 	configMap.clear();
 	while (std::getline(configFile, fileLine)) {
@@ -34,6 +35,7 @@ void LoadIniFile(const char* file, TUnorderedMap<String, String>& configMap) {
 			configMap.insert({ std::move(name), std::move(value) });
 		}
 	}
+	return true;
 }
 
 void LoadShaderFile(const char* file, TVector<char>& code){
@@ -41,13 +43,4 @@ void LoadShaderFile(const char* file, TVector<char>& code){
 	strcpy(shaderPath, SHADER_PATH);
 	strcat(shaderPath, file);
 	LoadFileCode(shaderPath, code);
-}
-
-unsigned char* LoadAssetImage(const char* file, int* w, int* h, int* n, int channels){
-	PARSE_ASSETS_FILE(file);
-	return stbi_load(file, w, h, n, channels);
-}
-
-void FreeImage(void* data){
-	stbi_image_free(data);
 }

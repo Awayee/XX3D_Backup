@@ -4,11 +4,15 @@
 #include <mutex>
 
 #include "Core/macro.h"
-#include "Core/File/CoreJson.h"
 #include "Core/Container/Container.h"
 #include "../ResourcesMacro.h"
+#include "Resource/Assets/Assets.h"
 
-#define ENGINE_CONFIG_PATH "Engine/EngineConfig.ini"
+#define PARSE_CONFIG_FILE(f)\
+	char __s[128]; strcpy(__s, PROJECT_CONFIG); strcat(__s, f); f=__s
+
+
+#define ENGINE_CONFIG_FILE "EngineConfig.ini"
 
 inline ERHIType ParseRHIType(const std::string& rhiTypeStr) {
 	if ("Vulkan" == rhiTypeStr) {
@@ -48,13 +52,13 @@ inline EGPUType ParseGPUType(const std::string& gpuType) {
 
 ConfigManager::ConfigManager(const char* file) {
 	TUnorderedMap<String, String> configMap;
-	LoadIniFile(file, configMap);
-	m_DefaultFontPath = JoinAssetPath(configMap["DefaultFont"].c_str());
+	ASSERT(LoadIniFile(file, configMap), "");
+	m_DefaultFontPath = configMap["DefaultFont"];
 	m_RHIType = ParseRHIType(configMap["RHIType"]);
 	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);
 	m_GpuType = ParseGPUType(configMap["PreferredGPU"]);
-	m_WindowSize.Width = std::atoi(configMap["WindowWidth"].c_str());
-	m_WindowSize.Height = std::atoi(configMap["WindowHeight"].c_str());
+	m_WindowSize.w = std::atoi(configMap["WindowWidth"].c_str());
+	m_WindowSize.h = std::atoi(configMap["WindowHeight"].c_str());
 }
 
 ConfigManager::~ConfigManager(){}
@@ -66,9 +70,9 @@ ConfigManager* GetConfig() {
 	if(nullptr == s_ConfigManager) {
 		std::lock_guard<std::mutex> lock(s_ConfigManagerMutex);
 		if(nullptr == s_ConfigManager) {
-			String cfgFile = CONFIG_PATH;
-			cfgFile.append(ENGINE_CONFIG_PATH);
-			s_ConfigManager.reset(new ConfigManager(cfgFile.c_str()));
+			const char* configFile = ENGINE_CONFIG_FILE;
+			PARSE_CONFIG_FILE(configFile);
+			s_ConfigManager.reset(new ConfigManager(configFile));
 		}
 	}
 	return s_ConfigManager.get();

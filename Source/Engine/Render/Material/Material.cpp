@@ -32,7 +32,7 @@ namespace Engine {
 			return m_DefaultMaterial.get();
 		}
 		m_DefaultMaterial.reset(new Material());
-		m_DefaultMaterial->SetTexture(TextureMgr::Get(TextureMgr::GRAY));
+		m_DefaultMaterial->SetTexture(TextureMgr::Get(TextureMgr::WHITE));
 		return m_DefaultMaterial.get();
 	}
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include <chrono>
-#include "../typedefine.h"
+#include "Core/BaseType/typedefine.h"
 
 typedef std::chrono::steady_clock::time_point TimePoint;
 

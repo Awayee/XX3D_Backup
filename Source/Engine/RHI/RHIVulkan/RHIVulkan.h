@@ -59,7 +59,7 @@ namespace RHI{
 
 
 		VkSwapchainKHR m_Swapchain{ nullptr };
-		RSExtent2D m_SwapchainExtent;
+		USize2D m_SwapchainExtent;
 		uint32 m_CurrentSwapchainImageIndex;
 		TVector<VkImage> m_SwapchainImages;
 		TVector<RImageViewVk> m_SwapchainImageViews;
@@ -82,7 +82,7 @@ namespace RHI{
 		void CreateSwapchain();
 		void ClearSwapchain();
 #pragma endregion
-		RImageVk* CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32 mipLevels, uint32 arrayLayers, 
+		RImageVk* CreateImage(RImageType type, RFormat format, USize3D&& extent, uint32 mipLevels, uint32 arrayLayers, 
 			RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage);
 	public:
 		RHIVulkan() = default;
@@ -91,7 +91,7 @@ namespace RHI{
 		RSVkImGuiInitInfo GetImGuiInitInfo();
 		uint8 GetMaxFramesInFlight() override { return m_MaxFramesInFlight; }
 		RFormat GetSwapchainImageFormat() override { return (RFormat)m_SwapchainFormat.format; }
-		const RSExtent2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
+		const USize2D& GetSwapchainExtent() override { return m_SwapchainExtent; }
 		RImageView* GetSwapchainImageView(uint8 i) override;
 		uint32 GetSwapchainMaxImageCount() override;
 		RQueue* GetGraphicsQueue() override;

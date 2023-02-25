@@ -37,8 +37,7 @@ namespace Engine {
         Math::FMatrix4x4 VP;
         Math::FVector3 Pos; float _padding;
     };
-    void RenderScene::UpdateUniform()
-    {
+    void RenderScene::UpdateUniform() {
         SceneUBO sceneUbo;
         sceneUbo.LightDir = m_DirectionalLight->GetLightDir();
         sceneUbo.LightColor = m_DirectionalLight->GetLightColor();
@@ -51,17 +50,15 @@ namespace Engine {
         m_CameraUniform.UpdateData(&cameraUbo);
     }
 
-    void RenderScene::CreateResources()
-    {
+    void RenderScene::CreateResources() {
         m_DirectionalLight.reset(new DirectionalLight);
         m_DirectionalLight->SetDir({-1, -1, -1});
         auto& ext = RHI_INSTANCE->GetSwapchainExtent();
-        m_Camera.reset(new Camera(CAMERA_PERSPECTIVE, (float)ext.width / ext.height, 0.1f, 1000.0f, Math::PI * 0.49f));
+        m_Camera.reset(new Camera(CAMERA_PERSPECTIVE, (float)ext.w / ext.h, 0.1f, 1000.0f, Math::PI * 0.49f));
         m_Camera->SetView({ 0, 4, -4 }, { 0, 2, 0}, { 0, 1, 0 });
     }
 
-    void RenderScene::CreateDescriptorSets()
-    {
+    void RenderScene::CreateDescriptorSets() {
         GET_RHI(rhi);
 
         m_SceneDescs = rhi->AllocateDescriptorSet(DescsMgr::Get(DESCS_SCENE));
@@ -75,8 +72,7 @@ namespace Engine {
         m_SceneDescs->UpdateUniformBuffer(1, m_CameraUniform.Buffer);
     }
 
-    RenderScene* RenderScene::GetDefaultScene()
-    {
+    RenderScene* RenderScene::GetDefaultScene() {
         if(nullptr == s_Default.get()) {
             static Mutex m;
             MutexLock lock(m);
@@ -87,8 +83,7 @@ namespace Engine {
         return s_Default.get();
     }
 
-    RenderScene::RenderScene()
-    {
+    RenderScene::RenderScene() {
         CreateResources();
         CreateDescriptorSets();
     }
@@ -99,15 +94,13 @@ namespace Engine {
         //RHI_INSTANCE->FreeDescriptorSet(m_SceneDescs);
     }
 
-    void RenderScene::AddRenderObject(RenderObject* obj)
-    {
+    void RenderScene::AddRenderObject(RenderObject* obj) {
         m_RenderObjects.push_back(obj);
         obj->m_Scene = this;
         obj->m_Index = m_RenderObjects.size();
     }
 
-    void RenderScene::RemoveRenderObject(RenderObject* obj)
-    {
+    void RenderScene::RemoveRenderObject(RenderObject* obj) {
         if (obj->m_Scene != this) return;
         if (0 == obj->m_Index || m_RenderObjects.size() < obj->m_Index)return;
 
@@ -118,13 +111,11 @@ namespace Engine {
         }
     }
 
-    void RenderScene::Update()
-    {
+    void RenderScene::Update() {
         UpdateUniform();
     }
 
-    void RenderScene::RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout)
-    {
+    void RenderScene::RenderGBuffer(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout) {
         cmd->BindDescriptorSet(layout, m_SceneDescs, 0, RHI::PIPELINE_GRAPHICS);
         for(RenderObject* obj: m_RenderObjects) {
             obj->DrawCall(cmd, layout);

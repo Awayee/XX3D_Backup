@@ -4,7 +4,7 @@
 
 namespace Engine {
 
-	Primitive::Primitive(const TVector<Vertex>& vertices, const TVector<IndexType>& indices)
+	Primitive::Primitive(const TVector<FVertex>& vertices, const TVector<IndexType>& indices)
 	{
 		m_VertexCount = vertices.size();
 		m_IndexCount  = indices.size();
@@ -12,7 +12,7 @@ namespace Engine {
 			return;
 		}
 		GET_RHI(rhi);
-		uint32 bufferSize = m_VertexCount * sizeof(Vertex);
+		uint32 bufferSize = m_VertexCount * sizeof(FVertex);
 		m_Vertex.reset(new BufferCommon); m_Vertex->CreateForVertex(bufferSize);
 
 		BufferCommon vertexStaging;
@@ -57,12 +57,12 @@ namespace Engine {
 	void FillVertexInput(TVector<RHI::RVertexInputBinding>& bindings, TVector<RHI::RVertexInputAttribute>& attributes)
 	{
 		bindings.resize(1);
-		bindings[0] = { 0, sizeof(Vertex), RHI::VERTEX_INPUT_RATE_VERTEX };
+		bindings[0] = { 0, sizeof(Math::FVector3) + sizeof(Math::FVector2) + sizeof(Math::FVector3) + sizeof(Math::FVector3)};
 		attributes.resize(4);
-		attributes[0] = { 0, RHI::FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) };
-		attributes[1] = { 0, RHI::FORMAT_R32G32_SFLOAT,    offsetof(Vertex, uv) };
-		attributes[2] = { 0, RHI::FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) };
-		attributes[3] = { 0, RHI::FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent) };
+		attributes[0] = { 0, RHI::FORMAT_R32G32B32_SFLOAT, 0 };//position
+		attributes[1] = { 0, RHI::FORMAT_R32G32_SFLOAT,    sizeof(Math::FVector3)};//uv
+		attributes[2] = { 0, RHI::FORMAT_R32G32B32_SFLOAT, sizeof(Math::FVector2) + sizeof(Math::FVector3) };//normal
+		attributes[3] = { 0, RHI::FORMAT_R32G32B32_SFLOAT, sizeof(Math::FVector2)};// tangent
 	}
 
 

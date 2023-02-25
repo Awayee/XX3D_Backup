@@ -115,8 +115,8 @@ namespace RHI {
 		m_SwapchainFormat = deviceInfo.swapchainFormat;
 		m_SwapchainPresentMode = deviceInfo.swapchainPresentMode;
 		m_SwapchainTransform = deviceInfo.swapchainTransform;
-		m_SwapchainExtent.width = deviceInfo.swapchainExtent.width;
-		m_SwapchainExtent.height = deviceInfo.swapchainExtent.height;
+		m_SwapchainExtent.w = deviceInfo.swapchainExtent.width;
+		m_SwapchainExtent.h = deviceInfo.swapchainExtent.height;
 	}
 
 	void RHIVulkan::CreateLogicalDevice()
@@ -292,8 +292,8 @@ namespace RHI {
 		createInfo.minImageCount = m_ImageCount;
 		createInfo.imageFormat = m_SwapchainFormat.format;
 		createInfo.imageColorSpace = m_SwapchainFormat.colorSpace;
-		createInfo.imageExtent.width = m_SwapchainExtent.width;
-		createInfo.imageExtent.height = m_SwapchainExtent.height;
+		createInfo.imageExtent.width = m_SwapchainExtent.w;
+		createInfo.imageExtent.height = m_SwapchainExtent.h;
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		uint32 queueFamilyIndices[] = { m_GraphicsIndex, m_PresentIndex};
@@ -319,7 +319,7 @@ namespace RHI {
 		vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &image_count, nullptr);
 		m_SwapchainImages.resize(image_count);
 		vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &image_count, m_SwapchainImages.data());
-		m_Scissor = { {0, 0,}, {m_SwapchainExtent.width, m_SwapchainExtent.height} };
+		m_Scissor = { {0, 0,}, {m_SwapchainExtent.w, m_SwapchainExtent.h} };
 		// Create image views
 		m_SwapchainImageViews.resize(m_SwapchainImages.size());
 
@@ -737,7 +737,7 @@ namespace RHI {
 		viewportInfo.viewportCount = 1;
 		viewportInfo.pViewports = &viewportVk;
 		auto& scissor = info.Scissor;
-		VkRect2D scissorVk{ {scissor.offset.x, scissor.offset.y}, {scissor.extent.width, scissor.extent.height} };
+		VkRect2D scissorVk{ {scissor.x, scissor.y}, {scissor.w, scissor.h} };
 		viewportInfo.scissorCount = 1;
 		viewportInfo.pScissors = &scissorVk;
 
@@ -853,8 +853,8 @@ namespace RHI {
 			ERROR("_vkWaitForFences failed");
 			return;
 		}
-		m_SwapchainExtent.width = static_cast<uint32>(width);
-		m_SwapchainExtent.height = static_cast<uint32>(height);
+		m_SwapchainExtent.w = static_cast<uint32>(width);
+		m_SwapchainExtent.h = static_cast<uint32>(height);
 		ClearSwapchain();
 		CreateSwapchain();
 	}
@@ -1160,14 +1160,14 @@ namespace RHI {
 		vmaUnmapMemory(m_Vma, ((RMemoryVma*)memory)->handle);
 	}
 
-	RImageVk* RHIVulkan::CreateImage(RImageType type, RFormat format, RSExtent3D&& extent, uint32 mipLevels, uint32 arrayLayers, RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage)
+	RImageVk* RHIVulkan::CreateImage(RImageType type, RFormat format, USize3D&& extent, uint32 mipLevels, uint32 arrayLayers, RSampleCountFlags samples, RImageTiling tiling, RImageUsageFlags usage)
 	{
 		VkImageCreateInfo imageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 		imageInfo.pNext = nullptr;
 		imageInfo.flags = 0;
 		imageInfo.imageType = (VkImageType)type;
 		imageInfo.format = (VkFormat)format;
-		imageInfo.extent.width = extent.width; imageInfo.extent.height = extent.height; imageInfo.extent.depth = extent.depth;
+		imageInfo.extent.width = extent.w; imageInfo.extent.height = extent.h; imageInfo.extent.depth = extent.d;
 		imageInfo.mipLevels = mipLevels;
 		imageInfo.arrayLayers = arrayLayers;
 		imageInfo.samples = (VkSampleCountFlagBits)samples;

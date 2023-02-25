@@ -1,6 +1,7 @@
 #pragma once
 #include "Render/Common/RenderCommon.h"
 #include "Core/Container/Container.h"
+#include "Core/Memory/SmartPointer.h"
 
 namespace Engine {
 	class Material {

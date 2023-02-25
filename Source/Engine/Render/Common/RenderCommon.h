@@ -1,6 +1,6 @@
 #pragma once
 #include "RHI/RHI.h"
-#include "Core/Memory/SmartPointer.h"
+#include "Core/BaseType/Structs.h"
 #include "Core/Singleton/TSingleton.h"
 namespace Engine {
 	enum EDescsType {
@@ -35,21 +35,6 @@ namespace Engine {
 		SamplerMgr();
 		~SamplerMgr();
 		static RHI::RSampler* Get(ESamplerType type) { return Instance()->m_Samplers[type]; }
-	};
-
-	struct TextureData {
-	public:
-		uint32 Width{0};
-		uint32 Height{0};
-		uint32 Depth{0};
-		uint32 Miplevels{0};
-		uint32 ArrayLayers{0};
-		void* Pixels{0};
-		RHI::RFormat Format{RHI::FORMAT_UNDEFINED};
-		TextureData() = default;
-		TextureData(uint32 width, uint32 height, uint32 depth=1) : Width(width), Height(height), Depth(depth) {};
-		TextureData(const char* file, uint8 channels=4);
-		~TextureData();
 	};
 
 	struct TextureCommon {
@@ -190,11 +175,11 @@ namespace Engine {
 
 	class GBufferPipeline: public GraphicsPipelineCommon {
 	public:
-		GBufferPipeline(const RenderPassCommon* pass, uint32 subpass);
+		GBufferPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area);
 	};
 
 	class DeferredLightingPipeline: public GraphicsPipelineCommon {
 	public:
-		DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass);
+		DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area);
 	};
 }

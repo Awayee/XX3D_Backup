@@ -14,9 +14,9 @@ namespace Engine {
 		m_Materials.resize(primitives.size());
 		for (uint32 i = 0; i < primitives.size(); ++i) {
 			auto& primitiveData = primitives[i];
-			m_Primitives[i].reset(new Primitive(primitiveData.vertices, primitiveData.indices));
-			if(!primitiveData.textures.empty()) {
-				m_Materials[i] = MaterialMgr::Get(primitiveData.textures[0].c_str());
+			m_Primitives[i].reset(new Primitive(primitiveData.Vertices, primitiveData.Indices));
+			if(!primitiveData.Textures.empty()) {
+				m_Materials[i] = MaterialMgr::Get(primitiveData.Textures[0].c_str());
 			}
 			else {
 				m_Materials[i] = MaterialMgr::GetDefault();

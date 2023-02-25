@@ -1,9 +1,9 @@
 #pragma once
-#include <document.h>
 #include <fstream>
 #include <string>
+#include <document.h>
 namespace Json {
-	bool ParseFile(const char* file, rapidjson::Document& doc) {
+	inline bool ParseFile(const char* file, rapidjson::Document& doc) {
 		std::ifstream in(file);
 		if (!in.is_open()) {
 			printf("Load json file failed: %s", file);

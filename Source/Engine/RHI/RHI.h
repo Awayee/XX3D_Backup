@@ -13,7 +13,7 @@ namespace RHI{
 		virtual void Initialize(const RSInitInfo* initInfo)=0;
 		virtual void Release() = 0;
 		virtual uint8 GetMaxFramesInFlight() = 0;
-		virtual const RSExtent2D& GetSwapchainExtent() = 0;
+		virtual const USize2D& GetSwapchainExtent() = 0;
 		virtual RFormat GetSwapchainImageFormat() = 0;
 		virtual RImageView* GetSwapchainImageView(uint8 i) = 0;
 		virtual uint32 GetSwapchainMaxImageCount() = 0;

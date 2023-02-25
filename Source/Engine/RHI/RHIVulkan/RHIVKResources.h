@@ -136,7 +136,7 @@ namespace RHI {
 		VkCommandPool m_Pool{ VK_NULL_HANDLE };
 		void Begin(RCommandBufferUsageFlags flags) override;
 		void End() override;
-		void BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const RSRect2D& area) override;
+		void BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const URect2D& area) override;
 		void NextSubpass() override;
 		void EndRenderPass() override;
 		void CopyBufferToImage(RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayer, uint32 layerCount) override;
@@ -150,7 +150,7 @@ namespace RHI {
 		void DrawVertices(RBuffer* buffer, uint32 vertexCount, uint32 instanceCount) override;
 		void DrawVerticesIndexed(RBuffer* vertexBuffer, RBuffer* indexBuffer, uint32 indexCount, uint32 instanceCount) override;
 		void Dispatch(uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ) override;
-		void ClearAttachment(RImageAspectFlags aspect, const float* color, const RSRect2D& rect) override;
+		void ClearAttachment(RImageAspectFlags aspect, const float* color, const URect2D& rect) override;
 		void CopyBuffer(RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size) override;
 		void TransitionImageLayout(RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32 baseMipLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount, RImageAspectFlags aspect) override;
 		void GenerateMipmap(RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) override;

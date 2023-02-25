@@ -1,18 +1,13 @@
 #pragma once
 #include "Core/Math/Math.h"
 #include "Core/Memory/SmartPointer.h"
-#include "Core/String/String.h"
+#include "Core/Container/String.h"
 #include "Render/Common/RenderResources.h"
 #include "Render/Common/RenderCommon.h"
 #include "Render/Scene//RenderScene.h"
+#include "Resource/Assets/AssetData.h"
 
 namespace Engine {
-	struct SPrimitiveData{
-		TVector<Vertex> vertices;
-		TVector<uint32> indices;
-		TVector<String> textures;
-	};
-
 	// static mesh
 	class RenderMesh: public RenderObject {
 	private:

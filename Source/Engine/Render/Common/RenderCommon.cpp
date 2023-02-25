@@ -1,7 +1,8 @@
 #include "RenderCommon.h"
-#include  "Core/File/CoreFile.h"
-#include "Core/String/String.h"
+#include "Core/File/CoreFile.h"
+#include "Core/Container/String.h"
 #include "Core/Singleton/TSingleton.h"
+#include "Resource/Assets/Assets.h"
 #include "RenderResources.h"
 
 namespace Engine {
@@ -71,32 +72,6 @@ namespace Engine {
 		m_Samplers.clear();
 	}
 
-	TextureData::TextureData(const char* file, uint8 channels)
-	{
-		int w, h, n;
-		Pixels = LoadAssetImage(file, &w, &h, &n, channels);
-		Width = w;
-		Height = h;
-		Depth = n;
-		switch (channels)
-		{
-		case 2:
-			Format = RHI::FORMAT_R32G32_SFLOAT;
-			break;
-		case 4:
-			Format = RHI::FORMAT_R32G32B32A32_SFLOAT;
-		default:
-			Format = RHI::FORMAT_UNDEFINED;
-		}
-	}
-
-	TextureData::~TextureData()
-	{
-		if (Pixels) {
-			FreeImage(Pixels);
-		}
-	}
-
 	void TextureCommon::Create(RHI::RFormat format, uint32 width, uint32 height, RHI::RImageUsageFlags usage)
 	{
 		Release();
@@ -110,7 +85,7 @@ namespace Engine {
 
 	void TextureCommon::UpdatePixels(void* pixels, int channels) {
 		BufferCommon b;
-		b.CreateForTransfer(Image->GetExtent().width * Image->GetExtent().height * channels, pixels);
+		b.CreateForTransfer(Image->GetExtent().w * Image->GetExtent().h * channels, pixels);
 		RHI_INSTANCE->ImmediateCommit([&b, this](RHI::RCommandBuffer* cmd) {
 			cmd->TransitionImageLayout(Image, RHI::IMAGE_LAYOUT_UNDEFINED, RHI::IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, 1, 0, 1, RHI::IMAGE_ASPECT_COLOR_BIT);
 			cmd->CopyBufferToImage(b.Buffer, Image, RHI::IMAGE_ASPECT_COLOR_BIT, 0, 0, 1);
@@ -153,10 +128,9 @@ namespace Engine {
 			return &finded->second;
 		}
 		TextureCommon& tex = m_TextureMap.insert({ file, {} }).first->second;
-		int w, h, n;
-		uint8* pixels = LoadAssetImage(file, &w, &h, &n, CHANNELS);
-		tex.Create(FORMAT, w, h, USAGE);
-		tex.UpdatePixels(pixels, CHANNELS);
+		AImageAsset imageAsset = AssetMgr::LoadAsset<AImageAsset>(file);
+		tex.Create(FORMAT, imageAsset.Width, imageAsset.Height, USAGE);
+		tex.UpdatePixels(imageAsset.Pixels, CHANNELS);
 		return &tex;
 
 	}
@@ -199,7 +173,7 @@ namespace Engine {
 	}
 	void RenderPassCommon::Begin(RHI::RCommandBuffer* cmd)
 	{
-		cmd->BeginRenderPass(m_RHIPass, m_Framebuffer, { {0, 0}, {m_Framebuffer->GetWidth(), m_Framebuffer->GetHeight()} });
+		cmd->BeginRenderPass(m_RHIPass, m_Framebuffer, { 0, 0, m_Framebuffer->GetWidth(), m_Framebuffer->GetHeight() });
 	}
 
 	RHI::RImageView* RenderPassCommon::GetAttachment(uint32 attachmentIdx) const
@@ -211,8 +185,8 @@ namespace Engine {
 	DeferredLightingPass::DeferredLightingPass()
 	{
 		GET_RHI(rhi);
-		uint32 width = rhi->GetSwapchainExtent().width;
-		uint32 height = rhi->GetSwapchainExtent().height;
+		uint32 width = rhi->GetSwapchainExtent().w;
+		uint32 height = rhi->GetSwapchainExtent().h;
 		// create attachments
 		m_Attachments.resize(ATTACHMENT_COLOR_KHR);
 		m_Attachments[ATTACHMENT_DEPTH].Create(rhi->GetDepthFormat(), width, height, RHI::IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|RHI::IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
@@ -324,7 +298,7 @@ namespace Engine {
 	}
 
 
-	GBufferPipeline::GBufferPipeline(const RenderPassCommon* pass, uint32 subpass)
+	GBufferPipeline::GBufferPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area)
 	{
 		GET_RHI(rhi);
 		// layout
@@ -346,10 +320,8 @@ namespace Engine {
 		// input
 		FillVertexInput(info.Bindings, info.Attributes);
 		// viewport
-		uint32 w = pass->GetFramebuffer()->GetWidth();
-		uint32 h = pass->GetFramebuffer()->GetHeight();
-		info.Viewport = { 0.0f, 0.0f, (float)w, (float)h, 0.0f, 1.0f };
-		info.Scissor = { {0, 0}, {w, h} };
+		info.Viewport = { (float)area.x, (float)area.y, (float)area.w, (float)area.h, 0.0f, 1.0f };
+		info.Scissor = area;
 		// rasterization
 		info.DepthClampEnable = false;
 		info.RasterizerDiscardEnable = false;
@@ -367,7 +339,7 @@ namespace Engine {
 		m_Pipeline = rhi->CreateGraphicsPipeline(info, m_Layout, pass->GetRHIPass(), subpass, nullptr, 0);
 	}
 
-	DeferredLightingPipeline::DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass)
+	DeferredLightingPipeline::DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area)
 	{
 		GET_RHI(rhi);
 		TVector<RHI::RDescriptorSetLayout*> setLayouts{ DescsMgr::Get(DESCS_DEFERRED_LIGHTING) };
@@ -382,10 +354,8 @@ namespace Engine {
 		info.Shaders.push_back({ RHI::SHADER_STAGE_FRAGMENT_BIT, fragShaderCode, "main" });
 		// no vertex input
 		// viewport
-		uint32 w = pass->GetFramebuffer()->GetWidth();
-		uint32 h = pass->GetFramebuffer()->GetHeight();
-		info.Viewport = { 0.0f, 0.0f, (float)w, (float)h, 0.0f, 1.0f };
-		info.Scissor = { {0, 0}, {w, h} };
+		info.Viewport = {(float)area.x, (float)area.y, (float)area.w, (float)area.h, 0.0f, 1.0f};
+		info.Scissor = area;
 		// rasterization
 		info.DepthClampEnable = false;
 		info.RasterizerDiscardEnable = false;

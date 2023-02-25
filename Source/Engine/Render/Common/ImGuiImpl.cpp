@@ -58,6 +58,11 @@ namespace Engine {
 		ImGui::NewFrame();
 		BRANCH_END
 	}
+
+	void ImGuiEndFrame() {
+		ImGui::EndFrame();
+	}
+
 	void ImGuiDestroyFontUploadObjects()
 	{
 		BRANCH_VULKAN ImGui_ImplVulkan_DestroyFontUploadObjects(); BRANCH_END

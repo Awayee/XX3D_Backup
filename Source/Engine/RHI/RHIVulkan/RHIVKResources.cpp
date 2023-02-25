@@ -98,9 +98,9 @@ namespace RHI {
 		vkEndCommandBuffer(handle);
 	}
 
-	void RCommandBufferVk::BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const RSRect2D& area){
+	void RCommandBufferVk::BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const URect2D& area){
 		RRenderPassVk* passVk = reinterpret_cast<RRenderPassVk*>(pass);
-		VkRect2D vkRenderArea{ {area.offset.x, area.offset.y}, {area.extent.width, area.extent.height} };
+		VkRect2D vkRenderArea{ {area.x, area.y}, {area.w, area.h} };
 		VkRenderPassBeginInfo passInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		passInfo.pNext = nullptr;
 		passInfo.renderPass = passVk->handle;
@@ -130,7 +130,7 @@ namespace RHI {
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = layerCount;
 		region.imageOffset = { 0, 0, 0 };
-		region.imageExtent = { imageVk->GetExtent().width, imageVk->GetExtent().height, imageVk->GetExtent().depth };
+		region.imageExtent = { imageVk->GetExtent().w, imageVk->GetExtent().h, imageVk->GetExtent().d };
 		_vkCmdCopyBufferToImage(handle, ((RBufferVk*)buffer)->handle, imageVk->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	}
 
@@ -190,7 +190,7 @@ namespace RHI {
 		_vkCmdDispatch(handle, groupCountX, groupCountY, groupCountZ);
 	}
 
-	void RCommandBufferVk::ClearAttachment(RImageAspectFlags aspect, const float* color, const RSRect2D& rect){
+	void RCommandBufferVk::ClearAttachment(RImageAspectFlags aspect, const float* color, const URect2D& rect){
 		VkClearAttachment clearAttachment;
 		clearAttachment.aspectMask = aspect;
 		clearAttachment.clearValue.color.float32[0] = color[0];
@@ -198,10 +198,10 @@ namespace RHI {
 		clearAttachment.clearValue.color.float32[2] = color[2];
 		clearAttachment.clearValue.color.float32[3] = color[3];
 		VkClearRect clearRect;
-		clearRect.rect.extent.width = rect.extent.width;
-		clearRect.rect.extent.height = rect.extent.height;
-		clearRect.rect.offset.x = rect.offset.x;
-		clearRect.rect.offset.y = rect.offset.y;
+		clearRect.rect.extent.width = rect.w;
+		clearRect.rect.extent.height = rect.h;
+		clearRect.rect.offset.x = rect.x;
+		clearRect.rect.offset.y = rect.y;
 		clearRect.baseArrayLayer = 0;
 		clearRect.layerCount = 1;
 		_vkCmdClearAttachments(handle, 1, &clearAttachment, 1, &clearRect);
@@ -235,7 +235,7 @@ namespace RHI {
 
 	void RCommandBufferVk::GenerateMipmap(RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) {
 		RImageVk* imageVk = (RImageVk*)image;
-		GenerateMipMap(handle, imageVk->handle, levelCount, imageVk->GetExtent().width, imageVk->GetExtent().height, aspect, baseLayer, layerCount);
+		GenerateMipMap(handle, imageVk->handle, levelCount, imageVk->GetExtent().w, imageVk->GetExtent().h, aspect, baseLayer, layerCount);
 	}
 
 	void RCommandBufferVk::BeginDebugLabel(const char* msg, const float* color) {

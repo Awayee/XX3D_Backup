@@ -32,6 +32,10 @@ namespace Engine {
 	{
 		return glfwWindowShouldClose(m_Window);
 	}
+	void WindowSystemGLFW::Close()
+	{
+		glfwSetWindowShouldClose(m_Window, 1);
+	}
 	void WindowSystemGLFW::SetTitle(const char* title)
 	{
 		glfwSetWindowTitle(m_Window, title);

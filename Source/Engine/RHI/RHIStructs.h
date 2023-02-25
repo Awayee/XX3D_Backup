@@ -1,7 +1,8 @@
 #pragma once
 #include "RHIEnum.h"
 #include "Core/Container/Container.h"
-#include "Core/typedefine.h"
+#include "Core/BaseType/typedefine.h"
+#include "Core/BaseType/Structs.h"
 
 namespace RHI {
 	struct RSInitInfo {
@@ -14,29 +15,8 @@ namespace RHI {
 		uint8 maxFramesInFlight;
 	};
 
-	struct RSOffset2D {
-		int32 x;
-		int32 y;
-	};
-
-	struct RSExtent2D {
-		uint32 width;
-		uint32 height;
-	};
-
-	struct RSExtent3D {
-		uint32 width;
-		uint32 height;
-		uint32 depth;
-	};
-
 	struct RSOffset3D {
 		int32 x, y, z;
-	};
-
-	struct RSRect2D {
-		RSOffset2D offset;
-		RSExtent2D extent;
 	};
 
 	struct RSViewport {
@@ -111,12 +91,12 @@ namespace RHI {
 		uint32		  srcMipLevel;
 		uint32		  srcBaseLayer;
 		uint32		  srcLayerCount;
-		RSOffset3D		  srcOffsets[2];
+		UOffset2D		  srcOffsets[2];
 		RImageAspectFlags dstAspect;
 		uint32		  dstMipLevel;
 		uint32		  dstBaseLayer;
 		uint32		  dstLayerCount;
-		RSOffset3D		  dstOffsets[2];
+		UOffset2D		  dstOffsets[2];
 	};
 
 	struct RSSamplerInfo {
@@ -209,7 +189,7 @@ namespace RHI {
 
 		// viewport
 		RSViewport Viewport;
-		RSRect2D Scissor;
+		URect2D Scissor;
 
 		// rasterization
 		bool DepthClampEnable;

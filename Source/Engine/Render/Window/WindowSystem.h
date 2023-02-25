@@ -26,6 +26,7 @@ namespace Engine {
         virtual void Initialize(const WindowInitInfo& initInfo) = 0;
 		virtual void PollEvents() = 0;
 		virtual bool ShouldClose() = 0;
+        virtual void Close() = 0;
 		virtual void SetTitle(const char* title) = 0;
 		virtual void GetWindowSize(int* w, int* h) = 0;
 

@@ -3,16 +3,10 @@
 #include "Core/Math/Math.h"
 #include "RHI/RHI.h"
 #include "RenderCommon.h"
+#include "Core/Memory/SmartPointer.h"
+#include "Resource/Assets/AssetData.h"
+
 namespace Engine {
-
-	typedef uint32 IndexType;
-
-	struct Vertex {
-		Math::FVector3 position;
-		Math::FVector3 normal;
-		Math::FVector3 tangent;
-		Math::FVector2 uv;
-	};
 
 	class Primitive {
 	private:
@@ -21,7 +15,7 @@ namespace Engine {
 		TUniquePtr<BufferCommon> m_Vertex;
 		TUniquePtr<BufferCommon> m_Index;
 	public:
-		Primitive(const TVector<Vertex>& vertices, const TVector<IndexType>& indices);
+		Primitive(const TVector<FVertex>& vertices, const TVector<IndexType>& indices);
 		RHI::RBuffer* GetVertexBuffer() const { return m_Vertex ? m_Vertex->Buffer : nullptr; }
 		RHI::RBuffer* GetIndexBuffer()  const { return m_Index  ? m_Index->Buffer  : nullptr; }
 		uint32 GetVertexCount()const { return m_VertexCount; }

@@ -6,8 +6,8 @@
 namespace Engine {
 	class XXEngine {
 	private:
-		WindowSystemBase* m_Window {nullptr};
-		RenderSystem* m_Renderer {nullptr};
+		TUniquePtr<WindowSystemBase> m_Window {nullptr};
+		TUniquePtr<RenderSystem> m_Renderer{ nullptr };
 		TimePoint m_LastTickTime{ std::chrono::steady_clock::now() };
 
 		uint32 m_FPSFrameCounter{0U};
@@ -16,11 +16,10 @@ namespace Engine {
 	public:
 		XXEngine();
 		~XXEngine();
-		void EngineRun();
 		bool Tick();
 		float GetFPS() const { return m_FPS; }
-		WindowSystemBase* GetWindowSystem() const { return m_Window; }
-		RenderSystem* GetRenderSystem() const { return m_Renderer; }
+		WindowSystemBase* Window() const { return m_Window.get(); }
+		RenderSystem* Renderer() const { return m_Renderer.get(); }
 
 	private:
 		float ComputeDeltaTime();

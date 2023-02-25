@@ -28,6 +28,7 @@ namespace Engine {
 		void Initialize(const WindowInitInfo& initInfo) override;
 		void PollEvents() override;
 		bool ShouldClose() override;
+		void Close() override;
 		void SetTitle(const char* title) override;
 		void GetWindowSize(int* w, int* h) override;
 		void SetFocusMode(bool focusMode) override;

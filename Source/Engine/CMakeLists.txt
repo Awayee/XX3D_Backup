@@ -35,3 +35,10 @@ target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/stb_image)
 
 #imgui
 target_link_libraries(${TARGET_NAME} PRIVATE "imgui")
+
+#tiny gltf
+target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/tinygltf)
+
+#assimp
+target_include_directories(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/assimpWin64/include)
+target_link_libraries(${TARGET_NAME} PRIVATE ${THIRD_PARTY}/assimpWin64/lib/assimp-vc140-mt.lib)
