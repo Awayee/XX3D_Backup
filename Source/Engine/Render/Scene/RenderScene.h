@@ -14,10 +14,12 @@ namespace Engine {
 	private:
 		RenderScene* m_Scene;
 		uint32 m_Index;
+		String m_Name{"Unnamed object"};
 	public:
 		RenderObject(RenderScene* scene);
 		virtual ~RenderObject();
 		virtual void DrawCall(RHI::RCommandBuffer* cmd, RHI::RPipelineLayout* layout) = 0;
+		virtual const char* Name() { return m_Name.c_str(); }
 	};
 
 	struct SceneRenderData {
@@ -50,6 +52,7 @@ namespace Engine {
 
 		RenderScene();
 		~RenderScene();
+		const TVector<RenderObject*> GetRenderObjects() const { return m_RenderObjects; }
 		void AddRenderObject(RenderObject* obj);
 		void RemoveRenderObject(RenderObject* obj);
 	};

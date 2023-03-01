@@ -1,5 +1,5 @@
 #include "Core/macro.h"
-#include "Public/Editor.h"
+#include "Editor.h"
 #include "Engine.h"
 
 int main() {

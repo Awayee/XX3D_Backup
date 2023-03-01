@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "EngineContext.h"
 #include "Core/macro.h"
 #include "Resource/Config/Config.h"
 
@@ -7,7 +8,7 @@ int main() {
 	{
 		LOG("Runtime");
 		Engine::XXEngine engine;
-		engine.Renderer()->SetRenderArea({ 0, 0, GetConfig()->GetWindowSize().w, GetConfig()->GetWindowSize().h });
+		Engine::Context()->Renderer()->SetRenderArea({ 0, 0, GetConfig()->GetWindowSize().w, GetConfig()->GetWindowSize().h });
 		while (engine.Tick());
 	}
 	return 0;

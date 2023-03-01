@@ -4,6 +4,7 @@
 #include "Core/Singleton/TSingleton.h"
 #include "Resource/Assets/Assets.h"
 #include "RenderResources.h"
+#include "Resource/Shaders/Shaders.h"
 
 namespace Engine {
 
@@ -298,7 +299,7 @@ namespace Engine {
 	}
 
 
-	GBufferPipeline::GBufferPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area)
+	GBufferPipeline::GBufferPipeline(const RenderPassCommon* pass, uint32 subpass, const IURect& area)
 	{
 		GET_RHI(rhi);
 		// layout
@@ -339,7 +340,7 @@ namespace Engine {
 		m_Pipeline = rhi->CreateGraphicsPipeline(info, m_Layout, pass->GetRHIPass(), subpass, nullptr, 0);
 	}
 
-	DeferredLightingPipeline::DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area)
+	DeferredLightingPipeline::DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass, const IURect& area)
 	{
 		GET_RHI(rhi);
 		TVector<RHI::RDescriptorSetLayout*> setLayouts{ DescsMgr::Get(DESCS_DEFERRED_LIGHTING) };

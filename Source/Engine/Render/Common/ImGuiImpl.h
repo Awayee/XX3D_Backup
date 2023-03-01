@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHI.h"
-#include <imgui.h>
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace Engine {
 	void ImGuiInitialize(RHI::RRenderPass* pass, uint32 subpass);

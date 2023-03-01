@@ -98,7 +98,7 @@ namespace RHI {
 		vkEndCommandBuffer(handle);
 	}
 
-	void RCommandBufferVk::BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const URect2D& area){
+	void RCommandBufferVk::BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const IURect& area){
 		RRenderPassVk* passVk = reinterpret_cast<RRenderPassVk*>(pass);
 		VkRect2D vkRenderArea{ {area.x, area.y}, {area.w, area.h} };
 		VkRenderPassBeginInfo passInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
@@ -190,7 +190,7 @@ namespace RHI {
 		_vkCmdDispatch(handle, groupCountX, groupCountY, groupCountZ);
 	}
 
-	void RCommandBufferVk::ClearAttachment(RImageAspectFlags aspect, const float* color, const URect2D& rect){
+	void RCommandBufferVk::ClearAttachment(RImageAspectFlags aspect, const float* color, const IURect& rect){
 		VkClearAttachment clearAttachment;
 		clearAttachment.aspectMask = aspect;
 		clearAttachment.clearValue.color.float32[0] = color[0];

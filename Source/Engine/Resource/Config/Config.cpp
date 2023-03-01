@@ -52,7 +52,7 @@ inline EGPUType ParseGPUType(const std::string& gpuType) {
 
 ConfigManager::ConfigManager(const char* file) {
 	TUnorderedMap<String, String> configMap;
-	ASSERT(LoadIniFile(file, configMap), "");
+	ASSERT(File::LoadIniFile(file, configMap), "");
 	m_DefaultFontPath = configMap["DefaultFont"];
 	m_RHIType = ParseRHIType(configMap["RHIType"]);
 	m_RenderPath = ParseRenderPath(configMap["RenderPath"]);

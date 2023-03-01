@@ -175,11 +175,11 @@ namespace Engine {
 
 	class GBufferPipeline: public GraphicsPipelineCommon {
 	public:
-		GBufferPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area);
+		GBufferPipeline(const RenderPassCommon* pass, uint32 subpass, const IURect& area);
 	};
 
 	class DeferredLightingPipeline: public GraphicsPipelineCommon {
 	public:
-		DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass, const URect2D& area);
+		DeferredLightingPipeline(const RenderPassCommon* pass, uint32 subpass, const IURect& area);
 	};
 }

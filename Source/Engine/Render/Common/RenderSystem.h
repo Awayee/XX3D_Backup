@@ -1,5 +1,4 @@
 #pragma once
-#include "UIBase.h"
 #include "RHI/RHI.h"
 #include "Core/Memory/SmartPointer.h"
 #include "RenderResources.h"
@@ -32,8 +31,8 @@ namespace Engine {
 
 		uint8_t m_CurrentFrameIndex{0};
 		bool m_WindowAvailable{ true };
-		URect2D m_RenderArea;
-		UIBase* m_UIContent;
+		IURect m_RenderArea;
+		bool m_RenderAreaDirty{ false };
 
 	public:
 		RenderSystem() = default;
@@ -41,13 +40,12 @@ namespace Engine {
 		~RenderSystem();
 		void SetEnable(bool enable);
 		void Tick();
-		void InitUIPass(UIBase* ui);
-		void SetRenderArea(URect2D&& area);
+		void InitUIPass() const;
+		void SetRenderArea(const IURect& area);
 
 	private:
 		void CreateRenderResources();
-		void CreatePipelines();
-		void RenderDeferredLighting(RHI::RCommandBuffer* cmd);
+		void ResizeRenderArea();
 		void OnWindowSizeChanged(uint32 w, uint32 h);
 	};
 }

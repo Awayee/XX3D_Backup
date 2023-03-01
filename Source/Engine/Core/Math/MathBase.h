@@ -13,7 +13,7 @@ namespace Math {
 	template<typename T> T Max(T a, T b) { return a > b ? a : b; }
 	template<typename T> T Abs(T x) { return x < (T)0 ? -x : x; }
 	inline bool IsNaN(float f) { return std::isnan(f); };
-	inline bool FloatEqual(float a, float b, float precision = 1e-6f) { return std::fabs(b - a) <= precision; }
+	template<typename T> bool FloatEqual(float a, T b, float precision = 1e-6f) { return std::fabs(b - a) <= precision; }
 
 	// rad is default
 	inline float ToRad(float x) { return x * Deg2Rad; }

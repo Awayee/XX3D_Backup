@@ -15,6 +15,9 @@ namespace Engine {
 
 #define BRANCH_END return ;}
 
+	// check ImGui::NewFrame() is called before Draw
+	static bool s_FrameFlag{ false };
+
 	void ImGuiInitialize(RHI::RRenderPass* pass, uint32 subpass)
 	{
 		BRANCH_VULKAN
@@ -44,6 +47,10 @@ namespace Engine {
 		BRANCH_END
 	}
 	void ImGuiRenderDrawData(RHI::RCommandBuffer* cmd) {
+		if(!s_FrameFlag) {
+			return;
+		}
+		s_FrameFlag = false;
 		ImGui::Render();
 		BRANCH_VULKAN ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), reinterpret_cast<RHI::RCommandBufferVk*>(cmd)->handle); BRANCH_END
 	}
@@ -56,6 +63,7 @@ namespace Engine {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui_ImplVulkan_NewFrame();
 		ImGui::NewFrame();
+		s_FrameFlag = true;
 		BRANCH_END
 	}
 

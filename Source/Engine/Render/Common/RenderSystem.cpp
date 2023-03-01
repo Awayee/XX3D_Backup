@@ -29,6 +29,7 @@ namespace Engine {
 
 		DescsMgr::Initialize();
 		SamplerMgr::Initialize();
+		SetRenderArea({ 0, 0, static_cast<uint32>(windowWidth), static_cast<uint32>(windowHeight) });
 		CreateRenderResources();
 		// register window func
 		window->RegisterOnWindowSizeFunc([this](int w, int h) {
@@ -38,7 +39,6 @@ namespace Engine {
 	}
 	RenderSystem::~RenderSystem()
 	{
-		ImGuiRelease();
 		RenderScene::Clear();
 		DescsMgr::Release();
 		SamplerMgr::Release();
@@ -78,6 +78,12 @@ namespace Engine {
 		auto mainScene = RenderScene::GetDefaultScene();
 		mainScene->Update();
 
+		if(m_RenderAreaDirty) {
+			ResizeRenderArea();
+			m_RenderAreaDirty = false;
+			return;
+		}
+
 		GET_RHI(rhi);
 		// begin render pass;
 		int swapchainImageIndex = rhi->PreparePresent(m_CurrentFrameIndex);
@@ -91,19 +97,25 @@ namespace Engine {
 		m_PresentPass->SetImageIndex(swapchainImageIndex);
 		m_PresentPass->Begin(cmd);
 
+		// 1. render main viewport
 		if(RENDER_DEFERRED == GetConfig()->GetRenderPath()) {
-			m_GBufferPipeline->Bind(cmd);
-			mainScene->RenderGBuffer(cmd, m_GBufferPipeline->GetLayout());
+			// render g buffer pass
+			if(m_GBufferPipeline) {
+				m_GBufferPipeline->Bind(cmd);
+				mainScene->RenderGBuffer(cmd, m_GBufferPipeline->GetLayout());
+			}
 			cmd->NextSubpass();
-			RenderDeferredLighting(cmd);
+			// render deferred pass
+			if(m_DeferredLightingPipeline) {
+				m_DeferredLightingPipeline->Bind(cmd);
+				cmd->BindDescriptorSet(m_DeferredLightingPipeline->GetLayout(), m_DeferredLightingDescs, 0, RHI::PIPELINE_GRAPHICS);
+				cmd->Draw(6, 1, 0, 0);
+			}
+
 		}
 
-		// render ui
-		if(nullptr != m_UIContent) {
-			Engine::ImGuiNewFrame();
-			m_UIContent->Tick();
-			Engine::ImGuiRenderDrawData(cmd);
-		}
+		// 2. render imgui
+		Engine::ImGuiRenderDrawData(cmd);
 
 		cmd->EndRenderPass();
 		cmd->End();
@@ -115,16 +127,8 @@ namespace Engine {
 
 	}
 
-	void RenderSystem::RenderDeferredLighting(RHI::RCommandBuffer* cmd)
+	void RenderSystem::InitUIPass() const
 	{
-		m_DeferredLightingPipeline->Bind(cmd);
-		cmd->BindDescriptorSet(m_DeferredLightingPipeline->GetLayout(), m_DeferredLightingDescs, 0, RHI::PIPELINE_GRAPHICS);
-		cmd->Draw(6, 1, 0, 0);
-	}
-
-	void RenderSystem::InitUIPass(UIBase* ui)
-	{
-		m_UIContent = ui;
 		// the last subpass is for ui
 		Engine::ImGuiInitialize(m_PresentPass->GetRHIPass(), 1);
 		GET_RHI(rhi);
@@ -135,25 +139,22 @@ namespace Engine {
 		ImGuiDestroyFontUploadObjects();
 	}
 
-	void RenderSystem::SetRenderArea(URect2D&& area){
-		ASSERT(area.w > 0 && area.h > 0, "Render area invalid!");
-		m_RenderArea = std::move(area);
-		RenderScene::GetDefaultScene()->GetMainCamera()->SetAspect((float)m_RenderArea.w / m_RenderArea.h);
-		CreatePipelines();
+	void RenderSystem::SetRenderArea(const IURect& area){
+		m_RenderArea = area;
+		m_RenderAreaDirty = true;
 	}
 
 
 	void RenderSystem::CreateRenderResources()
 	{
-		m_PresentPass.reset(new DeferredLightingPass());
 		// create command buffers
-		GET_RHI(rhi);
 		m_CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 		for (uint8 i = 0; i < m_CommandBuffers.size(); ++i) {
-			m_CommandBuffers[i] = rhi->AllocateCommandBuffer(RHI::COMMAND_BUFFER_LEVEL_PRIMARY);
+			m_CommandBuffers[i] = RHI_INSTANCE->AllocateCommandBuffer(RHI::COMMAND_BUFFER_LEVEL_PRIMARY);
 		}
+		m_PresentPass.reset(new DeferredLightingPass());
 		// create descriptor set
-		m_DeferredLightingDescs = rhi->AllocateDescriptorSet(DescsMgr::Get(DESCS_DEFERRED_LIGHTING));
+		m_DeferredLightingDescs = RHI_INSTANCE->AllocateDescriptorSet(DescsMgr::Get(DESCS_DEFERRED_LIGHTING));
 		m_DeferredLightingDescs->UpdateUniformBuffer(0, RenderScene::GetDefaultScene()->m_CameraUniform.Buffer);
 		m_DeferredLightingDescs->UpdateUniformBuffer(1, RenderScene::GetDefaultScene()->m_LightUniform.Buffer);
 		m_DeferredLightingDescs->UpdateInputAttachment(2, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_NORMAL));
@@ -161,28 +162,28 @@ namespace Engine {
 		m_DeferredLightingDescs->UpdateInputAttachment(4, m_PresentPass->GetAttachment(DeferredLightingPass::ATTACHMENT_DEPTH));
 	}
 
-	void RenderSystem::CreatePipelines(){
+	void RenderSystem::ResizeRenderArea(){
+		GET_RHI(rhi);
+		rhi->WaitGraphicsQueue();
 		if(m_RenderArea.w > 0 && m_RenderArea.h > 0) {
 			m_GBufferPipeline.reset(new GBufferPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_BASE, m_RenderArea));
-			m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_DEFERRED_LIGHTING, m_RenderArea));			
+			m_DeferredLightingPipeline.reset(new DeferredLightingPipeline(m_PresentPass.get(), DeferredLightingPass::SUBPASS_DEFERRED_LIGHTING, m_RenderArea));
+		}
+		else {
+			m_GBufferPipeline.reset();
+			m_GBufferPipeline.reset();
 		}
 	}
 
 
-	void RenderSystem::OnWindowSizeChanged(uint32 w, uint32 h)
-	{
+	void RenderSystem::OnWindowSizeChanged(uint32 w, uint32 h){
 		m_WindowAvailable = (0 != w && 0 != h);
 		if(!m_WindowAvailable) {
 			return;
 		}
-
-		// recreate resources
-		GET_RHI(rhi);
-		rhi->ResizeSwapchain(w, h);
-		for (auto cmd : m_CommandBuffers) {
-			if(cmd)rhi->FreeCommandBuffer(cmd);
-		}
+		RHI_INSTANCE->WaitGraphicsQueue();
+		RHI_INSTANCE->ResizeSwapchain(w, h);
 		CreateRenderResources();
-		CreatePipelines();
+		m_RenderAreaDirty = true;
 	}
 }

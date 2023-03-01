@@ -97,7 +97,7 @@ namespace RHI{
 		virtual ~RCommandBuffer() {}
 		virtual void Begin(RCommandBufferUsageFlags flags) = 0;
 		virtual void End() = 0;
-		virtual void BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const URect2D& area) = 0;
+		virtual void BeginRenderPass(RRenderPass* pass, RFramebuffer* framebuffer, const IURect& area) = 0;
 		virtual void NextSubpass() = 0;
 		virtual void EndRenderPass() = 0;
 		virtual void CopyBufferToImage(RBuffer* buffer, RImage* image, RImageAspectFlags aspect, uint32 mipLevel, uint32 baseLayer, uint32 layerCount) = 0;
@@ -111,7 +111,7 @@ namespace RHI{
 		virtual void DrawVertices(RBuffer* buffer, uint32 vertexCount, uint32 instanceCount) = 0;
 		virtual void DrawVerticesIndexed(RBuffer* vertexBuffer, RBuffer* indexBuffer, uint32 indexCount, uint32 instanceCount) = 0;
 		virtual void Dispatch(uint32 groupCountX, uint32 groupCountY, uint32 groupCountZ) = 0;
-		virtual void ClearAttachment(RImageAspectFlags aspect, const float* color, const URect2D& rect) = 0;
+		virtual void ClearAttachment(RImageAspectFlags aspect, const float* color, const IURect& rect) = 0;
 		virtual void CopyBuffer(RBuffer* srcBuffer, RBuffer* dstBuffer, uint64 srcOffset, uint64 dstOffset, uint64 size) = 0;
 		virtual void TransitionImageLayout(RImage* image, RImageLayout oldLayout, RImageLayout newLayout, uint32 baseMipLevel, uint32 levelCount, uint32 layer, uint32 layerCount, RImageAspectFlags aspect) = 0;
 		virtual void GenerateMipmap(RImage* image, uint32 levelCount, RImageAspectFlags aspect, uint32 baseLayer, uint32 layerCount) = 0;

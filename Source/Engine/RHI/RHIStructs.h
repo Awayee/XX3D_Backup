@@ -15,10 +15,6 @@ namespace RHI {
 		uint8 maxFramesInFlight;
 	};
 
-	struct RSOffset3D {
-		int32 x, y, z;
-	};
-
 	struct RSViewport {
 		float x;
 		float y;
@@ -189,7 +185,7 @@ namespace RHI {
 
 		// viewport
 		RSViewport Viewport;
-		URect2D Scissor;
+		IURect Scissor;
 
 		// rasterization
 		bool DepthClampEnable;
