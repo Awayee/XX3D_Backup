@@ -14,8 +14,8 @@ namespace RHI{
 		if(nullptr == s_Instance) {
 			MutexLock lock(s_InstanceMutex);
 			if(nullptr == s_Instance) {
-				ERHIType rhiType = GetConfig()->GetRHIType();
-				if(RHI_Vulkan == rhiType) {
+				Engine::ERHIType rhiType = Engine::GetConfig()->GetRHIType();
+				if(Engine::RHI_Vulkan == rhiType) {
 					s_Instance.reset(new RHIVulkan());
 				}
 				else {

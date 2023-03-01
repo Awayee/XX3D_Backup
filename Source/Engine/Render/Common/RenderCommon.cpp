@@ -129,7 +129,7 @@ namespace Engine {
 			return &finded->second;
 		}
 		TextureCommon& tex = m_TextureMap.insert({ file, {} }).first->second;
-		AImageAsset imageAsset = AssetMgr::LoadAsset<AImageAsset>(file);
+		AImageAsset imageAsset = Assets::LoadAsset<AImageAsset>(file);
 		tex.Create(FORMAT, imageAsset.Width, imageAsset.Height, USAGE);
 		tex.UpdatePixels(imageAsset.Pixels, CHANNELS);
 		return &tex;

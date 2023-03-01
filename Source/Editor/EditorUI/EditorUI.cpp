@@ -41,7 +41,7 @@ namespace Editor {
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
-		auto fontAsset = AssetMgr::LoadAsset<AFontAsset>(GetConfig()->GetDefaultFontPath());
+		auto fontAsset = Engine::Assets::LoadAsset<Engine::AFontAsset>(Engine::GetConfig()->GetDefaultFontPath());
 		io.Fonts->AddFontFromFileTTF(fontAsset.Path.c_str(), contentScale * 16, nullptr, nullptr);
 		ASSERT(io.Fonts->Build(), "Failed to build fonts");
 		//io.IniFilename = nullptr; // Do not save settings
