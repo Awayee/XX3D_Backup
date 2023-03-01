@@ -8,7 +8,7 @@ namespace Editor {
 
 	void XXEditor::InitResources(){
 		Editor::Context()->m_Scene = Engine::RenderScene::GetDefaultScene();
-		AExternalMeshAsset meshAsset = AssetMgr::LoadAsset<AExternalMeshAsset>("keqing/keqing.glb");
+		Engine::AExternalMeshAsset meshAsset = Engine::Assets::LoadAsset<Engine::AExternalMeshAsset>("keqing/keqing.glb");
 		m_Ms.reset(new Engine::RenderMesh(meshAsset.Primitives, nullptr));
 	}
 

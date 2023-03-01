@@ -1,6 +1,8 @@
 #include "VulkanUtil.h"
 #include "Resource/Config/Config.h"
 
+using namespace Engine;
+
 namespace RHI {
 	void FindQueueFamilyIndex(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, int* pGraphicsIndex, int* pPresentIndex, int* pComputeIndex)
 	{

@@ -5,6 +5,7 @@
 #include "Core/Memory/SmartPointer.h"
 #include "Core/Concurrency/Concurrency.h"
 
+using namespace Engine;
 namespace RHI{
 
 	RHIInstance* GetInstance() {
@@ -14,8 +15,8 @@ namespace RHI{
 		if(nullptr == s_Instance) {
 			MutexLock lock(s_InstanceMutex);
 			if(nullptr == s_Instance) {
-				Engine::ERHIType rhiType = Engine::GetConfig()->GetRHIType();
-				if(Engine::RHI_Vulkan == rhiType) {
+				ERHIType rhiType = GetConfig()->GetRHIType();
+				if(RHI_Vulkan == rhiType) {
 					s_Instance.reset(new RHIVulkan());
 				}
 				else {
