@@ -39,5 +39,35 @@ namespace File {
 		}
 		return true;
 	}
-	
+
+	void ForeachPath(const char* folder, FForEachPathFunc&& func, bool recursively) {
+		if(recursively) {
+			FPathRecursiveIterator iter{ folder };
+			for (const FPathEntry& path : iter) {
+				func(path);
+			}
+		}
+		else {
+			FPathIterator iter{ folder };
+			for (const FPathEntry& path : iter) {
+				func(path);
+			}			
+		}
+	}
+
+	void ForeachPath(const FPathEntry& path, FForEachPathFunc&& func, bool recursively) {
+		if (recursively) {
+			FPathRecursiveIterator iter{ path };
+			for (const FPathEntry& p : iter) {
+				func(p);
+			}
+		}
+		else {
+			FPathIterator iter{ path };
+			for (const FPathEntry& p : iter) {
+				func(p);
+			}
+		}
+	}
+
 }

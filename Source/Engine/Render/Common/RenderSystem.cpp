@@ -18,7 +18,13 @@ namespace Engine {
 		{
 			RHI::RSInitInfo initInfo;
 			initInfo.applicationName = PROJECT_NAME;
-			initInfo.enableDebug = true;
+			initInfo.enableDebug =
+#ifdef _DEBUG
+				true
+#else
+				false
+#endif
+			;
 			initInfo.enableGeometryShader = true;
 			initInfo.windowWidth = windowWidth;
 			initInfo.windowHeight = windowHeight;

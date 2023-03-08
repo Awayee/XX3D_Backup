@@ -33,3 +33,17 @@ template<typename TPos, typename TSize> struct Rect {
 typedef Rect<float, float> FRect;
 typedef Rect<int32, int32> IRect;
 typedef Rect<int32, uint32> IURect;
+
+
+template<typename T> struct Color3 {
+	T r, g, b;
+};
+
+typedef Color3<uint8> U8Color3;
+typedef Color3<float> FColor3;
+
+template<typename T> struct Color4 {
+	T r, g, b, a;
+};
+typedef Color4<uint8> U8Color4;
+typedef Color4<float> FColor4;
